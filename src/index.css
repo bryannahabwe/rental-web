@@ -14,6 +14,7 @@
     --color-teal-900: #04342C;
 }
 
+/* ── Reset ── */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -24,48 +25,37 @@ body {
     font-family: "DM Sans", sans-serif;
     background-color: #f8faf9;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-.bottom-nav {
-    display: flex;
+input, button, textarea, select {
+    font-family: "DM Sans", sans-serif;
 }
 
+button {
+    cursor: pointer;
+}
+
+/* ── Desktop (768px+) ── */
 @media (min-width: 768px) {
-    .bottom-nav {
-        display: none !important;
-    }
-
-    .main-content {
-        margin-left: 240px;
-    }
+    .desktop-table    { display: block !important; }
+    .desktop-topbar   { display: flex  !important; }
+    .mobile-cards     { display: none  !important; }
+    .mobile-topbar    { display: none  !important; }
+    .sidebar-desktop  { display: flex  !important; }
+    .main-content     { margin-left: 240px !important; }
+    .bottom-nav       { display: none  !important; }
+    .page-content     { padding: 28px  !important; padding-bottom: 40px !important; }
 }
 
+/* ── Mobile (below 768px) ── */
 @media (max-width: 767px) {
-    .sidebar-desktop {
-        display: none !important;
-    }
-
-    .main-content {
-        margin-left: 0 !important;
-    }
-}
-
-@media (max-width: 767px) {
-    .desktop-table {
-        display: none !important;
-    }
-
-    .mobile-cards {
-        display: flex !important;
-    }
-}
-
-@media (min-width: 768px) {
-    .desktop-table {
-        display: block !important;
-    }
-
-    .mobile-cards {
-        display: none !important;
-    }
+    .desktop-table    { display: none  !important; }
+    .desktop-topbar   { display: none  !important; }
+    .mobile-cards     { display: flex  !important; }
+    .mobile-topbar    { display: flex  !important; }
+    .sidebar-desktop  { display: none  !important; }
+    .main-content     { margin-left: 0 !important; }
+    .bottom-nav       { display: flex  !important; }
+    .page-content     { padding: 14px  !important; padding-bottom: 100px !important; }
 }

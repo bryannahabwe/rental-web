@@ -323,12 +323,24 @@ export default function PaymentsPage() {
             backgroundColor: "#0F6E56", color: "#fff", border: "none",
             cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
         }}>
-            <Plus size={16}/> Record Payment
+            <Plus size={16} /> Record Payment
+        </button>
+    )
+
+    const mobileAction = (
+        <button onClick={() => setShowModal(true)} style={{
+            width: "54px", height: "54px", borderRadius: "50%",
+            backgroundColor: "#0F6E56", color: "#fff", border: "none",
+            cursor: "pointer", fontSize: "28px", fontWeight: "300",
+            boxShadow: "0 4px 16px rgba(15,110,86,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+            +
         </button>
     )
 
     return (
-        <PageWrapper title="Payments" actions={actions}>
+        <PageWrapper title="Payments" actions={actions} mobileAction={mobileAction}>
 
             <div style={{
                 marginBottom: "16px", display: "flex",
@@ -498,16 +510,17 @@ export default function PaymentsPage() {
                         <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {payments.map((p, i) => (
                                 <div key={p.id} style={{
-                                    padding: "16px 20px",
+                                    padding: "14px 16px",
                                     borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
                                 }}>
+                                    {/* Row 1 — tenant + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
-                                        justifyContent: "space-between", marginBottom: "10px",
+                                        justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-                    <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
-                      {p.tenantName}
-                    </span>
+        <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
+          {p.tenantName}
+        </span>
                                         <span style={{
                                             display: "inline-block", padding: "3px 10px",
                                             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
@@ -520,68 +533,58 @@ export default function PaymentsPage() {
                                                     p.periodStatus === "PARTIAL" ? "#854F0B" :
                                                         p.periodStatus === "ROLLOVER" ? "#185FA5" : "#6b7280",
                                         }}>
-                      {p.periodStatus || "—"}
-                    </span>
+          {p.periodStatus || "—"}
+        </span>
                                     </div>
 
+                                    {/* Row 2 — unit · period */}
+                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "8px"}}>
+                                        Unit {p.roomNumber} · {p.periodMonth
+                                        ? `${getMonthName(p.periodMonth)} ${p.periodYear}`
+                                        : "—"}
+                                    </div>
+
+                                    {/* Row 3 — amount bar */}
                                     <div style={{
-                                        display: "grid", gridTemplateColumns: "1fr 1fr",
-                                        gap: "8px", marginBottom: "10px",
+                                        backgroundColor: "#f9fafb", borderRadius: "8px",
+                                        padding: "10px 12px", marginBottom: "8px",
                                     }}>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>UNIT
-                                            </div>
-                                            <div style={{fontSize: "13px", color: "#374151"}}>{p.roomNumber}</div>
+                                        <div style={{
+                                            display: "flex", justifyContent: "space-between",
+                                            alignItems: "baseline", marginBottom: "6px",
+                                        }}>
+          <span style={{fontSize: "18px", fontWeight: "700", color: "#111827"}}>
+            {formatUGX(p.amount)}
+          </span>
+                                            <span style={{fontSize: "12px", color: "#9ca3af"}}>
+            of {formatUGX(p.expectedAmount)}
+          </span>
                                         </div>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>PERIOD
-                                            </div>
-                                            <div style={{fontSize: "13px", color: "#374151"}}>
-                                                {p.periodMonth ? `${getMonthName(p.periodMonth)} ${p.periodYear}` : "—"}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>AMOUNT
-                                            </div>
-                                            <div style={{fontSize: "14px", fontWeight: "600", color: "#111827"}}>
-                                                {formatUGX(p.amount)}
-                                            </div>
-                                        </div>
-                                        <div>
+
+                                        {/* Progress bar */}
+                                        {p.expectedAmount > 0 && (
                                             <div style={{
-                                                fontSize: "11px",
-                                                color: "#9ca3af",
-                                                marginBottom: "2px"
-                                            }}>EXPECTED
-                                            </div>
-                                            <div style={{
-                                                fontSize: "13px",
-                                                color: "#6b7280"
-                                            }}>{formatUGX(p.expectedAmount)}</div>
-                                        </div>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>DATE
-                                            </div>
-                                            <div style={{
-                                                fontSize: "13px",
-                                                color: "#374151"
-                                            }}>{formatDate(p.paymentDate)}</div>
-                                        </div>
-                                        {p.reference && (
-                                            <div>
+                                                height: "4px", borderRadius: "4px",
+                                                backgroundColor: "#e5e7eb", overflow: "hidden",
+                                            }}>
                                                 <div style={{
-                                                    fontSize: "11px",
-                                                    color: "#9ca3af",
-                                                    marginBottom: "2px"
-                                                }}>REFERENCE
-                                                </div>
-                                                <div style={{fontSize: "13px", color: "#374151"}}>{p.reference}</div>
+                                                    height: "100%", borderRadius: "4px",
+                                                    backgroundColor:
+                                                        p.periodStatus === "PAID" ? "#0F6E56" :
+                                                            p.periodStatus === "ROLLOVER" ? "#185FA5" : "#EF9F27",
+                                                    width: `${Math.min(100, (p.amount / p.expectedAmount) * 100)}%`,
+                                                }}/>
                                             </div>
                                         )}
+                                    </div>
+
+                                    {/* Row 4 — date + reference */}
+                                    <div style={{fontSize: "12px", color: "#9ca3af"}}>
+                                        {new Date(p.paymentDate).toLocaleDateString("en-UG", {
+                                            day: "numeric", month: "short", year: "numeric"
+                                        })}
+                                        {p.reference && ` · ${p.reference}`}
+                                        {p.source === "ROLLOVER" && " · Auto-rollover"}
                                     </div>
                                 </div>
                             ))}

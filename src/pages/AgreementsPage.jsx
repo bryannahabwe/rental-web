@@ -377,21 +377,30 @@ export default function AgreementsPage() {
     const totalPages = data?.totalPages || 0
 
     const actions = (
-        <button
-            onClick={() => setShowCreate(true)}
-            style={{
-                display: "flex", alignItems: "center", gap: "6px",
-                padding: "9px 16px", borderRadius: "8px", fontSize: "14px",
-                backgroundColor: "#0F6E56", color: "#fff", border: "none",
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-            }}
-        >
-            <Plus size={16}/> New Agreement
+        <button onClick={() => setShowCreate(true)} style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "9px 16px", borderRadius: "8px", fontSize: "14px",
+            backgroundColor: "#0F6E56", color: "#fff", border: "none",
+            cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+        }}>
+            <Plus size={16} /> New Agreement
+        </button>
+    )
+
+    const mobileAction = (
+        <button onClick={() => setShowCreate(true)} style={{
+            width: "54px", height: "54px", borderRadius: "50%",
+            backgroundColor: "#0F6E56", color: "#fff", border: "none",
+            cursor: "pointer", fontSize: "28px", fontWeight: "300",
+            boxShadow: "0 4px 16px rgba(15,110,86,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+            +
         </button>
     )
 
     return (
-        <PageWrapper title="Agreements" actions={actions}>
+        <PageWrapper title="Agreements" actions={actions} mobileAction={mobileAction}>
 
             <div style={{marginBottom: "12px"}}>
                 <input
@@ -543,80 +552,58 @@ export default function AgreementsPage() {
                         <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {agreements.map((ag, i) => (
                                 <div key={ag.id} style={{
-                                    padding: "16px 20px",
+                                    padding: "14px 16px",
                                     borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
                                 }}>
+                                    {/* Row 1 — tenant name + agreement status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
-                                        justifyContent: "space-between", marginBottom: "10px",
+                                        justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-                    <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
-                      {ag.tenantName}
-                    </span>
-                                        <div style={{display: "flex", gap: "6px"}}>
-                      <span style={{
-                          display: "inline-block", padding: "3px 8px",
-                          borderRadius: "20px", fontSize: "11px", fontWeight: "500",
-                          backgroundColor: ag.tenantType === "NEW" ? "#E6F1FB" : "#FAEEDA",
-                          color: ag.tenantType === "NEW" ? "#185FA5" : "#854F0B",
-                      }}>
-                        {ag.tenantType}
-                      </span>
-                                            <span style={{
-                                                display: "inline-block", padding: "3px 8px",
-                                                borderRadius: "20px", fontSize: "11px", fontWeight: "500",
-                                                backgroundColor: ag.status === "ACTIVE" ? "#E1F5EE" : "#f3f4f6",
-                                                color: ag.status === "ACTIVE" ? "#0F6E56" : "#6b7280",
-                                            }}>
-                        {ag.status === "ACTIVE" ? "Active" : "Terminated"}
-                      </span>
-                                        </div>
+        <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
+          {ag.tenantName}
+        </span>
+                                        <span style={{
+                                            display: "inline-block", padding: "3px 8px",
+                                            borderRadius: "20px", fontSize: "11px", fontWeight: "500",
+                                            backgroundColor: ag.status === "ACTIVE" ? "#E1F5EE" : "#f3f4f6",
+                                            color: ag.status === "ACTIVE" ? "#0F6E56" : "#6b7280",
+                                        }}>
+          {ag.status === "ACTIVE" ? "Active" : "Terminated"}
+        </span>
                                     </div>
 
-                                    <div style={{
-                                        display: "grid", gridTemplateColumns: "1fr 1fr",
-                                        gap: "8px", marginBottom: "12px",
-                                    }}>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>UNIT
-                                            </div>
-                                            <div style={{fontSize: "13px", color: "#374151"}}>{ag.roomNumber}</div>
-                                        </div>
-                                        <div>
-                                            <div style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>RENT
-                                                / MONTH
-                                            </div>
-                                            <div style={{fontSize: "13px", fontWeight: "500", color: "#111827"}}>
-                                                {formatUGX(ag.rentAmount)}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div style={{
-                                                fontSize: "11px",
-                                                color: "#9ca3af",
-                                                marginBottom: "2px"
-                                            }}>MOVE-IN
-                                            </div>
-                                            <div style={{
-                                                fontSize: "13px",
-                                                color: "#374151"
-                                            }}>{formatDate(ag.startDate)}</div>
-                                        </div>
-                                        <div>
-                                            <div style={{
-                                                fontSize: "11px",
-                                                color: "#9ca3af",
-                                                marginBottom: "2px"
-                                            }}>MOVE-OUT
-                                            </div>
-                                            <div style={{
-                                                fontSize: "13px",
-                                                color: "#374151"
-                                            }}>{formatDate(ag.moveOutDate)}</div>
-                                        </div>
+                                    {/* Row 2 — unit · type · rent */}
+                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "4px"}}>
+                                        Unit {ag.roomNumber} ·{" "}
+                                        <span style={{
+                                            fontSize: "11px", fontWeight: "500", padding: "1px 6px",
+                                            borderRadius: "10px",
+                                            backgroundColor: ag.tenantType === "NEW" ? "#E6F1FB" : "#FAEEDA",
+                                            color: ag.tenantType === "NEW" ? "#185FA5" : "#854F0B",
+                                        }}>
+          {ag.tenantType}
+        </span>
+                                        {" "}· {formatUGX(ag.rentAmount)}/mo
                                     </div>
 
+                                    {/* Row 3 — move-in date */}
+                                    <div style={{fontSize: "13px", color: "#9ca3af", marginBottom: "10px"}}>
+                                        Move-in: {ag.startDate
+                                        ? new Date(ag.startDate).toLocaleDateString("en-UG", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric"
+                                        })
+                                        : "Not recorded"}
+                                        {ag.moveOutDate && ` · Move-out: ${new Date(ag.moveOutDate).toLocaleDateString("en-UG", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric"
+                                        })}`}
+                                    </div>
+
+                                    {/* Row 4 — move-out button */}
                                     {ag.status === "ACTIVE" && (
                                         <button onClick={() => setMoveOutAgreement(ag)} style={{
                                             width: "100%", padding: "9px", borderRadius: "8px", fontSize: "13px",

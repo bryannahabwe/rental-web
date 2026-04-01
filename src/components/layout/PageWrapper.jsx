@@ -1,34 +1,151 @@
+import { useState, useRef, useEffect } from "react"
 import Sidebar from "./Sidebar"
 import BottomNav from "./BottomNav"
+import useAuthStore from "@/store/authStore"
+import { useNavigate } from "react-router-dom"
+import { LogOut } from "lucide-react"
 
-export default function PageWrapper({title, actions, children}) {
+// ── Mobile avatar + dropdown ─────────────────────────────
+function AvatarMenu() {
+    const { landlord, logout } = useAuthStore()
+    const navigate = useNavigate()
+    const [open, setOpen] = useState(false)
+    const ref = useRef(null)
+
+    const initials = landlord?.name
+        ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+        : "RL"
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
+    }, [])
+
     return (
-        <div style={{display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9"}}>
-
-            {/* Sidebar — desktop only */}
-            <div style={{display: "none"}} className="sidebar-wrapper">
-                <Sidebar/>
+        <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+            {/* Avatar circle */}
+            <div
+                onClick={() => setOpen(v => !v)}
+                style={{
+                    width: "34px", height: "34px", borderRadius: "50%",
+                    backgroundColor: "#1D9E75",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "13px", color: "#fff", fontWeight: "600",
+                    cursor: "pointer",
+                    border: open ? "2px solid #5DCAA5" : "2px solid transparent",
+                    transition: "border-color 0.15s",
+                }}
+            >
+                {initials}
             </div>
-            <Sidebar/>
 
-            {/* Main content */}
-            <div className="main-content" style={{
-                flex: 1,
-                marginLeft: "240px",
-                display: "flex",
-                flexDirection: "column",
-                minHeight: "100vh",
-            }}>
-
-                {/* Top bar */}
+            {/* Dropdown */}
+            {open && (
                 <div style={{
-                    height: "56px", backgroundColor: "#ffffff",
-                    borderBottom: "1px solid #f0f0f0",
-                    display: "flex", alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "0 28px", flexShrink: 0,
-                    position: "sticky", top: 0, zIndex: 50,
+                    position: "absolute", top: "42px", right: 0,
+                    backgroundColor: "#fff", borderRadius: "12px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                    minWidth: "220px", zIndex: 300,
+                    border: "1px solid #f0f0f0",
+                    overflow: "hidden",
                 }}>
+                    {/* User info */}
+                    <div style={{
+                        padding: "16px", borderBottom: "1px solid #f3f4f6",
+                        display: "flex", alignItems: "center", gap: "12px",
+                    }}>
+                        <div style={{
+                            width: "40px", height: "40px", borderRadius: "50%",
+                            backgroundColor: "#0a4a38",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "14px", color: "#fff", fontWeight: "600", flexShrink: 0,
+                        }}>
+                            {initials}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                                fontSize: "14px", fontWeight: "600", color: "#111827",
+                                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                            }}>
+                                {landlord?.name || "Landlord"}
+                            </div>
+                            <div style={{
+                                fontSize: "12px", color: "#9ca3af",
+                                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                            }}>
+                                {landlord?.phoneNumber || ""}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sign out */}
+                    <button
+                        onClick={() => { logout(); navigate("/login") }}
+                        style={{
+                            width: "100%", padding: "14px 16px",
+                            display: "flex", alignItems: "center", gap: "10px",
+                            backgroundColor: "#fff", border: "none",
+                            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                            fontSize: "14px", color: "#dc2626", textAlign: "left",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "#fef2f2"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
+                    >
+                        <LogOut size={16} color="#dc2626" />
+                        Sign out
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ── Main PageWrapper ─────────────────────────────────────
+// Props:
+//   title        — page title shown in both headers
+//   actions      — desktop button(s) shown in top right of desktop header
+//   mobileAction — FAB shown bottom-right on mobile (optional)
+//   children     — page content
+
+export default function PageWrapper({ title, actions, mobileAction, children }) {
+    return (
+        <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9" }}>
+
+            {/* ── Sidebar (desktop only) ── */}
+            <Sidebar />
+
+            {/* ── Main area ── */}
+            <div
+                className="main-content"
+                style={{
+                    flex: 1,
+                    marginLeft: "240px",   // overridden to 0 on mobile via CSS
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "100vh",
+                }}
+            >
+
+                {/* ── Desktop top bar ── */}
+                <div
+                    className="desktop-topbar"
+                    style={{
+                        height: "56px",
+                        backgroundColor: "#ffffff",
+                        borderBottom: "1px solid #f0f0f0",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "0 28px",
+                        flexShrink: 0,
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 50,
+                    }}
+                >
                     <h1 style={{
                         fontSize: "15px", fontWeight: "600",
                         color: "#111827", margin: 0,
@@ -36,21 +153,76 @@ export default function PageWrapper({title, actions, children}) {
                     }}>
                         {title}
                     </h1>
+
+                    {/* Desktop action buttons e.g. "+ Add Tenant" */}
                     {actions && (
-                        <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             {actions}
                         </div>
                     )}
                 </div>
 
-                {/* Page content */}
-                <div style={{flex: 1, padding: "28px", paddingBottom: "80px"}}>
+                {/* ── Mobile top bar ── */}
+                <div
+                    className="mobile-topbar"
+                    style={{
+                        height: "56px",
+                        backgroundColor: "#0a4a38",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "0 16px",
+                        flexShrink: 0,
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 50,
+                    }}
+                >
+                    <h1 style={{
+                        fontSize: "16px", fontWeight: "600",
+                        color: "#ffffff", margin: 0,
+                        fontFamily: "'DM Sans', sans-serif",
+                    }}>
+                        {title}
+                    </h1>
+
+                    {/* Avatar + dropdown — no action buttons here */}
+                    <AvatarMenu />
+                </div>
+
+                {/* ── Page content ── */}
+                <div style={{
+                    flex: 1,
+                    padding: "20px 28px",       // desktop padding
+                    paddingBottom: "40px",
+                }}
+                     className="page-content"
+                >
                     {children}
                 </div>
+
             </div>
 
-            {/* Bottom nav — mobile only */}
-            <BottomNav/>
+            {/* ── Mobile FAB ── */}
+            {/* Shown only on mobile when mobileAction is provided */}
+            {mobileAction && (
+                <div
+                    className="mobile-topbar"
+                    style={{
+                        display: "none",
+                        position: "fixed",
+                        bottom: "80px",
+                        right: "20px",
+                        zIndex: 150,
+                    }}
+                >
+                    {mobileAction}
+                </div>
+            )}
+
+            {/* ── Bottom nav (mobile only) ── */}
+            <BottomNav />
+
         </div>
     )
 }

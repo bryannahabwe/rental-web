@@ -287,6 +287,7 @@ export default function TenantsPage() {
 
     const totalPages = data?.totalPages || 0
 
+// TenantsPage.jsx — inside the component
     const actions = (
         <button
             onClick={() => setShowModal(true)}
@@ -297,12 +298,27 @@ export default function TenantsPage() {
                 cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
             }}
         >
-            <Plus size={16}/> Add Tenant
+            <Plus size={16} /> Add Tenant
+        </button>
+    )
+
+    const mobileAction = (
+        <button
+            onClick={() => setShowModal(true)}
+            style={{
+                width: "54px", height: "54px", borderRadius: "50%",
+                backgroundColor: "#0F6E56", color: "#fff", border: "none",
+                cursor: "pointer", fontSize: "28px", fontWeight: "300",
+                boxShadow: "0 4px 16px rgba(15,110,86,0.45)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+        >
+            +
         </button>
     )
 
     return (
-        <PageWrapper title="Tenants" actions={actions}>
+        <PageWrapper title="Tenants" actions={actions} mobileAction={mobileAction}>
 
             {/* Search + status filter */}
             <div style={{
@@ -476,18 +492,16 @@ export default function TenantsPage() {
                         </div>
 
                         {/* Mobile cards */}
-                        <div className="mobile-cards" style={{
-                            display: "none", flexDirection: "column", gap: "0",
-                        }}>
+                        <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {tenants.map((tenant, i) => (
                                 <div key={tenant.id} style={{
-                                    padding: "16px 20px",
+                                    padding: "14px 16px",
                                     borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
                                 }}>
-                                    {/* Top row — name + status */}
+                                    {/* Row 1 — name + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
-                                        justifyContent: "space-between", marginBottom: "8px",
+                                        justifyContent: "space-between", marginBottom: "4px",
                                     }}>
         <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
           {tenant.name}
@@ -495,56 +509,21 @@ export default function TenantsPage() {
                                         <StatusPill status={tenant.periodStatus}/>
                                     </div>
 
-                                    {/* Details grid */}
-                                    <div style={{
-                                        display: "grid", gridTemplateColumns: "1fr 1fr",
-                                        gap: "6px", marginBottom: "12px",
-                                    }}>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>PHONE
-                                            </div>
-                                            <div style={{fontSize: "13px", color: "#374151"}}>{tenant.phone}</div>
-                                        </div>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>UNIT
-                                            </div>
-                                            <div style={{
-                                                fontSize: "13px",
-                                                color: "#374151"
-                                            }}>{tenant.currentUnit || "—"}</div>
-                                        </div>
-                                        <div>
-                                            <div
-                                                style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>PERIOD
-                                            </div>
-                                            <div style={{fontSize: "13px", color: "#374151"}}>
-                                                {tenant.currentPeriodMonth
-                                                    ? `${getMonthName(tenant.currentPeriodMonth)} ${tenant.currentPeriodYear}`
-                                                    : "—"}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div style={{
-                                                fontSize: "11px",
-                                                color: "#9ca3af",
-                                                marginBottom: "2px"
-                                            }}>EXPECTED
-                                            </div>
-                                            <div style={{
-                                                fontSize: "13px",
-                                                color: "#374151"
-                                            }}>{formatUGX(tenant.monthlyRent)}</div>
-                                        </div>
+                                    {/* Row 2 — unit + period */}
+                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "8px"}}>
+                                        {tenant.currentUnit
+                                            ? `Unit ${tenant.currentUnit} · ${tenant.currentPeriodMonth
+                                                ? `${getMonthName(tenant.currentPeriodMonth)} ${tenant.currentPeriodYear}`
+                                                : ""}`
+                                            : "No active agreement"}
                                     </div>
 
-                                    {/* Balance bar */}
+                                    {/* Row 3 — balance */}
                                     {tenant.currentBalance != null && (
                                         <div style={{
                                             display: "flex", alignItems: "center", justifyContent: "space-between",
                                             backgroundColor: tenant.currentBalance > 0 ? "#fef2f2" : "#E1F5EE",
-                                            borderRadius: "8px", padding: "10px 14px", marginBottom: "12px",
+                                            borderRadius: "8px", padding: "8px 12px", marginBottom: "10px",
                                         }}>
           <span style={{
               fontSize: "13px", fontWeight: "500",
@@ -554,47 +533,32 @@ export default function TenantsPage() {
                 ? `Outstanding: ${formatUGX(tenant.currentBalance)}`
                 : "Fully paid up"}
           </span>
+                                            {tenant.monthlyRent && (
+                                                <span style={{fontSize: "12px", color: "#9ca3af"}}>
+              of {formatUGX(tenant.monthlyRent)}
+            </span>
+                                            )}
                                         </div>
                                     )}
 
-                                    {/* Actions */}
+                                    {/* Row 4 — actions */}
                                     <div style={{display: "flex", gap: "8px"}}>
-                                        <button
-                                            onClick={() => setEditTenant(tenant)}
-                                            style={{
-                                                flex: 1,
-                                                padding: "8px",
-                                                borderRadius: "8px",
-                                                fontSize: "13px",
-                                                border: "1px solid #e5e7eb",
-                                                backgroundColor: "#fff",
-                                                color: "#374151",
-                                                cursor: "pointer",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                gap: "4px",
-                                            }}
-                                        >
+                                        <button onClick={() => setEditTenant(tenant)} style={{
+                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
+                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                            color: "#374151", cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                                            fontFamily: "'DM Sans', sans-serif",
+                                        }}>
                                             <Pencil size={13}/> Edit
                                         </button>
-                                        <button
-                                            onClick={() => setDeleteTenant(tenant)}
-                                            style={{
-                                                flex: 1,
-                                                padding: "8px",
-                                                borderRadius: "8px",
-                                                fontSize: "13px",
-                                                border: "1px solid #fee2e2",
-                                                backgroundColor: "#fff",
-                                                color: "#dc2626",
-                                                cursor: "pointer",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                gap: "4px",
-                                            }}
-                                        >
+                                        <button onClick={() => setDeleteTenant(tenant)} style={{
+                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
+                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                            color: "#dc2626", cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                                            fontFamily: "'DM Sans', sans-serif",
+                                        }}>
                                             <Trash2 size={13}/> Delete
                                         </button>
                                     </div>

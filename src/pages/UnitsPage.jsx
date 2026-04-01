@@ -288,21 +288,30 @@ export default function UnitsPage() {
     const totalPages = data?.totalPages || 0
 
     const actions = (
-        <button
-            onClick={() => setShowModal(true)}
-            style={{
-                display: "flex", alignItems: "center", gap: "6px",
-                padding: "9px 16px", borderRadius: "8px", fontSize: "14px",
-                backgroundColor: "#0F6E56", color: "#fff", border: "none",
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-            }}
-        >
-            <Plus size={16}/> Add Unit
+        <button onClick={() => setShowModal(true)} style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "9px 16px", borderRadius: "8px", fontSize: "14px",
+            backgroundColor: "#0F6E56", color: "#fff", border: "none",
+            cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+        }}>
+            <Plus size={16} /> Add Unit
+        </button>
+    )
+
+    const mobileAction = (
+        <button onClick={() => setShowModal(true)} style={{
+            width: "54px", height: "54px", borderRadius: "50%",
+            backgroundColor: "#0F6E56", color: "#fff", border: "none",
+            cursor: "pointer", fontSize: "28px", fontWeight: "300",
+            boxShadow: "0 4px 16px rgba(15,110,86,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+            +
         </button>
     )
 
     return (
-        <PageWrapper title="Units" actions={actions}>
+        <PageWrapper title="Units" actions={actions} mobileAction={mobileAction}>
 
             {/* Search + filter */}
             <div style={{
@@ -456,60 +465,56 @@ export default function UnitsPage() {
                         <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {units.map((unit, i) => (
                                 <div key={unit.id} style={{
-                                    padding: "16px 20px",
+                                    padding: "14px 16px",
                                     borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
                                 }}>
+                                    {/* Row 1 — room + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
-                                        justifyContent: "space-between", marginBottom: "10px",
+                                        justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-                    <span style={{fontSize: "16px", fontWeight: "700", color: "#111827"}}>
-                      {unit.roomNumber}
-                    </span>
+        <span style={{fontSize: "18px", fontWeight: "700", color: "#111827"}}>
+          {unit.roomNumber}
+        </span>
                                         <span style={{
                                             display: "inline-block", padding: "3px 10px",
                                             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
                                             backgroundColor: unit.isAvailable ? "#E1F5EE" : "#fef2f2",
                                             color: unit.isAvailable ? "#0F6E56" : "#dc2626",
                                         }}>
-                      {unit.isAvailable ? "Available" : "Occupied"}
-                    </span>
+          {unit.isAvailable ? "Available" : "Occupied"}
+        </span>
                                     </div>
 
+                                    {/* Row 2 — rent */}
                                     <div style={{
-                                        display: "grid", gridTemplateColumns: "1fr 1fr",
-                                        gap: "8px", marginBottom: "12px",
+                                        fontSize: "14px",
+                                        fontWeight: "500",
+                                        color: "#0F6E56",
+                                        marginBottom: "4px"
                                     }}>
-                                        <div>
-                                            <div style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>RENT
-                                                / MONTH
-                                            </div>
-                                            <div style={{fontSize: "14px", fontWeight: "500", color: "#111827"}}>
-                                                {formatUGX(unit.rentAmount)}
-                                            </div>
-                                        </div>
-                                        {unit.description && (
-                                            <div>
-                                                <div style={{
-                                                    fontSize: "11px",
-                                                    color: "#9ca3af",
-                                                    marginBottom: "2px"
-                                                }}>DESCRIPTION
-                                                </div>
-                                                <div style={{
-                                                    fontSize: "13px",
-                                                    color: "#6b7280"
-                                                }}>{unit.description}</div>
-                                            </div>
-                                        )}
+                                        {formatUGX(unit.rentAmount)}<span style={{color: "#9ca3af", fontWeight: "400"}}> / month</span>
                                     </div>
 
-                                    <div style={{display: "flex", gap: "8px"}}>
+                                    {/* Row 3 — description */}
+                                    {unit.description && (
+                                        <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "10px"}}>
+                                            {unit.description}
+                                        </div>
+                                    )}
+
+                                    {/* Row 4 — actions */}
+                                    <div style={{
+                                        display: "flex",
+                                        gap: "8px",
+                                        marginTop: unit.description ? "0" : "10px"
+                                    }}>
                                         <button onClick={() => setEditUnit(unit)} style={{
                                             flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
                                             border: "1px solid #e5e7eb", backgroundColor: "#fff",
                                             color: "#374151", cursor: "pointer",
                                             display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                                            fontFamily: "'DM Sans', sans-serif",
                                         }}>
                                             <Pencil size={13}/> Edit
                                         </button>
@@ -518,6 +523,7 @@ export default function UnitsPage() {
                                             border: "1px solid #fee2e2", backgroundColor: "#fff",
                                             color: "#dc2626", cursor: "pointer",
                                             display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                                            fontFamily: "'DM Sans', sans-serif",
                                         }}>
                                             <Trash2 size={13}/> Delete
                                         </button>
