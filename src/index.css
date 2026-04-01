@@ -2,50 +2,70 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "DM Sans", sans-serif;
-  --font-display: "DM Serif Display", serif;
+    --font-sans: "DM Sans", sans-serif;
+    --font-display: "DM Serif Display", serif;
 
-  --color-teal-50: #E1F5EE;
-  --color-teal-100: #9FE1CB;
-  --color-teal-200: #5DCAA5;
-  --color-teal-400: #1D9E75;
-  --color-teal-600: #0F6E56;
-  --color-teal-800: #085041;
-  --color-teal-900: #04342C;
+    --color-teal-50: #E1F5EE;
+    --color-teal-100: #9FE1CB;
+    --color-teal-200: #5DCAA5;
+    --color-teal-400: #1D9E75;
+    --color-teal-600: #0F6E56;
+    --color-teal-800: #085041;
+    --color-teal-900: #04342C;
 }
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  font-family: "DM Sans", sans-serif;
-  background-color: #f8faf9;
-  -webkit-font-smoothing: antialiased;
+    font-family: "DM Sans", sans-serif;
+    background-color: #f8faf9;
+    -webkit-font-smoothing: antialiased;
 }
 
 .bottom-nav {
-  display: flex;
+    display: flex;
 }
 
 @media (min-width: 768px) {
-  .bottom-nav {
-    display: none !important;
-  }
+    .bottom-nav {
+        display: none !important;
+    }
 
-  .main-content {
-    margin-left: 240px;
-  }
+    .main-content {
+        margin-left: 240px;
+    }
 }
 
 @media (max-width: 767px) {
-  .sidebar-desktop {
-    display: none !important;
-  }
+    .sidebar-desktop {
+        display: none !important;
+    }
 
-  .main-content {
-    margin-left: 0 !important;
-  }
+    .main-content {
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .desktop-table {
+        display: none !important;
+    }
+
+    .mobile-cards {
+        display: flex !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .desktop-table {
+        display: block !important;
+    }
+
+    .mobile-cards {
+        display: none !important;
+    }
 }

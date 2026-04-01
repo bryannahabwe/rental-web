@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { paymentsService } from "@/services/paymentsService"
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
+import {paymentsService} from "@/services/paymentsService"
 
 export function usePayments(params) {
     return useQuery({
@@ -13,8 +13,8 @@ export function useCreatePayment() {
     return useMutation({
         mutationFn: paymentsService.create,
         onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["payments"] })
-            void queryClient.invalidateQueries({ queryKey: ["reports"] })
+            void queryClient.invalidateQueries({queryKey: ["payments"]})
+            void queryClient.invalidateQueries({queryKey: ["reports"]})
         },
     })
 }

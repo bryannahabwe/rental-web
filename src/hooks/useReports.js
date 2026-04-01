@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query"
-import { reportsService } from "@/services/reportsService"
+import {useQuery} from "@tanstack/react-query"
+import {reportsService} from "@/services/reportsService"
 
 export function useSummary() {
     return useQuery({

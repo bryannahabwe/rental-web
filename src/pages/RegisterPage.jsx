@@ -1,7 +1,7 @@
-import { useForm } from "react-hook-form"
-import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/services/authService"
-import { useState } from "react"
+import {useForm} from "react-hook-form"
+import {Link, useNavigate} from "react-router-dom"
+import {authService} from "@/services/authService"
+import {useState} from "react"
 
 export default function RegisterPage() {
     const navigate = useNavigate()
@@ -11,7 +11,7 @@ export default function RegisterPage() {
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: {errors},
     } = useForm()
 
     const onSubmit = async (data) => {
@@ -46,9 +46,9 @@ export default function RegisterPage() {
         color: "#374151", marginBottom: "8px", letterSpacing: "0.01em",
     }
 
-    const fieldStyle = { marginBottom: "20px" }
+    const fieldStyle = {marginBottom: "20px"}
 
-    const errorStyle = { fontSize: "12px", color: "#ef4444", marginTop: "5px" }
+    const errorStyle = {fontSize: "12px", color: "#ef4444", marginTop: "5px"}
 
     return (
         <div style={{
@@ -59,17 +59,17 @@ export default function RegisterPage() {
             backgroundColor: "#f8faf9",
             padding: "24px 16px",
         }}>
-            <div style={{ width: "100%", maxWidth: "440px" }}>
+            <div style={{width: "100%", maxWidth: "440px"}}>
 
                 {/* Logo */}
-                <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                <div style={{textAlign: "center", marginBottom: "32px"}}>
                     <h1 style={{
                         fontFamily: "'DM Serif Display', serif",
                         fontSize: "32px",
                         color: "#0a4a38",
                         margin: 0,
                     }}>RentFlow</h1>
-                    <p style={{ fontSize: "13px", color: "#9ca3af", marginTop: "4px" }}>
+                    <p style={{fontSize: "13px", color: "#9ca3af", marginTop: "4px"}}>
                         Property Management
                     </p>
                 </div>
@@ -84,20 +84,20 @@ export default function RegisterPage() {
                 }}>
 
                     {/* Header */}
-                    <div style={{ marginBottom: "32px" }}>
+                    <div style={{marginBottom: "32px"}}>
                         <h2 style={{
                             fontSize: "22px", fontWeight: "600",
                             color: "#0a4a38", margin: "0 0 6px", letterSpacing: "-0.3px",
                         }}>
                             Create account
                         </h2>
-                        <p style={{ fontSize: "14px", color: "#9ca3af", margin: 0, lineHeight: "1.5" }}>
+                        <p style={{fontSize: "14px", color: "#9ca3af", margin: 0, lineHeight: "1.5"}}>
                             Start managing your properties today
                         </p>
                     </div>
 
                     {/* Divider */}
-                    <div style={{ height: "1px", backgroundColor: "#f3f4f6", marginBottom: "28px" }} />
+                    <div style={{height: "1px", backgroundColor: "#f3f4f6", marginBottom: "28px"}}/>
 
                     <form onSubmit={handleSubmit(onSubmit)}>
 
@@ -105,7 +105,7 @@ export default function RegisterPage() {
                         <div style={fieldStyle}>
                             <label style={labelStyle}>Full Name</label>
                             <input
-                                {...register("name", { required: "Name is required" })}
+                                {...register("name", {required: "Name is required"})}
                                 type="text"
                                 placeholder="John Katende"
                                 style={inputStyle}
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                         <div style={fieldStyle}>
                             <label style={labelStyle}>Phone Number</label>
                             <input
-                                {...register("phoneNumber", { required: "Phone number is required" })}
+                                {...register("phoneNumber", {required: "Phone number is required"})}
                                 type="tel"
                                 placeholder="0771234567"
                                 style={inputStyle}
@@ -133,7 +133,7 @@ export default function RegisterPage() {
                         <div style={fieldStyle}>
                             <label style={labelStyle}>
                                 Email{" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
                             </label>
                             <input
                                 {...register("email")}
@@ -146,12 +146,12 @@ export default function RegisterPage() {
                         </div>
 
                         {/* Password */}
-                        <div style={{ marginBottom: "28px" }}>
+                        <div style={{marginBottom: "28px"}}>
                             <label style={labelStyle}>Password</label>
                             <input
                                 {...register("password", {
                                     required: "Password is required",
-                                    minLength: { value: 6, message: "Minimum 6 characters" },
+                                    minLength: {value: 6, message: "Minimum 6 characters"},
                                 })}
                                 type="password"
                                 placeholder="••••••••"
@@ -186,8 +186,12 @@ export default function RegisterPage() {
                                 letterSpacing: "0.01em",
                                 transition: "background-color 0.2s",
                             }}
-                            onMouseEnter={e => { if (!loading) e.target.style.backgroundColor = "#0a4a38" }}
-                            onMouseLeave={e => { if (!loading) e.target.style.backgroundColor = "#0F6E56" }}
+                            onMouseEnter={e => {
+                                if (!loading) e.target.style.backgroundColor = "#0a4a38"
+                            }}
+                            onMouseLeave={e => {
+                                if (!loading) e.target.style.backgroundColor = "#0F6E56"
+                            }}
                         >
                             {loading ? "Creating account..." : "Create account"}
                         </button>
@@ -196,9 +200,9 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Footer */}
-                <p style={{ textAlign: "center", fontSize: "14px", color: "#9ca3af", marginTop: "24px" }}>
+                <p style={{textAlign: "center", fontSize: "14px", color: "#9ca3af", marginTop: "24px"}}>
                     Already have an account?{" "}
-                    <Link to="/login" style={{ color: "#0F6E56", fontWeight: "500", textDecoration: "none" }}>
+                    <Link to="/login" style={{color: "#0F6E56", fontWeight: "500", textDecoration: "none"}}>
                         Sign in
                     </Link>
                 </p>

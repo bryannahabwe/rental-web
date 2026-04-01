@@ -3,7 +3,7 @@ import useAuthStore from "@/store/authStore"
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api/v1",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type": "application/json"},
 })
 
 // Attach JWT token to every request
@@ -22,9 +22,9 @@ api.interceptors.response.use(
             original._retry = true
             try {
                 const refreshToken = useAuthStore.getState().refreshToken
-                const { data } = await axios.post(
+                const {data} = await axios.post(
                     `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api/v1"}/auth/refresh`,
-                    { refreshToken }
+                    {refreshToken}
                 )
                 useAuthStore.getState().setTokens(data.accessToken, data.refreshToken)
                 original.headers.Authorization = `Bearer ${data.accessToken}`

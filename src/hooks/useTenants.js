@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { tenantsService } from "@/services/tenantsService"
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
+import {tenantsService} from "@/services/tenantsService"
 
 export function useTenants(params) {
     return useQuery({
@@ -11,7 +11,7 @@ export function useTenants(params) {
 export function useAllTenants() {
     return useQuery({
         queryKey: ["tenants", "all"],
-        queryFn: () => tenantsService.getAll({ page: 0, size: 100 }).then(r => r.data.content),
+        queryFn: () => tenantsService.getAll({page: 0, size: 100}).then(r => r.data.content),
     })
 }
 
@@ -20,7 +20,7 @@ export function useCreateTenant() {
     return useMutation({
         mutationFn: tenantsService.create,
         onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["tenants"] })
+            void queryClient.invalidateQueries({queryKey: ["tenants"]})
         },
     })
 }
@@ -28,9 +28,9 @@ export function useCreateTenant() {
 export function useUpdateTenant() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: ({ id, data }) => tenantsService.update(id, data),
+        mutationFn: ({id, data}) => tenantsService.update(id, data),
         onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["tenants"] })
+            void queryClient.invalidateQueries({queryKey: ["tenants"]})
         },
     })
 }
@@ -40,7 +40,7 @@ export function useDeleteTenant() {
     return useMutation({
         mutationFn: tenantsService.delete,
         onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["tenants"] })
+            void queryClient.invalidateQueries({queryKey: ["tenants"]})
         },
     })
 }

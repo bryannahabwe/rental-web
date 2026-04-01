@@ -1,20 +1,18 @@
-import { NavLink, useNavigate } from "react-router-dom"
+import {NavLink, useNavigate} from "react-router-dom"
 import useAuthStore from "@/store/authStore"
-import {
-    LayoutDashboard, Users, Building2, FileText, CreditCard, BarChart3, LogOut,
-} from "lucide-react"
+import {BarChart3, Building2, CreditCard, FileText, LayoutDashboard, LogOut, Users,} from "lucide-react"
 
 const navItems = [
-    { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { label: "Tenants", path: "/tenants", icon: Users },
-    { label: "Units", path: "/units", icon: Building2 },
-    { label: "Agreements", path: "/agreements", icon: FileText },
-    { label: "Payments", path: "/payments", icon: CreditCard },
-    { label: "Reports", path: "/reports", icon: BarChart3 },
+    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
+    {label: "Tenants", path: "/tenants", icon: Users},
+    {label: "Units", path: "/units", icon: Building2},
+    {label: "Agreements", path: "/agreements", icon: FileText},
+    {label: "Payments", path: "/payments", icon: CreditCard},
+    {label: "Reports", path: "/reports", icon: BarChart3},
 ]
 
 export default function Sidebar() {
-    const { landlord, logout } = useAuthStore()
+    const {landlord, logout} = useAuthStore()
     const navigate = useNavigate()
 
     const handleLogout = () => {
@@ -51,18 +49,20 @@ export default function Sidebar() {
                     fontSize: "22px",
                     color: "#ffffff",
                     lineHeight: 1.2,
-                }}>RentFlow</div>
+                }}>RentFlow
+                </div>
                 <div style={{
                     fontSize: "11px",
                     color: "rgba(255,255,255,0.35)",
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
                     marginTop: "3px",
-                }}>Property Management</div>
+                }}>Property Management
+                </div>
             </div>
 
             {/* Nav */}
-            <nav style={{ padding: "16px 12px", flex: 1 }}>
+            <nav style={{padding: "16px 12px", flex: 1}}>
                 <div style={{
                     fontSize: "10px", color: "rgba(255,255,255,0.3)",
                     letterSpacing: "0.1em", textTransform: "uppercase",
@@ -71,11 +71,11 @@ export default function Sidebar() {
                     Main
                 </div>
 
-                {navItems.slice(0, 4).map(({ label, path, icon: Icon }) => (
+                {navItems.slice(0, 4).map(({label, path, icon: Icon}) => (
                     <NavLink
                         key={path}
                         to={path}
-                        style={({ isActive }) => ({
+                        style={({isActive}) => ({
                             display: "flex", alignItems: "center", gap: "10px",
                             padding: "9px 10px", borderRadius: "8px", marginBottom: "2px",
                             textDecoration: "none", fontSize: "14px",
@@ -86,7 +86,7 @@ export default function Sidebar() {
                             transition: "all 0.15s",
                         })}
                     >
-                        <Icon size={16} />
+                        <Icon size={16}/>
                         {label}
                     </NavLink>
                 ))}
@@ -99,11 +99,11 @@ export default function Sidebar() {
                     Financials
                 </div>
 
-                {navItems.slice(4).map(({ label, path, icon: Icon }) => (
+                {navItems.slice(4).map(({label, path, icon: Icon}) => (
                     <NavLink
                         key={path}
                         to={path}
-                        style={({ isActive }) => ({
+                        style={({isActive}) => ({
                             display: "flex", alignItems: "center", gap: "10px",
                             padding: "9px 10px", borderRadius: "8px", marginBottom: "2px",
                             textDecoration: "none", fontSize: "14px",
@@ -114,7 +114,7 @@ export default function Sidebar() {
                             transition: "all 0.15s",
                         })}
                     >
-                        <Icon size={16} />
+                        <Icon size={16}/>
                         {label}
                     </NavLink>
                 ))}
@@ -126,7 +126,7 @@ export default function Sidebar() {
                 borderTop: "1px solid rgba(255,255,255,0.08)",
             }}>
                 {/* User info */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                <div style={{display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px"}}>
                     <div style={{
                         width: "34px", height: "34px", borderRadius: "50%",
                         backgroundColor: "#1D9E75", display: "flex",
@@ -135,14 +135,14 @@ export default function Sidebar() {
                     }}>
                         {initials}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{flex: 1, minWidth: 0}}>
                         <div style={{
                             fontSize: "13px", color: "#ffffff", fontWeight: "500",
                             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                         }}>
                             {landlord?.name || "Landlord"}
                         </div>
-                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>
+                        <div style={{fontSize: "11px", color: "rgba(255,255,255,0.35)"}}>
                             {landlord?.phoneNumber || ""}
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default function Sidebar() {
                         e.currentTarget.style.color = "rgba(255,255,255,0.4)"
                     }}
                 >
-                    <LogOut size={14} />
+                    <LogOut size={14}/>
                     Sign out
                 </button>
             </div>

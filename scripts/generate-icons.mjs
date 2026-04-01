@@ -1,5 +1,5 @@
-import { createCanvas } from "canvas"
-import { writeFileSync } from "fs"
+import {createCanvas} from "canvas"
+import {writeFileSync} from "fs"
 
 function generateIcon(size, outputPath) {
     const canvas = createCanvas(size, size)

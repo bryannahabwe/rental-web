@@ -1,19 +1,19 @@
-import { useForm } from "react-hook-form"
-import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/services/authService"
+import {useForm} from "react-hook-form"
+import {Link, useNavigate} from "react-router-dom"
+import {authService} from "@/services/authService"
 import useAuthStore from "@/store/authStore"
-import { useState } from "react"
+import {useState} from "react"
 
 export default function LoginPage() {
     const navigate = useNavigate()
-    const { setTokens, setLandlord } = useAuthStore()
+    const {setTokens, setLandlord} = useAuthStore()
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: {errors},
     } = useForm()
 
     const onSubmit = async (data) => {
@@ -24,10 +24,10 @@ export default function LoginPage() {
                 username: data.username,
                 password: data.password,
             })
-            const { accessToken, refreshToken, name, phoneNumber, email } = res.data
+            const {accessToken, refreshToken, name, phoneNumber, email} = res.data
             setTokens(accessToken, refreshToken)
-            setLandlord({ name, phoneNumber, email })
-            navigate("/dashboard", { replace: true })
+            setLandlord({name, phoneNumber, email})
+            navigate("/dashboard", {replace: true})
         } catch (err) {
             setError(err.response?.data?.message || "Invalid credentials")
         } finally {
@@ -44,17 +44,17 @@ export default function LoginPage() {
             backgroundColor: "#f8faf9",
             padding: "16px",
         }}>
-            <div style={{ width: "100%", maxWidth: "440px" }}>
+            <div style={{width: "100%", maxWidth: "440px"}}>
 
                 {/* Logo */}
-                <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                <div style={{textAlign: "center", marginBottom: "32px"}}>
                     <h1 style={{
                         fontFamily: "'DM Serif Display', serif",
                         fontSize: "32px",
                         color: "#0a4a38",
                         margin: 0,
                     }}>RentFlow</h1>
-                    <p style={{ fontSize: "13px", color: "#9ca3af", marginTop: "4px" }}>
+                    <p style={{fontSize: "13px", color: "#9ca3af", marginTop: "4px"}}>
                         Property Management
                     </p>
                 </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                 }}>
                     {/* Header */}
-                    <div style={{ marginBottom: "32px" }}>
+                    <div style={{marginBottom: "32px"}}>
                         <h2 style={{
                             fontSize: "22px",
                             fontWeight: "600",
@@ -79,18 +79,18 @@ export default function LoginPage() {
                         }}>
                             Welcome back
                         </h2>
-                        <p style={{ fontSize: "14px", color: "#9ca3af", margin: 0, lineHeight: "1.5" }}>
+                        <p style={{fontSize: "14px", color: "#9ca3af", margin: 0, lineHeight: "1.5"}}>
                             Sign in to continue to your account
                         </p>
                     </div>
 
                     {/* Divider */}
-                    <div style={{ height: "1px", backgroundColor: "#f3f4f6", marginBottom: "28px" }} />
+                    <div style={{height: "1px", backgroundColor: "#f3f4f6", marginBottom: "28px"}}/>
 
                     <form onSubmit={handleSubmit(onSubmit)}>
 
                         {/* Username */}
-                        <div style={{ marginBottom: "20px" }}>
+                        <div style={{marginBottom: "20px"}}>
                             <label style={{
                                 display: "block",
                                 fontSize: "13px",
@@ -102,7 +102,7 @@ export default function LoginPage() {
                                 Phone Number or Email
                             </label>
                             <input
-                                {...register("username", { required: "This field is required" })}
+                                {...register("username", {required: "This field is required"})}
                                 type="text"
                                 placeholder="0771234567"
                                 style={{
@@ -117,14 +117,14 @@ export default function LoginPage() {
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.username && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "5px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "5px"}}>
                                     {errors.username.message}
                                 </p>
                             )}
                         </div>
 
                         {/* Password */}
-                        <div style={{ marginBottom: "28px" }}>
+                        <div style={{marginBottom: "28px"}}>
                             <label style={{
                                 display: "block",
                                 fontSize: "13px",
@@ -136,7 +136,7 @@ export default function LoginPage() {
                                 Password
                             </label>
                             <input
-                                {...register("password", { required: "Password is required" })}
+                                {...register("password", {required: "Password is required"})}
                                 type="password"
                                 placeholder="••••••••"
                                 style={{
@@ -151,7 +151,7 @@ export default function LoginPage() {
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.password && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "5px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "5px"}}>
                                     {errors.password.message}
                                 </p>
                             )}
@@ -181,8 +181,12 @@ export default function LoginPage() {
                                 letterSpacing: "0.01em",
                                 transition: "background-color 0.2s",
                             }}
-                            onMouseEnter={e => { if (!loading) e.target.style.backgroundColor = "#0a4a38" }}
-                            onMouseLeave={e => { if (!loading) e.target.style.backgroundColor = "#0F6E56" }}
+                            onMouseEnter={e => {
+                                if (!loading) e.target.style.backgroundColor = "#0a4a38"
+                            }}
+                            onMouseLeave={e => {
+                                if (!loading) e.target.style.backgroundColor = "#0F6E56"
+                            }}
                         >
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
@@ -191,9 +195,9 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer */}
-                <p style={{ textAlign: "center", fontSize: "14px", color: "#9ca3af", marginTop: "24px" }}>
+                <p style={{textAlign: "center", fontSize: "14px", color: "#9ca3af", marginTop: "24px"}}>
                     Don't have an account?{" "}
-                    <Link to="/register" style={{ color: "#0F6E56", fontWeight: "500", textDecoration: "none" }}>
+                    <Link to="/register" style={{color: "#0F6E56", fontWeight: "500", textDecoration: "none"}}>
                         Register
                     </Link>
                 </p>

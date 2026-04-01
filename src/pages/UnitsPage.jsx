@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react"
+import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from "@/hooks/useUnits"
-import { useForm } from "react-hook-form"
-import { Plus, Pencil, Trash2, X } from "lucide-react"
+import {useCreateUnit, useDeleteUnit, useUnits, useUpdateUnit} from "@/hooks/useUnits"
+import {useForm} from "react-hook-form"
+import {Pencil, Plus, Trash2, X} from "lucide-react"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -20,14 +20,14 @@ const labelStyle = {
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
-function UnitModal({ unit, onClose }) {
+function UnitModal({unit, onClose}) {
     const isEdit = !!unit
     const createUnit = useCreateUnit()
     const updateUnit = useUpdateUnit()
     const [error, setError] = useState("")
     const [isAvailable, setIsAvailable] = useState(unit ? unit.isAvailable : true)
 
-    const { register, handleSubmit, formState: { errors } } = useForm({
+    const {register, handleSubmit, formState: {errors}} = useForm({
         defaultValues: unit ? {
             roomNumber: unit.roomNumber,
             description: unit.description,
@@ -45,7 +45,7 @@ function UnitModal({ unit, onClose }) {
                 isAvailable,
             }
             if (isEdit) {
-                await updateUnit.mutateAsync({ id: unit.id, data: payload })
+                await updateUnit.mutateAsync({id: unit.id, data: payload})
             } else {
                 await createUnit.mutateAsync(payload)
             }
@@ -67,35 +67,36 @@ function UnitModal({ unit, onClose }) {
                 backgroundColor: "#fff", borderRadius: "16px",
                 width: "100%", maxWidth: "480px",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                maxHeight: "90vh", overflowY: "auto",
             }}>
                 <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
+                    position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
-                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
                         {isEdit ? "Edit Unit" : "Add New Unit"}
                     </h2>
                     <button onClick={onClose} style={{
                         background: "none", border: "none", cursor: "pointer",
                         color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20} />
+                        <X size={20}/>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-
+                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
                         <div>
                             <label style={labelStyle}>Room number</label>
                             <input
-                                {...register("roomNumber", { required: "Room number is required" })}
+                                {...register("roomNumber", {required: "Room number is required"})}
                                 style={inputStyle} placeholder="A1"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.roomNumber && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.roomNumber.message}
                                 </p>
                             )}
@@ -106,14 +107,14 @@ function UnitModal({ unit, onClose }) {
                             <input
                                 {...register("rentAmount", {
                                     required: "Rent amount is required",
-                                    min: { value: 1, message: "Must be greater than 0" },
+                                    min: {value: 1, message: "Must be greater than 0"},
                                 })}
                                 type="number" style={inputStyle} placeholder="350000"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.rentAmount && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.rentAmount.message}
                                 </p>
                             )}
@@ -122,28 +123,27 @@ function UnitModal({ unit, onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Description{" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
                             </label>
                             <textarea
                                 {...register("description")} rows={3}
-                                style={{ ...inputStyle, resize: "vertical" }}
-                                placeholder="Single room with bathroom, ground floor..."
+                                style={{...inputStyle, resize: "vertical"}}
+                                placeholder="Single room with bathroom..."
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                         </div>
 
-                        {/* Availability toggle */}
                         <div style={{
                             display: "flex", alignItems: "center", justifyContent: "space-between",
                             padding: "14px 16px", borderRadius: "8px",
                             border: "1px solid #e5e7eb", backgroundColor: "#f9fafb",
                         }}>
                             <div>
-                                <div style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                                <div style={{fontSize: "13px", fontWeight: "500", color: "#374151"}}>
                                     Available for rent
                                 </div>
-                                <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>
+                                <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "2px"}}>
                                     Uncheck if unit is already occupied
                                 </div>
                             </div>
@@ -161,7 +161,7 @@ function UnitModal({ unit, onClose }) {
                                     backgroundColor: "#fff", borderRadius: "50%",
                                     top: "3px", left: isAvailable ? "23px" : "3px",
                                     transition: "left 0.2s",
-                                }} />
+                                }}/>
                             </div>
                         </div>
 
@@ -201,7 +201,7 @@ function UnitModal({ unit, onClose }) {
     )
 }
 
-function DeleteConfirm({ unit, onClose }) {
+function DeleteConfirm({unit, onClose}) {
     const deleteUnit = useDeleteUnit()
     const [error, setError] = useState("")
 
@@ -225,11 +225,11 @@ function DeleteConfirm({ unit, onClose }) {
                 width: "100%", maxWidth: "400px",
                 padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}>
-                <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "0 0 8px" }}>
+                <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: "0 0 8px"}}>
                     Delete unit?
                 </h2>
-                <p style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5" }}>
-                    Are you sure you want to delete unit <strong>{unit.roomNumber}</strong>? This cannot be undone.
+                <p style={{fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5"}}>
+                    Are you sure you want to delete unit <strong>{unit.roomNumber}</strong>?
                 </p>
                 {error && (
                     <div style={{
@@ -240,7 +240,7 @@ function DeleteConfirm({ unit, onClose }) {
                         {error}
                     </div>
                 )}
-                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <div style={{display: "flex", gap: "10px", justifyContent: "flex-end"}}>
                     <button onClick={onClose} style={{
                         padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
                         border: "1px solid #e5e7eb", backgroundColor: "#fff",
@@ -278,7 +278,7 @@ export default function UnitsPage() {
         return () => clearTimeout(timer)
     }, [search])
 
-    const { data, isLoading } = useUnits({
+    const {data, isLoading} = useUnits({
         page, size: 10, sortBy: "createdAt", sortDir: "desc",
         search: debouncedSearch || undefined,
         isAvailable: availabilityFilter,
@@ -297,7 +297,7 @@ export default function UnitsPage() {
                 cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
             }}
         >
-            <Plus size={16} /> Add Unit
+            <Plus size={16}/> Add Unit
         </button>
     )
 
@@ -307,15 +307,15 @@ export default function UnitsPage() {
             {/* Search + filter */}
             <div style={{
                 marginBottom: "16px", display: "flex",
-                gap: "12px", alignItems: "center", flexWrap: "wrap",
+                gap: "10px", alignItems: "center", flexWrap: "wrap",
             }}>
                 <input
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Search by room number or description..."
+                    placeholder="Search by room number..."
                     style={{
-                        flex: 1, minWidth: "200px", maxWidth: "360px",
+                        flex: 1, minWidth: "160px", maxWidth: "360px",
                         padding: "10px 14px", fontSize: "14px",
                         borderRadius: "8px", border: "1px solid #e5e7eb",
                         outline: "none", boxSizing: "border-box",
@@ -326,15 +326,18 @@ export default function UnitsPage() {
                     onBlur={e => e.target.style.borderColor = "#e5e7eb"}
                 />
                 {[
-                    { label: "All", value: null },
-                    { label: "Available", value: true },
-                    { label: "Occupied", value: false },
+                    {label: "All", value: null},
+                    {label: "Available", value: true},
+                    {label: "Occupied", value: false},
                 ].map(f => (
                     <button
                         key={String(f.value)}
-                        onClick={() => { setAvailabilityFilter(f.value); setPage(0) }}
+                        onClick={() => {
+                            setAvailabilityFilter(f.value);
+                            setPage(0)
+                        }}
                         style={{
-                            padding: "9px 16px", borderRadius: "8px", fontSize: "13px",
+                            padding: "9px 14px", borderRadius: "8px", fontSize: "13px",
                             fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
                             border: "1px solid",
                             borderColor: availabilityFilter === f.value ? "#0F6E56" : "#e5e7eb",
@@ -353,13 +356,13 @@ export default function UnitsPage() {
                 border: "1px solid #f0f0f0", overflow: "hidden",
             }}>
                 {isLoading ? (
-                    <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
+                    <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
                         Loading units...
                     </div>
                 ) : units.length === 0 ? (
-                    <div style={{ padding: "60px", textAlign: "center" }}>
-                        <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "16px" }}>
-                            {search ? `No units found for "${search}"` : "No units yet. Add your first rental unit."}
+                    <div style={{padding: "60px", textAlign: "center"}}>
+                        <p style={{color: "#9ca3af", fontSize: "14px", marginBottom: "16px"}}>
+                            {search ? `No units found for "${search}"` : "No units yet."}
                         </p>
                         {!search && (
                             <button
@@ -371,108 +374,184 @@ export default function UnitsPage() {
                                     cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                                 }}
                             >
-                                <Plus size={16} /> Add Unit
+                                <Plus size={16}/> Add Unit
                             </button>
                         )}
                     </div>
                 ) : (
                     <>
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                            <tr style={{ backgroundColor: "#f9fafb" }}>
-                                {["Room", "Rent / Month", "Description", "Status", ""].map((h, i) => (
-                                    <th key={i} style={{
-                                        padding: "11px 20px", textAlign: "left",
-                                        fontSize: "11px", fontWeight: "500", color: "#9ca3af",
-                                        textTransform: "uppercase", letterSpacing: "0.05em",
-                                    }}>{h}</th>
-                                ))}
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {units.map((unit) => (
-                                <tr key={unit.id} style={{ borderTop: "1px solid #f9f9f9" }}>
-                                    <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "600" }}>
-                                        {unit.roomNumber}
-                                    </td>
-                                    <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
-                                        {formatUGX(unit.rentAmount)}
-                                    </td>
-                                    <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280", maxWidth: "300px" }}>
-                                        {unit.description || "—"}
-                                    </td>
-                                    <td style={{ padding: "14px 20px" }}>
-                      <span style={{
-                          display: "inline-block", padding: "3px 10px",
-                          borderRadius: "20px", fontSize: "12px", fontWeight: "500",
-                          backgroundColor: unit.isAvailable ? "#E1F5EE" : "#fef2f2",
-                          color: unit.isAvailable ? "#0F6E56" : "#dc2626",
-                      }}>
-                        {unit.isAvailable ? "Available" : "Occupied"}
-                      </span>
-                                    </td>
-                                    <td style={{ padding: "14px 20px" }}>
-                                        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                                            <button
-                                                onClick={() => setEditUnit(unit)}
-                                                style={{
+                        {/* Desktop table */}
+                        <div className="desktop-table">
+                            <table style={{width: "100%", borderCollapse: "collapse"}}>
+                                <thead>
+                                <tr style={{backgroundColor: "#f9fafb"}}>
+                                    {["Room", "Rent / Month", "Description", "Status", ""].map((h, i) => (
+                                        <th key={i} style={{
+                                            padding: "11px 20px", textAlign: "left",
+                                            fontSize: "11px", fontWeight: "500", color: "#9ca3af",
+                                            textTransform: "uppercase", letterSpacing: "0.05em",
+                                        }}>{h}</th>
+                                    ))}
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {units.map((unit) => (
+                                    <tr key={unit.id} style={{borderTop: "1px solid #f9f9f9"}}>
+                                        <td style={{
+                                            padding: "14px 20px",
+                                            fontSize: "14px",
+                                            color: "#111827",
+                                            fontWeight: "600"
+                                        }}>
+                                            {unit.roomNumber}
+                                        </td>
+                                        <td style={{
+                                            padding: "14px 20px",
+                                            fontSize: "14px",
+                                            color: "#111827",
+                                            fontWeight: "500"
+                                        }}>
+                                            {formatUGX(unit.rentAmount)}
+                                        </td>
+                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                            {unit.description || "—"}
+                                        </td>
+                                        <td style={{padding: "14px 20px"}}>
+                        <span style={{
+                            display: "inline-block", padding: "3px 10px",
+                            borderRadius: "20px", fontSize: "12px", fontWeight: "500",
+                            backgroundColor: unit.isAvailable ? "#E1F5EE" : "#fef2f2",
+                            color: unit.isAvailable ? "#0F6E56" : "#dc2626",
+                        }}>
+                          {unit.isAvailable ? "Available" : "Occupied"}
+                        </span>
+                                        </td>
+                                        <td style={{padding: "14px 20px"}}>
+                                            <div style={{display: "flex", gap: "8px", justifyContent: "flex-end"}}>
+                                                <button onClick={() => setEditUnit(unit)} style={{
                                                     padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
                                                     border: "1px solid #e5e7eb", backgroundColor: "#fff",
                                                     color: "#374151", cursor: "pointer",
                                                     display: "flex", alignItems: "center", gap: "4px",
-                                                }}
-                                            >
-                                                <Pencil size={13} /> Edit
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteUnit(unit)}
-                                                style={{
+                                                }}>
+                                                    <Pencil size={13}/> Edit
+                                                </button>
+                                                <button onClick={() => setDeleteUnit(unit)} style={{
                                                     padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
                                                     border: "1px solid #fee2e2", backgroundColor: "#fff",
                                                     color: "#dc2626", cursor: "pointer",
                                                     display: "flex", alignItems: "center", gap: "4px",
-                                                }}
-                                            >
-                                                <Trash2 size={13} /> Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                                }}>
+                                                    <Trash2 size={13}/> Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
 
+                        {/* Mobile cards */}
+                        <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
+                            {units.map((unit, i) => (
+                                <div key={unit.id} style={{
+                                    padding: "16px 20px",
+                                    borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
+                                }}>
+                                    <div style={{
+                                        display: "flex", alignItems: "center",
+                                        justifyContent: "space-between", marginBottom: "10px",
+                                    }}>
+                    <span style={{fontSize: "16px", fontWeight: "700", color: "#111827"}}>
+                      {unit.roomNumber}
+                    </span>
+                                        <span style={{
+                                            display: "inline-block", padding: "3px 10px",
+                                            borderRadius: "20px", fontSize: "12px", fontWeight: "500",
+                                            backgroundColor: unit.isAvailable ? "#E1F5EE" : "#fef2f2",
+                                            color: unit.isAvailable ? "#0F6E56" : "#dc2626",
+                                        }}>
+                      {unit.isAvailable ? "Available" : "Occupied"}
+                    </span>
+                                    </div>
+
+                                    <div style={{
+                                        display: "grid", gridTemplateColumns: "1fr 1fr",
+                                        gap: "8px", marginBottom: "12px",
+                                    }}>
+                                        <div>
+                                            <div style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>RENT
+                                                / MONTH
+                                            </div>
+                                            <div style={{fontSize: "14px", fontWeight: "500", color: "#111827"}}>
+                                                {formatUGX(unit.rentAmount)}
+                                            </div>
+                                        </div>
+                                        {unit.description && (
+                                            <div>
+                                                <div style={{
+                                                    fontSize: "11px",
+                                                    color: "#9ca3af",
+                                                    marginBottom: "2px"
+                                                }}>DESCRIPTION
+                                                </div>
+                                                <div style={{
+                                                    fontSize: "13px",
+                                                    color: "#6b7280"
+                                                }}>{unit.description}</div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div style={{display: "flex", gap: "8px"}}>
+                                        <button onClick={() => setEditUnit(unit)} style={{
+                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
+                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                            color: "#374151", cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                                        }}>
+                                            <Pencil size={13}/> Edit
+                                        </button>
+                                        <button onClick={() => setDeleteUnit(unit)} style={{
+                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
+                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                            color: "#dc2626", cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                                        }}>
+                                            <Trash2 size={13}/> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
                         {totalPages > 1 && (
                             <div style={{
                                 display: "flex", alignItems: "center", justifyContent: "space-between",
                                 padding: "14px 20px", borderTop: "1px solid #f3f4f6",
                             }}>
-                <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+                <span style={{fontSize: "13px", color: "#9ca3af"}}>
                   Page {page + 1} of {totalPages}
                 </span>
-                                <div style={{ display: "flex", gap: "8px" }}>
-                                    <button
-                                        onClick={() => setPage(p => Math.max(0, p - 1))}
-                                        disabled={page === 0}
-                                        style={{
-                                            padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                            color: page === 0 ? "#d1d5db" : "#374151",
-                                            cursor: page === 0 ? "not-allowed" : "pointer",
-                                        }}
-                                    >
+                                <div style={{display: "flex", gap: "8px"}}>
+                                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                                            style={{
+                                                padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
+                                                border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                                color: page === 0 ? "#d1d5db" : "#374151",
+                                                cursor: page === 0 ? "not-allowed" : "pointer",
+                                            }}>
                                         Previous
                                     </button>
-                                    <button
-                                        onClick={() => setPage(p => p + 1)}
-                                        disabled={page >= totalPages - 1}
-                                        style={{
-                                            padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                            color: page >= totalPages - 1 ? "#d1d5db" : "#374151",
-                                            cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
-                                        }}
-                                    >
+                                    <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}
+                                            style={{
+                                                padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
+                                                border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                                color: page >= totalPages - 1 ? "#d1d5db" : "#374151",
+                                                cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
+                                            }}>
                                         Next
                                     </button>
                                 </div>
@@ -482,10 +561,9 @@ export default function UnitsPage() {
                 )}
             </div>
 
-            {showModal && <UnitModal onClose={() => setShowModal(false)} />}
-            {editUnit && <UnitModal unit={editUnit} onClose={() => setEditUnit(null)} />}
-            {deleteUnit && <DeleteConfirm unit={deleteUnit} onClose={() => setDeleteUnit(null)} />}
-
+            {showModal && <UnitModal onClose={() => setShowModal(false)}/>}
+            {editUnit && <UnitModal unit={editUnit} onClose={() => setEditUnit(null)}/>}
+            {deleteUnit && <DeleteConfirm unit={deleteUnit} onClose={() => setDeleteUnit(null)}/>}
         </PageWrapper>
     )
 }

@@ -1,15 +1,15 @@
 import Sidebar from "./Sidebar"
 import BottomNav from "./BottomNav"
 
-export default function PageWrapper({ title, actions, children }) {
+export default function PageWrapper({title, actions, children}) {
     return (
-        <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9" }}>
+        <div style={{display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9"}}>
 
             {/* Sidebar — desktop only */}
-            <div style={{ display: "none" }} className="sidebar-wrapper">
-                <Sidebar />
+            <div style={{display: "none"}} className="sidebar-wrapper">
+                <Sidebar/>
             </div>
-            <Sidebar />
+            <Sidebar/>
 
             {/* Main content */}
             <div className="main-content" style={{
@@ -37,20 +37,20 @@ export default function PageWrapper({ title, actions, children }) {
                         {title}
                     </h1>
                     {actions && (
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
                             {actions}
                         </div>
                     )}
                 </div>
 
                 {/* Page content */}
-                <div style={{ flex: 1, padding: "28px", paddingBottom: "80px" }}>
+                <div style={{flex: 1, padding: "28px", paddingBottom: "80px"}}>
                     {children}
                 </div>
             </div>
 
             {/* Bottom nav — mobile only */}
-            <BottomNav />
+            <BottomNav/>
         </div>
     )
 }
