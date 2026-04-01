@@ -12,6 +12,6 @@ deploy:
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
   script:
-    - ssh root@$SERVER_IP "cd /opt/cognix/rental-web && git pull && docker compose -f /opt/cognix/docker-compose.yml up -d --build rental-frontend"
+    - ssh root@$SERVER_IP "cd /opt/cognix/rental-web && git pull && docker compose -f /opt/cognix/docker-compose.yml up -d --build rental-web"
   only:
     - main
