@@ -1,13 +1,13 @@
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import {useAgreements, useCreateAgreement, useMoveOut, useUpdateAgreement } from "@/hooks/useAgreements"
-import {useAllTenants} from "@/hooks/useTenants"
-import {useAllUnits} from "@/hooks/useUnits"
-import {useForm} from "react-hook-form"
-import {LogOut, Plus, X, ChevronRight, Pencil} from "lucide-react"
+import { useAgreements, useCreateAgreement, useMoveOut, useUpdateAgreement } from "@/hooks/useAgreements"
+import { useAllTenants } from "@/hooks/useTenants"
+import { useAllUnits } from "@/hooks/useUnits"
+import { useForm } from "react-hook-form"
+import { LogOut, Plus, X, ChevronRight, Pencil } from "lucide-react"
 import AgreementDetailSheet from "@/components/ui/AgreementDetailSheet"
 
-
+// ── Shared styles ────────────────────────────────────────
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
     borderRadius: "8px", border: "1px solid #d1d5db",
@@ -21,6 +21,7 @@ const labelStyle = {
     color: "#374151", marginBottom: "6px",
 }
 
+// ── Helpers ──────────────────────────────────────────────
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
@@ -31,8 +32,117 @@ const formatDate = (dateStr) => {
     })
 }
 
-const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
+const nullIfEmpty = (val) =>
+    val === "" || val === undefined ? null : val
 
+const getOrdinal = (n) => {
+    const s = ["th", "st", "nd", "rd"]
+    const v = n % 100
+    return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
+
+// ── Billing day hint ─────────────────────────────────────
+function BillingDayHint({ dateStr, billingModel }) {
+    if (!dateStr) return null
+    const day = Math.min(new Date(dateStr).getDate(), 28)
+    return (
+        <div style={{
+            marginTop: "8px", padding: "10px 14px",
+            backgroundColor: "#E1F5EE", borderRadius: "8px",
+            fontSize: "12px", color: "#0F6E56",
+        }}>
+            Rent will be due on the <strong>{getOrdinal(day)}</strong> of every month.
+            {billingModel === "ARREARS"
+                ? " Payment collected at end of each cycle."
+                : " Payment collected at start of each cycle."}
+        </div>
+    )
+}
+
+// ── Billing model toggle ─────────────────────────────────
+function BillingModelToggle({ value, onChange }) {
+    return (
+        <div>
+            <label style={labelStyle}>Billing model</label>
+            <div style={{ display: "flex", gap: "8px" }}>
+                {[
+                    { value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle" },
+                    { value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle" },
+                ].map(opt => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => onChange(opt.value)}
+                        style={{
+                            flex: 1, padding: "10px 8px", borderRadius: "8px",
+                            fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+                            cursor: "pointer", fontWeight: "500", border: "1px solid",
+                            borderColor: value === opt.value ? "#0F6E56" : "#e5e7eb",
+                            backgroundColor: value === opt.value ? "#0F6E56" : "#fff",
+                            color: value === opt.value ? "#fff" : "#6b7280",
+                            textAlign: "center",
+                        }}
+                    >
+                        <div>{opt.label}</div>
+                        <div style={{ fontSize: "10px", marginTop: "2px", opacity: 0.8 }}>
+                            {opt.desc}
+                        </div>
+                    </button>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+// ── Opening balance field ────────────────────────────────
+function OpeningBalanceField({ register, balanceSign, setBalanceSign, helpText }) {
+    return (
+        <div style={{
+            backgroundColor: "#f8faf9", borderRadius: "10px",
+            border: "1px solid #e5e7eb", padding: "16px",
+        }}>
+            <label style={labelStyle}>Opening balance (UGX)</label>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                {[
+                    { label: "Paid ahead (+)", value: "positive" },
+                    { label: "Owes arrears (−)", value: "negative" },
+                ].map(opt => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setBalanceSign(opt.value)}
+                        style={{
+                            flex: 1, padding: "8px", borderRadius: "8px",
+                            fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
+                            cursor: "pointer", fontWeight: "500", border: "1px solid",
+                            borderColor: balanceSign === opt.value ? "#0F6E56" : "#e5e7eb",
+                            backgroundColor: balanceSign === opt.value
+                                ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
+                                : "#fff",
+                            color: balanceSign === opt.value ? "#fff" : "#6b7280",
+                        }}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+            <input
+                {...register("openingBalance")}
+                type="number" min="0"
+                style={inputStyle} placeholder="0"
+                onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                onBlur={e => e.target.style.borderColor = "#d1d5db"}
+            />
+            {helpText && (
+                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "8px", lineHeight: "1.6" }}>
+                    {helpText}
+                </p>
+            )}
+        </div>
+    )
+}
+
+// ── Create Agreement Modal ───────────────────────────────
 function CreateAgreementModal({ onClose }) {
     const createAgreement = useCreateAgreement()
     const { data: tenants = [], isLoading: tenantsLoading } = useAllTenants()
@@ -43,28 +153,21 @@ function CreateAgreementModal({ onClose }) {
     const [balanceSign, setBalanceSign] = useState("positive")
 
     const availableUnits = units.filter(u => u.isAvailable)
+
     const { register, handleSubmit, watch, formState: { errors } } = useForm()
     const selectedUnitId = watch("unitId")
     const selectedUnit = units.find(u => u.id === selectedUnitId)
     const startDate = watch("startDate")
 
-    // Derive billing day from start date
-    const billingDay = startDate
-        ? Math.min(new Date(startDate).getDate(), 28)
-        : null
-
     const onSubmit = async (data) => {
         setError("")
         try {
-            const rawBalance = data.openingBalance
-                ? parseFloat(data.openingBalance) : 0
+            const rawBalance = data.openingBalance ? parseFloat(data.openingBalance) : 0
             const openingBalance = tenantType === "EXISTING"
-                ? (balanceSign === "negative"
-                    ? -Math.abs(rawBalance)
-                    : Math.abs(rawBalance))
+                ? (balanceSign === "negative" ? -Math.abs(rawBalance) : Math.abs(rawBalance))
                 : 0
 
-            const payload = {
+            await createAgreement.mutateAsync({
                 tenantId: data.tenantId,
                 unitId: data.unitId,
                 startDate: nullIfEmpty(data.startDate),
@@ -73,8 +176,7 @@ function CreateAgreementModal({ onClose }) {
                 tenantType,
                 billingModel,
                 openingBalance,
-            }
-            await createAgreement.mutateAsync(payload)
+            })
             onClose()
         } catch (err) {
             setError(err.response?.data?.message || "Something went wrong")
@@ -93,6 +195,7 @@ function CreateAgreementModal({ onClose }) {
                 boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
                 maxHeight: "90vh", overflowY: "auto",
             }}>
+                {/* Header */}
                 <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
@@ -139,35 +242,7 @@ function CreateAgreementModal({ onClose }) {
                         </div>
 
                         {/* Billing model */}
-                        <div>
-                            <label style={labelStyle}>Billing model</label>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                {[
-                                    { value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle" },
-                                    { value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle" },
-                                ].map(opt => (
-                                    <button key={opt.value} type="button"
-                                            onClick={() => setBillingModel(opt.value)}
-                                            style={{
-                                                flex: 1, padding: "10px 8px", borderRadius: "8px",
-                                                fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
-                                                cursor: "pointer", fontWeight: "500", border: "1px solid",
-                                                borderColor: billingModel === opt.value ? "#0F6E56" : "#e5e7eb",
-                                                backgroundColor: billingModel === opt.value ? "#0F6E56" : "#fff",
-                                                color: billingModel === opt.value ? "#fff" : "#6b7280",
-                                                textAlign: "center",
-                                            }}>
-                                        <div>{opt.label}</div>
-                                        <div style={{
-                                            fontSize: "10px", marginTop: "2px",
-                                            opacity: 0.8,
-                                        }}>
-                                            {opt.desc}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <BillingModelToggle value={billingModel} onChange={setBillingModel} />
 
                         {/* Tenant */}
                         <div>
@@ -217,6 +292,11 @@ function CreateAgreementModal({ onClose }) {
                                     {errors.unitId.message}
                                 </p>
                             )}
+                            {availableUnits.length === 0 && !unitsLoading && (
+                                <p style={{ fontSize: "12px", color: "#f59e0b", marginTop: "4px" }}>
+                                    No available units. Mark a unit as available first.
+                                </p>
+                            )}
                         </div>
 
                         {/* Rent amount */}
@@ -230,8 +310,7 @@ function CreateAgreementModal({ onClose }) {
                 </span>
                             </label>
                             <input
-                                {...register("rentAmount")} type="number"
-                                style={inputStyle}
+                                {...register("rentAmount")} type="number" style={inputStyle}
                                 placeholder={selectedUnit
                                     ? String(selectedUnit.rentAmount)
                                     : "Leave blank to use unit rent"}
@@ -243,18 +322,12 @@ function CreateAgreementModal({ onClose }) {
                         {/* Start date */}
                         <div>
                             <label style={labelStyle}>
-                                {tenantType === "NEW"
-                                    ? "Move-in date"
-                                    : "First billing cycle start date"}
+                                {tenantType === "NEW" ? "Move-in date" : "First billing cycle start date"}
                                 {" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>
-                  {tenantType === "NEW" ? "(required)" : "(required)"}
-                </span>
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(required)</span>
                             </label>
                             <input
-                                {...register("startDate", {
-                                    required: "Start date is required",
-                                })}
+                                {...register("startDate", { required: "Start date is required" })}
                                 type="date" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -264,22 +337,7 @@ function CreateAgreementModal({ onClose }) {
                                     {errors.startDate.message}
                                 </p>
                             )}
-
-                            {/* Billing day derived hint */}
-                            {billingDay && (
-                                <div style={{
-                                    marginTop: "8px", padding: "10px 14px",
-                                    backgroundColor: "#E1F5EE", borderRadius: "8px",
-                                    fontSize: "12px", color: "#0F6E56",
-                                }}>
-                                    Rent will be due on the <strong>{billingDay}th</strong> of every month.
-                                    {billingModel === "ARREARS"
-                                        ? " Payment collected at end of each cycle."
-                                        : " Payment collected at start of each cycle."}
-                                </div>
-                            )}
-
-                            {/* Existing tenant helper */}
+                            <BillingDayHint dateStr={startDate} billingModel={billingModel} />
                             {tenantType === "EXISTING" && (
                                 <div style={{
                                     marginTop: "8px", padding: "10px 14px",
@@ -300,8 +358,8 @@ function CreateAgreementModal({ onClose }) {
                                 <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <input
-                                {...register("depositAmount")} type="number"
-                                style={inputStyle} placeholder="Leave blank if not applicable"
+                                {...register("depositAmount")} type="number" style={inputStyle}
+                                placeholder="Leave blank if not applicable"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
@@ -309,52 +367,14 @@ function CreateAgreementModal({ onClose }) {
 
                         {/* Opening balance — EXISTING only */}
                         {tenantType === "EXISTING" && (
-                            <div style={{
-                                backgroundColor: "#f8faf9", borderRadius: "10px",
-                                border: "1px solid #e5e7eb", padding: "16px",
-                            }}>
-                                <label style={labelStyle}>Opening balance (UGX)</label>
-
-                                {/* Sign toggle */}
-                                <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
-                                    {[
-                                        { label: "Paid ahead (+)", value: "positive" },
-                                        { label: "Owes arrears (−)", value: "negative" },
-                                    ].map(opt => (
-                                        <button key={opt.value} type="button"
-                                                onClick={() => setBalanceSign(opt.value)}
-                                                style={{
-                                                    flex: 1, padding: "8px", borderRadius: "8px",
-                                                    fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
-                                                    cursor: "pointer", fontWeight: "500", border: "1px solid",
-                                                    borderColor: balanceSign === opt.value ? "#0F6E56" : "#e5e7eb",
-                                                    backgroundColor: balanceSign === opt.value
-                                                        ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
-                                                        : "#fff",
-                                                    color: balanceSign === opt.value ? "#fff" : "#6b7280",
-                                                }}>
-                                            {opt.label}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <input
-                                    {...register("openingBalance")}
-                                    type="number" min="0"
-                                    style={inputStyle} placeholder="0"
-                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                />
-
-                                <p style={{
-                                    fontSize: "12px", color: "#9ca3af",
-                                    marginTop: "8px", lineHeight: "1.6",
-                                }}>
-                                    {balanceSign === "negative"
-                                        ? "Enter the total unpaid amount BEFORE the start date above. For example, if the tenant owes 3 months at 180,000, enter 540,000."
-                                        : "Enter the amount the tenant has paid ahead before the start date above."}
-                                </p>
-                            </div>
+                            <OpeningBalanceField
+                                register={register}
+                                balanceSign={balanceSign}
+                                setBalanceSign={setBalanceSign}
+                                helpText={balanceSign === "negative"
+                                    ? "Enter the total unpaid amount BEFORE the start date above. For example, if the tenant owes 3 months at 180,000, enter 540,000."
+                                    : "Enter the amount the tenant has paid ahead before the start date above."}
+                            />
                         )}
 
                         {error && (
@@ -367,6 +387,7 @@ function CreateAgreementModal({ onClose }) {
                         )}
                     </div>
 
+                    {/* Footer */}
                     <div style={{
                         display: "flex", gap: "10px", justifyContent: "flex-end",
                         padding: "16px 24px", borderTop: "1px solid #f3f4f6",
@@ -393,105 +414,16 @@ function CreateAgreementModal({ onClose }) {
     )
 }
 
-function MoveOutModal({agreement, onClose}) {
-    const moveOut = useMoveOut()
-    const [error, setError] = useState("")
-    const {register, handleSubmit, formState: {errors}} = useForm()
-
-    const onSubmit = async (data) => {
-        setError("")
-        try {
-            await moveOut.mutateAsync({id: agreement.id, data: {moveOutDate: data.moveOutDate}})
-            onClose()
-        } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
-        }
-    }
-
-    return (
-        <div style={{
-            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 200, padding: "16px",
-        }}>
-            <div style={{
-                backgroundColor: "#fff", borderRadius: "16px",
-                width: "100%", maxWidth: "420px",
-                padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-            }}>
-                <div style={{display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px"}}>
-                    <div style={{
-                        width: "36px", height: "36px", borderRadius: "10px",
-                        backgroundColor: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                        <LogOut size={18} color="#dc2626"/>
-                    </div>
-                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
-                        Record Move-Out
-                    </h2>
-                </div>
-                <p style={{fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5"}}>
-                    Move-out for <strong>{agreement.tenantName}</strong> in unit{" "}
-                    <strong>{agreement.roomNumber}</strong>. This will terminate the agreement.
-                </p>
-
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{marginBottom: "20px"}}>
-                        <label style={labelStyle}>Move-out date</label>
-                        <input
-                            {...register("moveOutDate", {required: "Move-out date is required"})}
-                            type="date" style={inputStyle}
-                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                        />
-                        {errors.moveOutDate && (
-                            <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
-                                {errors.moveOutDate.message}
-                            </p>
-                        )}
-                    </div>
-
-                    {error && (
-                        <div style={{
-                            backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
-                            padding: "10px 14px", borderRadius: "8px", marginBottom: "16px",
-                            borderLeft: "3px solid #ef4444",
-                        }}>
-                            {error}
-                        </div>
-                    )}
-
-                    <div style={{display: "flex", gap: "10px", justifyContent: "flex-end"}}>
-                        <button type="button" onClick={onClose} style={{
-                            padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
-                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                            color: "#374151", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                        }}>
-                            Cancel
-                        </button>
-                        <button type="submit" disabled={moveOut.isPending} style={{
-                            padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
-                            backgroundColor: moveOut.isPending ? "#9ca3af" : "#dc2626",
-                            color: "#fff", border: "none", cursor: "pointer",
-                            fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                        }}>
-                            {moveOut.isPending ? "Recording..." : "Confirm move-out"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    )
-}
-
+// ── Edit Agreement Modal ─────────────────────────────────
 function EditAgreementModal({ agreement, onClose }) {
     const updateAgreement = useUpdateAgreement()
-    const [billingModel, setBillingModel] = useState(
-        agreement.billingModel || "ADVANCE"
+    const [billingModel, setBillingModel] = useState(agreement.billingModel || "ADVANCE")
+    const [balanceSign, setBalanceSign] = useState(
+        agreement.openingBalance < 0 ? "negative" : "positive"
     )
     const [error, setError] = useState("")
 
-    const { register, handleSubmit } = useForm({
+    const { register, handleSubmit, watch } = useForm({
         defaultValues: {
             rentAmount: agreement.rentAmount,
             depositAmount: agreement.depositAmount || "",
@@ -501,15 +433,12 @@ function EditAgreementModal({ agreement, onClose }) {
         },
     })
 
-    const [balanceSign, setBalanceSign] = useState(
-        agreement.openingBalance < 0 ? "negative" : "positive"
-    )
+    const watchedStartDate = watch("startDate")
 
     const onSubmit = async (data) => {
         setError("")
         try {
-            const rawBalance = data.openingBalance
-                ? parseFloat(data.openingBalance) : 0
+            const rawBalance = data.openingBalance ? parseFloat(data.openingBalance) : 0
             const openingBalance = balanceSign === "negative"
                 ? -Math.abs(rawBalance) : Math.abs(rawBalance)
 
@@ -543,16 +472,14 @@ function EditAgreementModal({ agreement, onClose }) {
                 boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
                 maxHeight: "90vh", overflowY: "auto",
             }}>
+                {/* Header */}
                 <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
                     position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
                     <div>
-                        <h2 style={{
-                            fontSize: "16px", fontWeight: "600",
-                            color: "#111827", margin: 0,
-                        }}>
+                        <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
                             Edit Agreement
                         </h2>
                         <p style={{ fontSize: "12px", color: "#9ca3af", margin: "2px 0 0" }}>
@@ -568,50 +495,14 @@ function EditAgreementModal({ agreement, onClose }) {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{
-                        padding: "24px",
-                        display: "flex", flexDirection: "column", gap: "16px",
-                    }}>
+                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
                         {/* Billing model */}
-                        <div>
-                            <label style={labelStyle}>Billing model</label>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                {[
-                                    { value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle" },
-                                    { value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle" },
-                                ].map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => setBillingModel(opt.value)}
-                                        style={{
-                                            flex: 1, padding: "10px 8px", borderRadius: "8px",
-                                            fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
-                                            cursor: "pointer", fontWeight: "500",
-                                            border: "1px solid",
-                                            borderColor: billingModel === opt.value
-                                                ? "#0F6E56" : "#e5e7eb",
-                                            backgroundColor: billingModel === opt.value
-                                                ? "#0F6E56" : "#fff",
-                                            color: billingModel === opt.value ? "#fff" : "#6b7280",
-                                            textAlign: "center",
-                                        }}
-                                    >
-                                        <div>{opt.label}</div>
-                                        <div style={{ fontSize: "10px", marginTop: "2px", opacity: 0.8 }}>
-                                            {opt.desc}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <BillingModelToggle value={billingModel} onChange={setBillingModel} />
 
                         {/* Start date */}
                         <div>
-                            <label style={labelStyle}>
-                                Billing cycle start date
-                            </label>
+                            <label style={labelStyle}>Billing cycle start date</label>
                             <input
                                 {...register("startDate")}
                                 type="date" style={inputStyle}
@@ -621,14 +512,17 @@ function EditAgreementModal({ agreement, onClose }) {
                             <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
                                 Billing day is derived from this date automatically.
                             </p>
+                            <BillingDayHint
+                                dateStr={watchedStartDate || agreement.startDate}
+                                billingModel={billingModel}
+                            />
                         </div>
 
                         {/* Rent amount */}
                         <div>
                             <label style={labelStyle}>Monthly rent (UGX)</label>
                             <input
-                                {...register("rentAmount")}
-                                type="number" style={inputStyle}
+                                {...register("rentAmount")} type="number" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
@@ -638,58 +532,21 @@ function EditAgreementModal({ agreement, onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Deposit (UGX){" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>
-                  (optional)
-                </span>
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <input
-                                {...register("depositAmount")}
-                                type="number" style={inputStyle}
+                                {...register("depositAmount")} type="number" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                         </div>
 
                         {/* Opening balance */}
-                        <div style={{
-                            backgroundColor: "#f8faf9", borderRadius: "10px",
-                            border: "1px solid #e5e7eb", padding: "16px",
-                        }}>
-                            <label style={labelStyle}>Opening balance (UGX)</label>
-                            <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
-                                {[
-                                    { label: "Paid ahead (+)", value: "positive" },
-                                    { label: "Owes arrears (−)", value: "negative" },
-                                ].map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => setBalanceSign(opt.value)}
-                                        style={{
-                                            flex: 1, padding: "8px", borderRadius: "8px",
-                                            fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
-                                            cursor: "pointer", fontWeight: "500",
-                                            border: "1px solid",
-                                            borderColor: balanceSign === opt.value
-                                                ? "#0F6E56" : "#e5e7eb",
-                                            backgroundColor: balanceSign === opt.value
-                                                ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
-                                                : "#fff",
-                                            color: balanceSign === opt.value ? "#fff" : "#6b7280",
-                                        }}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                            <input
-                                {...register("openingBalance")}
-                                type="number" min="0"
-                                style={inputStyle} placeholder="0"
-                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                            />
-                        </div>
+                        <OpeningBalanceField
+                            register={register}
+                            balanceSign={balanceSign}
+                            setBalanceSign={setBalanceSign}
+                        />
 
                         {error && (
                             <div style={{
@@ -702,6 +559,7 @@ function EditAgreementModal({ agreement, onClose }) {
                         )}
                     </div>
 
+                    {/* Footer */}
                     <div style={{
                         display: "flex", gap: "10px", justifyContent: "flex-end",
                         padding: "16px 24px", borderTop: "1px solid #f3f4f6",
@@ -709,22 +567,16 @@ function EditAgreementModal({ agreement, onClose }) {
                         <button type="button" onClick={onClose} style={{
                             padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
                             border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                            color: "#374151", cursor: "pointer",
-                            fontFamily: "'DM Sans', sans-serif",
+                            color: "#374151", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                         }}>
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            disabled={updateAgreement.isPending}
-                            style={{
-                                padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
-                                backgroundColor: updateAgreement.isPending
-                                    ? "#6b9e8f" : "#0F6E56",
-                                color: "#fff", border: "none", cursor: "pointer",
-                                fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                            }}
-                        >
+                        <button type="submit" disabled={updateAgreement.isPending} style={{
+                            padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
+                            backgroundColor: updateAgreement.isPending ? "#6b9e8f" : "#0F6E56",
+                            color: "#fff", border: "none", cursor: "pointer",
+                            fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                        }}>
                             {updateAgreement.isPending ? "Saving..." : "Save changes"}
                         </button>
                     </div>
@@ -734,6 +586,100 @@ function EditAgreementModal({ agreement, onClose }) {
     )
 }
 
+// ── Move Out Modal ───────────────────────────────────────
+function MoveOutModal({ agreement, onClose }) {
+    const moveOut = useMoveOut()
+    const [error, setError] = useState("")
+    const { register, handleSubmit, formState: { errors } } = useForm()
+
+    const onSubmit = async (data) => {
+        setError("")
+        try {
+            await moveOut.mutateAsync({ id: agreement.id, data: { moveOutDate: data.moveOutDate } })
+            onClose()
+        } catch (err) {
+            setError(err.response?.data?.message || "Something went wrong")
+        }
+    }
+
+    return (
+        <div style={{
+            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 200, padding: "16px",
+        }}>
+            <div style={{
+                backgroundColor: "#fff", borderRadius: "16px",
+                width: "100%", maxWidth: "420px",
+                padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                    <div style={{
+                        width: "36px", height: "36px", borderRadius: "10px",
+                        backgroundColor: "#fef2f2",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                        <LogOut size={18} color="#dc2626" />
+                    </div>
+                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                        Record Move-Out
+                    </h2>
+                </div>
+                <p style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5" }}>
+                    Move-out for <strong>{agreement.tenantName}</strong> in unit{" "}
+                    <strong>{agreement.roomNumber}</strong>. This will terminate the agreement.
+                </p>
+
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div style={{ marginBottom: "20px" }}>
+                        <label style={labelStyle}>Move-out date</label>
+                        <input
+                            {...register("moveOutDate", { required: "Move-out date is required" })}
+                            type="date" style={inputStyle}
+                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                        />
+                        {errors.moveOutDate && (
+                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                {errors.moveOutDate.message}
+                            </p>
+                        )}
+                    </div>
+
+                    {error && (
+                        <div style={{
+                            backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
+                            padding: "10px 14px", borderRadius: "8px", marginBottom: "16px",
+                            borderLeft: "3px solid #ef4444",
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                        <button type="button" onClick={onClose} style={{
+                            padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
+                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                            color: "#374151", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                        }}>
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={moveOut.isPending} style={{
+                            padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
+                            backgroundColor: moveOut.isPending ? "#9ca3af" : "#dc2626",
+                            color: "#fff", border: "none", cursor: "pointer",
+                            fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                        }}>
+                            {moveOut.isPending ? "Recording..." : "Confirm move-out"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+// ── Agreements Page ──────────────────────────────────────
 export default function AgreementsPage() {
     const [page, setPage] = useState(0)
     const [search, setSearch] = useState("")
@@ -741,9 +687,8 @@ export default function AgreementsPage() {
     const [statusFilter, setStatusFilter] = useState("ACTIVE")
     const [showCreate, setShowCreate] = useState(false)
     const [moveOutAgreement, setMoveOutAgreement] = useState(null)
-    const [selectedAgreementId, setSelectedAgreementId] = useState(null)
     const [editAgreement, setEditAgreement] = useState(null)
-
+    const [selectedAgreementId, setSelectedAgreementId] = useState(null)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -753,7 +698,7 @@ export default function AgreementsPage() {
         return () => clearTimeout(timer)
     }, [search])
 
-    const {data, isLoading} = useAgreements({
+    const { data, isLoading } = useAgreements({
         page, size: 10, sortBy: "createdAt", sortDir: "desc",
         status: statusFilter || undefined,
         search: debouncedSearch || undefined,
@@ -788,7 +733,8 @@ export default function AgreementsPage() {
     return (
         <PageWrapper title="Agreements" actions={actions} mobileAction={mobileAction}>
 
-            <div style={{marginBottom: "12px"}}>
+            {/* Search */}
+            <div style={{ marginBottom: "12px" }}>
                 <input
                     type="text" value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -804,23 +750,23 @@ export default function AgreementsPage() {
                 />
             </div>
 
-            <div style={{display: "flex", gap: "8px", marginBottom: "20px"}}>
+            {/* Status filter tabs */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
                 {[
-                    {label: "Active", value: "ACTIVE"},
-                    {label: "Terminated", value: "TERMINATED"},
-                    {label: "All", value: ""},
+                    { label: "Active", value: "ACTIVE" },
+                    { label: "Terminated", value: "TERMINATED" },
+                    { label: "All", value: "" },
                 ].map(s => (
-                    <button key={s.value} onClick={() => {
-                        setStatusFilter(s.value);
-                        setPage(0)
-                    }} style={{
-                        padding: "7px 16px", borderRadius: "8px", fontSize: "13px",
-                        fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: "1px solid",
-                        borderColor: statusFilter === s.value ? "#0F6E56" : "#e5e7eb",
-                        backgroundColor: statusFilter === s.value ? "#0F6E56" : "#fff",
-                        color: statusFilter === s.value ? "#fff" : "#6b7280",
-                        fontWeight: statusFilter === s.value ? "500" : "400",
-                    }}>
+                    <button key={s.value}
+                            onClick={() => { setStatusFilter(s.value); setPage(0) }}
+                            style={{
+                                padding: "7px 16px", borderRadius: "8px", fontSize: "13px",
+                                fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: "1px solid",
+                                borderColor: statusFilter === s.value ? "#0F6E56" : "#e5e7eb",
+                                backgroundColor: statusFilter === s.value ? "#0F6E56" : "#fff",
+                                color: statusFilter === s.value ? "#fff" : "#6b7280",
+                                fontWeight: statusFilter === s.value ? "500" : "400",
+                            }}>
                         {s.label}
                     </button>
                 ))}
@@ -831,12 +777,12 @@ export default function AgreementsPage() {
                 border: "1px solid #f0f0f0", overflow: "hidden",
             }}>
                 {isLoading ? (
-                    <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
+                    <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
                         Loading agreements...
                     </div>
                 ) : agreements.length === 0 ? (
-                    <div style={{padding: "60px", textAlign: "center"}}>
-                        <p style={{color: "#9ca3af", fontSize: "14px", marginBottom: "16px"}}>
+                    <div style={{ padding: "60px", textAlign: "center" }}>
+                        <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "16px" }}>
                             {search ? `No agreements found for "${search}"` : "No agreements found."}
                         </p>
                         {!search && statusFilter === "ACTIVE" && (
@@ -846,18 +792,18 @@ export default function AgreementsPage() {
                                 backgroundColor: "#0F6E56", color: "#fff", border: "none",
                                 cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                             }}>
-                                <Plus size={16}/> New Agreement
+                                <Plus size={16} /> New Agreement
                             </button>
                         )}
                     </div>
                 ) : (
                     <>
-                        {/* Desktop table */}
+                        {/* ── Desktop table ── */}
                         <div className="desktop-table">
-                            <table style={{width: "100%", borderCollapse: "collapse"}}>
+                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <thead>
-                                <tr style={{backgroundColor: "#f9fafb"}}>
-                                    {["Tenant", "Unit", "Type", "Rent / Month", "Move-in", "Move-out", "Status", ""].map((h, i) => (
+                                <tr style={{ backgroundColor: "#f9fafb" }}>
+                                    {["Tenant", "Unit", "Billing", "Rent / Month", "Move-in", "Move-out", "Status", ""].map((h, i) => (
                                         <th key={i} style={{
                                             padding: "11px 20px", textAlign: "left",
                                             fontSize: "11px", fontWeight: "500", color: "#9ca3af",
@@ -868,38 +814,42 @@ export default function AgreementsPage() {
                                 </thead>
                                 <tbody>
                                 {agreements.map((ag) => (
-                                    <tr key={ag.id} style={{borderTop: "1px solid #f9f9f9"}}>
-                                        <td style={{
-                                            padding: "14px 20px",
-                                            fontSize: "14px",
-                                            color: "#111827",
-                                            fontWeight: "500"
-                                        }}>
+                                    <tr key={ag.id} style={{ borderTop: "1px solid #f9f9f9" }}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
                                             {ag.tenantName}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {ag.roomNumber}
                                         </td>
-                                        <td style={{padding: "14px 20px"}}>
-                        <span style={{
-                            display: "inline-block", padding: "3px 10px",
-                            borderRadius: "20px", fontSize: "12px", fontWeight: "500",
-                            backgroundColor: ag.tenantType === "NEW" ? "#E6F1FB" : "#FAEEDA",
-                            color: ag.tenantType === "NEW" ? "#185FA5" : "#854F0B",
-                        }}>
-                          {ag.tenantType}
-                        </span>
+                                        <td style={{ padding: "14px 20px" }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <span style={{
+                              display: "inline-block", padding: "2px 8px",
+                              borderRadius: "20px", fontSize: "11px", fontWeight: "500",
+                              backgroundColor: ag.tenantType === "NEW" ? "#E6F1FB" : "#FAEEDA",
+                              color: ag.tenantType === "NEW" ? "#185FA5" : "#854F0B",
+                          }}>
+                            {ag.tenantType}
+                          </span>
+                                                <span style={{
+                                                    display: "inline-block", padding: "2px 8px",
+                                                    borderRadius: "20px", fontSize: "11px", fontWeight: "500",
+                                                    backgroundColor: "#f3f4f6", color: "#6b7280",
+                                                }}>
+                            {ag.billingModel || "ADVANCE"}
+                          </span>
+                                            </div>
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#111827"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827" }}>
                                             {formatUGX(ag.rentAmount)}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {formatDate(ag.startDate)}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {formatDate(ag.moveOutDate)}
                                         </td>
-                                        <td style={{padding: "14px 20px"}}>
+                                        <td style={{ padding: "14px 20px" }}>
                         <span style={{
                             display: "inline-block", padding: "3px 10px",
                             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
@@ -909,9 +859,8 @@ export default function AgreementsPage() {
                           {ag.status === "ACTIVE" ? "Active" : "Terminated"}
                         </span>
                                         </td>
-                                        <td style={{padding: "14px 20px"}}>
+                                        <td style={{ padding: "14px 20px" }}>
                                             <div style={{ display: "flex", gap: "8px" }}>
-                                                {/* Edit button — always visible */}
                                                 <button
                                                     onClick={() => setEditAgreement(ag)}
                                                     style={{
@@ -924,8 +873,6 @@ export default function AgreementsPage() {
                                                 >
                                                     <Pencil size={13} /> Edit
                                                 </button>
-
-                                                {/* Move-out — only for ACTIVE */}
                                                 {ag.status === "ACTIVE" && (
                                                     <button
                                                         onClick={() => setMoveOutAgreement(ag)}
@@ -948,36 +895,41 @@ export default function AgreementsPage() {
                             </table>
                         </div>
 
-                        {/* Mobile cards */}
-                        <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
+                        {/* ── Mobile cards ── */}
+                        <div className="mobile-cards" style={{ display: "none", flexDirection: "column" }}>
                             {agreements.map((ag, i) => (
-                                <div key={ag.id}
-                                     onClick={() => setSelectedAgreementId(ag.id)}
-                                     style={{ padding: "14px 16px", borderTop: i === 0 ? "none" : "1px solid #f3f4f6", cursor: "pointer" }}
+                                <div
+                                    key={ag.id}
+                                    onClick={() => setSelectedAgreementId(ag.id)}
+                                    style={{
+                                        padding: "14px 16px",
+                                        borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
+                                        cursor: "pointer",
+                                    }}
                                 >
-                                    {/* Row 1 — tenant name + agreement status */}
+                                    {/* Row 1 — name + status + chevron */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-  <span style={{ fontSize: "15px", fontWeight: "600", color: "#111827" }}>
-    {ag.tenantName}
-  </span>
+                    <span style={{ fontSize: "15px", fontWeight: "600", color: "#111827" }}>
+                      {ag.tenantName}
+                    </span>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-    <span style={{
-        display: "inline-block", padding: "3px 8px",
-        borderRadius: "20px", fontSize: "11px", fontWeight: "500",
-        backgroundColor: ag.status === "ACTIVE" ? "#E1F5EE" : "#f3f4f6",
-        color: ag.status === "ACTIVE" ? "#0F6E56" : "#6b7280",
-    }}>
-      {ag.status === "ACTIVE" ? "Active" : "Terminated"}
-    </span>
+                      <span style={{
+                          display: "inline-block", padding: "3px 8px",
+                          borderRadius: "20px", fontSize: "11px", fontWeight: "500",
+                          backgroundColor: ag.status === "ACTIVE" ? "#E1F5EE" : "#f3f4f6",
+                          color: ag.status === "ACTIVE" ? "#0F6E56" : "#6b7280",
+                      }}>
+                        {ag.status === "ACTIVE" ? "Active" : "Terminated"}
+                      </span>
                                             <ChevronRight size={16} color="#9ca3af" />
                                         </div>
                                     </div>
 
-                                    {/* Row 2 — unit · type · rent */}
-                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "4px"}}>
+                                    {/* Row 2 — unit · type · billing · rent */}
+                                    <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "4px" }}>
                                         Unit {ag.roomNumber} ·{" "}
                                         <span style={{
                                             fontSize: "11px", fontWeight: "500", padding: "1px 6px",
@@ -985,67 +937,65 @@ export default function AgreementsPage() {
                                             backgroundColor: ag.tenantType === "NEW" ? "#E6F1FB" : "#FAEEDA",
                                             color: ag.tenantType === "NEW" ? "#185FA5" : "#854F0B",
                                         }}>
-          {ag.tenantType}
-        </span>
+                      {ag.tenantType}
+                    </span>
+                                        {" "}·{" "}
+                                        <span style={{
+                                            fontSize: "11px", fontWeight: "500", padding: "1px 6px",
+                                            borderRadius: "10px", backgroundColor: "#f3f4f6", color: "#6b7280",
+                                        }}>
+                      {ag.billingModel || "ADVANCE"}
+                    </span>
                                         {" "}· {formatUGX(ag.rentAmount)}/mo
                                     </div>
 
-                                    {/* Row 3 — move-in date */}
-                                    <div style={{fontSize: "13px", color: "#9ca3af", marginBottom: "10px"}}>
+                                    {/* Row 3 — move-in */}
+                                    <div style={{ fontSize: "13px", color: "#9ca3af" }}>
                                         Move-in: {ag.startDate
                                         ? new Date(ag.startDate).toLocaleDateString("en-UG", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric"
+                                            day: "numeric", month: "short", year: "numeric",
                                         })
                                         : "Not recorded"}
-                                        {ag.moveOutDate && ` · Move-out: ${new Date(ag.moveOutDate).toLocaleDateString("en-UG", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric"
-                                        })}`}
+                                        {ag.moveOutDate && (
+                                            ` · Move-out: ${new Date(ag.moveOutDate).toLocaleDateString("en-UG", {
+                                                day: "numeric", month: "short", year: "numeric",
+                                            })}`
+                                        )}
                                     </div>
-
-                                    {/* Row 4 — move-out button */}
-                                    {/*{ag.status === "ACTIVE" && (*/}
-                                    {/*    <button onClick={() => setMoveOutAgreement(ag)} style={{*/}
-                                    {/*        width: "100%", padding: "9px", borderRadius: "8px", fontSize: "13px",*/}
-                                    {/*        border: "1px solid #fee2e2", backgroundColor: "#fff",*/}
-                                    {/*        color: "#dc2626", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",*/}
-                                    {/*        display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",*/}
-                                    {/*    }}>*/}
-                                    {/*        <LogOut size={14}/> Record Move-Out*/}
-                                    {/*    </button>*/}
-                                    {/*)}*/}
                                 </div>
                             ))}
                         </div>
 
+                        {/* Pagination */}
                         {totalPages > 1 && (
                             <div style={{
                                 display: "flex", alignItems: "center", justifyContent: "space-between",
                                 padding: "14px 20px", borderTop: "1px solid #f3f4f6",
                             }}>
-                <span style={{fontSize: "13px", color: "#9ca3af"}}>
+                <span style={{ fontSize: "13px", color: "#9ca3af" }}>
                   Page {page + 1} of {totalPages}
                 </span>
-                                <div style={{display: "flex", gap: "8px"}}>
-                                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-                                            style={{
-                                                padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                                                border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                                color: page === 0 ? "#d1d5db" : "#374151",
-                                                cursor: page === 0 ? "not-allowed" : "pointer",
-                                            }}>
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                    <button
+                                        onClick={() => setPage(p => Math.max(0, p - 1))}
+                                        disabled={page === 0}
+                                        style={{
+                                            padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
+                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                            color: page === 0 ? "#d1d5db" : "#374151",
+                                            cursor: page === 0 ? "not-allowed" : "pointer",
+                                        }}>
                                         Previous
                                     </button>
-                                    <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}
-                                            style={{
-                                                padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                                                border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                                color: page >= totalPages - 1 ? "#d1d5db" : "#374151",
-                                                cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
-                                            }}>
+                                    <button
+                                        onClick={() => setPage(p => p + 1)}
+                                        disabled={page >= totalPages - 1}
+                                        style={{
+                                            padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
+                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                            color: page >= totalPages - 1 ? "#d1d5db" : "#374151",
+                                            cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
+                                        }}>
                                         Next
                                     </button>
                                 </div>
@@ -1055,9 +1005,13 @@ export default function AgreementsPage() {
                 )}
             </div>
 
-            {showCreate && <CreateAgreementModal onClose={() => setShowCreate(false)}/>}
+            {/* Modals */}
+            {showCreate && <CreateAgreementModal onClose={() => setShowCreate(false)} />}
             {moveOutAgreement && (
-                <MoveOutModal agreement={moveOutAgreement} onClose={() => setMoveOutAgreement(null)}/>
+                <MoveOutModal
+                    agreement={moveOutAgreement}
+                    onClose={() => setMoveOutAgreement(null)}
+                />
             )}
             {editAgreement && (
                 <EditAgreementModal
@@ -1069,8 +1023,8 @@ export default function AgreementsPage() {
                 <AgreementDetailSheet
                     agreementId={selectedAgreementId}
                     onClose={() => setSelectedAgreementId(null)}
-                    onMoveOut={(ag) => setMoveOutAgreement(ag)}
-                    onEdit={(ag) => setEditAgreement(ag)}
+                    onMoveOut={(ag) => { setMoveOutAgreement(ag); setSelectedAgreementId(null) }}
+                    onEdit={(ag) => { setEditAgreement(ag); setSelectedAgreementId(null) }}
                 />
             )}
 
