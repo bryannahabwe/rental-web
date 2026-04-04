@@ -6,7 +6,7 @@ import {useState} from "react"
 
 export default function LoginPage() {
     const navigate = useNavigate()
-    const {setTokens, setLandlord} = useAuthStore()
+    const { setAuth } = useAuthStore()
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
@@ -24,10 +24,8 @@ export default function LoginPage() {
                 username: data.username,
                 password: data.password,
             })
-            const {accessToken, refreshToken, name, phoneNumber, email} = res.data
-            setTokens(accessToken, refreshToken)
-            setLandlord({name, phoneNumber, email})
-            navigate("/dashboard", {replace: true})
+            setAuth(res.data)
+            navigate("/dashboard", { replace: true })
         } catch (err) {
             setError(err.response?.data?.message || "Invalid credentials")
         } finally {
