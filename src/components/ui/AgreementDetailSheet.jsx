@@ -33,7 +33,7 @@ function DetailRow({ label, value, valueColor }) {
     )
 }
 
-export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut }) {
+export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, onEdit }) {
     const { data: ag, isLoading } = useAgreement(agreementId)
 
     return (
@@ -122,6 +122,21 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut }
                             valueColor={ag.openingBalance < 0 ? "#dc2626" : ag.openingBalance > 0 ? "#0F6E56" : "#111827"}
                         />
                     </div>
+
+                    {/* Edit button — always shown */}
+                    <button
+                        onClick={() => { onEdit(ag); onClose() }}
+                        style={{
+                            width: "100%", padding: "13px", borderRadius: "10px",
+                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                            color: "#374151", cursor: "pointer", fontSize: "14px",
+                            fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            gap: "8px", marginBottom: "8px",
+                        }}
+                    >
+                        <Pencil size={16} /> Edit Agreement
+                    </button>
 
                     {/* Move-out button */}
                     {ag.status === "ACTIVE" && (

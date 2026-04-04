@@ -4,7 +4,7 @@ import {useAgreements, useCreateAgreement, useMoveOut} from "@/hooks/useAgreemen
 import {useAllTenants} from "@/hooks/useTenants"
 import {useAllUnits} from "@/hooks/useUnits"
 import {useForm} from "react-hook-form"
-import {LogOut, Plus, X, ChevronRight} from "lucide-react"
+import {LogOut, Plus, X, ChevronRight, Pencil} from "lucide-react"
 import AgreementDetailSheet from "@/components/ui/AgreementDetailSheet"
 
 
@@ -487,6 +487,257 @@ function MoveOutModal({agreement, onClose}) {
     )
 }
 
+function EditAgreementModal({ agreement, onClose }) {
+    const updateAgreement = useUpdateAgreement()
+    const [billingModel, setBillingModel] = useState(
+        agreement.billingModel || "ADVANCE"
+    )
+    const [error, setError] = useState("")
+
+    const { register, handleSubmit } = useForm({
+        defaultValues: {
+            rentAmount: agreement.rentAmount,
+            depositAmount: agreement.depositAmount || "",
+            startDate: agreement.startDate || "",
+            openingBalance: agreement.openingBalance
+                ? Math.abs(agreement.openingBalance) : "",
+        },
+    })
+
+    const [balanceSign, setBalanceSign] = useState(
+        agreement.openingBalance < 0 ? "negative" : "positive"
+    )
+
+    const onSubmit = async (data) => {
+        setError("")
+        try {
+            const rawBalance = data.openingBalance
+                ? parseFloat(data.openingBalance) : 0
+            const openingBalance = balanceSign === "negative"
+                ? -Math.abs(rawBalance) : Math.abs(rawBalance)
+
+            await updateAgreement.mutateAsync({
+                id: agreement.id,
+                data: {
+                    tenantId: agreement.tenantId,
+                    unitId: agreement.unitId,
+                    rentAmount: data.rentAmount ? parseFloat(data.rentAmount) : null,
+                    depositAmount: data.depositAmount
+                        ? parseFloat(data.depositAmount) : null,
+                    startDate: data.startDate || null,
+                    billingModel,
+                    openingBalance,
+                },
+            })
+            onClose()
+        } catch (err) {
+            setError(err.response?.data?.message || "Something went wrong")
+        }
+    }
+
+    return (
+        <div style={{
+            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 200, padding: "16px",
+        }}>
+            <div style={{
+                backgroundColor: "#fff", borderRadius: "16px",
+                width: "100%", maxWidth: "520px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                maxHeight: "90vh", overflowY: "auto",
+            }}>
+                <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
+                    position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
+                }}>
+                    <div>
+                        <h2 style={{
+                            fontSize: "16px", fontWeight: "600",
+                            color: "#111827", margin: 0,
+                        }}>
+                            Edit Agreement
+                        </h2>
+                        <p style={{ fontSize: "12px", color: "#9ca3af", margin: "2px 0 0" }}>
+                            {agreement.tenantName} — Unit {agreement.roomNumber}
+                        </p>
+                    </div>
+                    <button onClick={onClose} style={{
+                        background: "none", border: "none",
+                        cursor: "pointer", color: "#9ca3af", padding: "4px",
+                    }}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div style={{
+                        padding: "24px",
+                        display: "flex", flexDirection: "column", gap: "16px",
+                    }}>
+
+                        {/* Billing model */}
+                        <div>
+                            <label style={labelStyle}>Billing model</label>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                {[
+                                    { value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle" },
+                                    { value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle" },
+                                ].map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setBillingModel(opt.value)}
+                                        style={{
+                                            flex: 1, padding: "10px 8px", borderRadius: "8px",
+                                            fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+                                            cursor: "pointer", fontWeight: "500",
+                                            border: "1px solid",
+                                            borderColor: billingModel === opt.value
+                                                ? "#0F6E56" : "#e5e7eb",
+                                            backgroundColor: billingModel === opt.value
+                                                ? "#0F6E56" : "#fff",
+                                            color: billingModel === opt.value ? "#fff" : "#6b7280",
+                                            textAlign: "center",
+                                        }}
+                                    >
+                                        <div>{opt.label}</div>
+                                        <div style={{ fontSize: "10px", marginTop: "2px", opacity: 0.8 }}>
+                                            {opt.desc}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Start date */}
+                        <div>
+                            <label style={labelStyle}>
+                                Billing cycle start date
+                            </label>
+                            <input
+                                {...register("startDate")}
+                                type="date" style={inputStyle}
+                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                            />
+                            <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                Billing day is derived from this date automatically.
+                            </p>
+                        </div>
+
+                        {/* Rent amount */}
+                        <div>
+                            <label style={labelStyle}>Monthly rent (UGX)</label>
+                            <input
+                                {...register("rentAmount")}
+                                type="number" style={inputStyle}
+                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                            />
+                        </div>
+
+                        {/* Deposit */}
+                        <div>
+                            <label style={labelStyle}>
+                                Deposit (UGX){" "}
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>
+                  (optional)
+                </span>
+                            </label>
+                            <input
+                                {...register("depositAmount")}
+                                type="number" style={inputStyle}
+                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                            />
+                        </div>
+
+                        {/* Opening balance */}
+                        <div style={{
+                            backgroundColor: "#f8faf9", borderRadius: "10px",
+                            border: "1px solid #e5e7eb", padding: "16px",
+                        }}>
+                            <label style={labelStyle}>Opening balance (UGX)</label>
+                            <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                                {[
+                                    { label: "Paid ahead (+)", value: "positive" },
+                                    { label: "Owes arrears (−)", value: "negative" },
+                                ].map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setBalanceSign(opt.value)}
+                                        style={{
+                                            flex: 1, padding: "8px", borderRadius: "8px",
+                                            fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
+                                            cursor: "pointer", fontWeight: "500",
+                                            border: "1px solid",
+                                            borderColor: balanceSign === opt.value
+                                                ? "#0F6E56" : "#e5e7eb",
+                                            backgroundColor: balanceSign === opt.value
+                                                ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
+                                                : "#fff",
+                                            color: balanceSign === opt.value ? "#fff" : "#6b7280",
+                                        }}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <input
+                                {...register("openingBalance")}
+                                type="number" min="0"
+                                style={inputStyle} placeholder="0"
+                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                            />
+                        </div>
+
+                        {error && (
+                            <div style={{
+                                backgroundColor: "#fef2f2", color: "#dc2626",
+                                fontSize: "13px", padding: "10px 14px",
+                                borderRadius: "8px", borderLeft: "3px solid #ef4444",
+                            }}>
+                                {error}
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={{
+                        display: "flex", gap: "10px", justifyContent: "flex-end",
+                        padding: "16px 24px", borderTop: "1px solid #f3f4f6",
+                    }}>
+                        <button type="button" onClick={onClose} style={{
+                            padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
+                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                            color: "#374151", cursor: "pointer",
+                            fontFamily: "'DM Sans', sans-serif",
+                        }}>
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={updateAgreement.isPending}
+                            style={{
+                                padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
+                                backgroundColor: updateAgreement.isPending
+                                    ? "#6b9e8f" : "#0F6E56",
+                                color: "#fff", border: "none", cursor: "pointer",
+                                fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                            }}
+                        >
+                            {updateAgreement.isPending ? "Saving..." : "Save changes"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
+
 export default function AgreementsPage() {
     const [page, setPage] = useState(0)
     const [search, setSearch] = useState("")
@@ -495,6 +746,8 @@ export default function AgreementsPage() {
     const [showCreate, setShowCreate] = useState(false)
     const [moveOutAgreement, setMoveOutAgreement] = useState(null)
     const [selectedAgreementId, setSelectedAgreementId] = useState(null)
+    const [editAgreement, setEditAgreement] = useState(null)
+
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -661,23 +914,37 @@ export default function AgreementsPage() {
                         </span>
                                         </td>
                                         <td style={{padding: "14px 20px"}}>
-                                            {ag.status === "ACTIVE" && (
-                                                <button onClick={() => setMoveOutAgreement(ag)} style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: "4px",
-                                                    padding: "6px 12px",
-                                                    borderRadius: "6px",
-                                                    fontSize: "13px",
-                                                    border: "1px solid #fee2e2",
-                                                    backgroundColor: "#fff",
-                                                    color: "#dc2626",
-                                                    cursor: "pointer",
-                                                    fontFamily: "'DM Sans', sans-serif",
-                                                }}>
-                                                    <LogOut size={13}/> Move-out
+                                            <div style={{ display: "flex", gap: "8px" }}>
+                                                {/* Edit button — always visible */}
+                                                <button
+                                                    onClick={() => setEditAgreement(ag)}
+                                                    style={{
+                                                        display: "flex", alignItems: "center", gap: "4px",
+                                                        padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
+                                                        border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                                        color: "#374151", cursor: "pointer",
+                                                        fontFamily: "'DM Sans', sans-serif",
+                                                    }}
+                                                >
+                                                    <Pencil size={13} /> Edit
                                                 </button>
-                                            )}
+
+                                                {/* Move-out — only for ACTIVE */}
+                                                {ag.status === "ACTIVE" && (
+                                                    <button
+                                                        onClick={() => setMoveOutAgreement(ag)}
+                                                        style={{
+                                                            display: "flex", alignItems: "center", gap: "4px",
+                                                            padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
+                                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                                            color: "#dc2626", cursor: "pointer",
+                                                            fontFamily: "'DM Sans', sans-serif",
+                                                        }}
+                                                    >
+                                                        <LogOut size={13} /> Move-out
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -801,6 +1068,21 @@ export default function AgreementsPage() {
                     onMoveOut={(ag) => setMoveOutAgreement(ag)}
                 />
             )}
+            {editAgreement && (
+                <EditAgreementModal
+                    agreement={editAgreement}
+                    onClose={() => setEditAgreement(null)}
+                />
+            )}
+            {selectedAgreementId && (
+            <AgreementDetailSheet
+                agreementId={selectedAgreementId}
+                onClose={() => setSelectedAgreementId(null)}
+                onMoveOut={(ag) => setMoveOutAgreement(ag)}
+                onEdit={(ag) => setEditAgreement(ag)}
+            />
+        )}
+
         </PageWrapper>
     )
 }
