@@ -6,6 +6,59 @@ import {useForm} from "react-hook-form"
 import {Plus, X, ChevronRight} from "lucide-react"
 import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
 
+// Format cycle date: 2026-04-15 → "Apr 15"
+const formatCycleDate = (dateStr) => {
+    if (!dateStr) return "—"
+    const d = new Date(dateStr)
+    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
+}
+
+// Format full cycle: "Apr 15 – May 14"
+const formatCycle = (start, end) => {
+    if (!start || !end) return "—"
+    return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
+}
+
+// Generate last 6 billing cycles for an agreement
+const generateCycles = (agreement) => {
+    if (!agreement?.startDate && !agreement?.billingDay) return []
+
+    const billingDay = agreement.billingDay || 1
+    const today = new Date()
+    const cycles = []
+
+    // Start from current cycle and go back 5
+    let cycleStart = new Date(today)
+    cycleStart.setDate(Math.min(billingDay, 28))
+
+    // If billing day hasn't occurred yet this month, go back one month
+    if (cycleStart > today) {
+        cycleStart.setMonth(cycleStart.getMonth() - 1)
+        cycleStart.setDate(Math.min(billingDay, 28))
+    }
+
+    for (let i = 0; i < 6; i++) {
+        const start = new Date(cycleStart)
+        start.setMonth(start.getMonth() - i)
+        start.setDate(Math.min(billingDay, 28))
+
+        const end = new Date(start)
+        end.setMonth(end.getMonth() + 1)
+        end.setDate(Math.min(billingDay, 28))
+        end.setDate(end.getDate() - 1)
+
+        const isCurrent = i === 0
+
+        cycles.push({
+            start: start.toISOString().split("T")[0],
+            end: end.toISOString().split("T")[0],
+            isCurrent,
+        })
+    }
+
+    return cycles
+}
+
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
     borderRadius: "8px", border: "1px solid #d1d5db",
@@ -44,44 +97,51 @@ const months = [
     {value: 11, label: "November"}, {value: 12, label: "December"},
 ]
 
-function RecordPaymentModal({onClose}) {
+function RecordPaymentModal({ onClose }) {
     const createPayment = useCreatePayment()
-    const {data: agreementsData, isLoading: agreementsLoading} = useAgreements({
+    const { data: agreementsData, isLoading: agreementsLoading } = useAgreements({
         page: 0, size: 100, status: "ACTIVE",
     })
     const [error, setError] = useState("")
+    const [selectedCycle, setSelectedCycle] = useState(null)
 
     const activeAgreements = agreementsData?.content || []
-    const currentMonth = new Date().getMonth() + 1
-    const currentYear = new Date().getFullYear()
 
-    const {register, handleSubmit, watch, formState: {errors}} = useForm({
+    const { register, handleSubmit, watch, formState: { errors } } = useForm({
         defaultValues: {
             paymentDate: new Date().toISOString().split("T")[0],
-            periodMonth: currentMonth,
-            periodYear: currentYear,
         },
     })
 
     const selectedAgreementId = watch("agreementId")
     const enteredAmount = watch("amount")
-    const selectedAgreement = activeAgreements.find(ag => ag.id === selectedAgreementId)
+    const selectedAgreement = activeAgreements.find(
+        ag => ag.id === selectedAgreementId
+    )
+
+    // Generate last 6 cycles for selected agreement
+    const cycles = generateCycles(selectedAgreement)
+
     const expectedAmount = selectedAgreement?.rentAmount || 0
     const overpayment = enteredAmount && parseFloat(enteredAmount) > expectedAmount
         ? parseFloat(enteredAmount) - expectedAmount : 0
 
     const onSubmit = async (data) => {
         setError("")
+        if (!selectedCycle) {
+            setError("Please select a payment period")
+            return
+        }
         try {
             await createPayment.mutateAsync({
                 agreementId: data.agreementId,
                 paymentDate: data.paymentDate,
                 amount: parseFloat(data.amount),
                 method: "CASH",
-                periodMonth: parseInt(data.periodMonth),
-                periodYear: parseInt(data.periodYear),
-                reference: nullIfEmpty(data.reference),
-                notes: nullIfEmpty(data.notes),
+                periodStartDate: selectedCycle.start,
+                periodEndDate: selectedCycle.end,
+                reference: data.reference || null,
+                notes: data.notes || null,
             })
             onClose()
         } catch (err) {
@@ -106,28 +166,33 @@ function RecordPaymentModal({onClose}) {
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
                     position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
-                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
+                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
                         Record Payment
                     </h2>
                     <button onClick={onClose} style={{
-                        background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: "4px",
+                        background: "none", border: "none", cursor: "pointer",
+                        color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20}/>
+                        <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
+                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
+                        {/* Tenant / Agreement */}
                         <div>
                             <label style={labelStyle}>Tenant / Agreement</label>
                             <select
-                                {...register("agreementId", {required: "Please select an agreement"})}
+                                {...register("agreementId", { required: "Please select an agreement" })}
                                 style={inputStyle}
+                                onChange={() => setSelectedCycle(null)}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             >
-                                <option value="">{agreementsLoading ? "Loading..." : "Select tenant"}</option>
+                                <option value="">
+                                    {agreementsLoading ? "Loading..." : "Select tenant"}
+                                </option>
                                 {activeAgreements.map(ag => (
                                     <option key={ag.id} value={ag.id}>
                                         {ag.tenantName} — Unit {ag.roomNumber} ({formatUGX(ag.rentAmount)}/mo)
@@ -135,39 +200,68 @@ function RecordPaymentModal({onClose}) {
                                 ))}
                             </select>
                             {errors.agreementId && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.agreementId.message}
                                 </p>
                             )}
                         </div>
 
-                        <div>
-                            <label style={labelStyle}>Payment period</label>
-                            <div style={{display: "flex", gap: "10px"}}>
-                                <select
-                                    {...register("periodMonth", {required: true})}
-                                    style={{...inputStyle, flex: 2}}
-                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                >
-                                    {months.map(m => (
-                                        <option key={m.value} value={m.value}>{m.label}</option>
+                        {/* Billing cycle selector */}
+                        {selectedAgreement && (
+                            <div>
+                                <label style={labelStyle}>Payment period</label>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                    {cycles.map((cycle, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setSelectedCycle(cycle)}
+                                            style={{
+                                                padding: "10px 14px", borderRadius: "8px",
+                                                border: "1px solid",
+                                                borderColor: selectedCycle?.start === cycle.start
+                                                    ? "#0F6E56" : "#e5e7eb",
+                                                backgroundColor: selectedCycle?.start === cycle.start
+                                                    ? "#E1F5EE" : "#fff",
+                                                cursor: "pointer", textAlign: "left",
+                                                fontFamily: "'DM Sans', sans-serif",
+                                                display: "flex", alignItems: "center",
+                                                justifyContent: "space-between",
+                                            }}
+                                        >
+                      <span style={{
+                          fontSize: "14px", fontWeight: "500",
+                          color: selectedCycle?.start === cycle.start
+                              ? "#0F6E56" : "#111827",
+                      }}>
+                        {formatCycleDate(cycle.start)} – {formatCycleDate(cycle.end)}
+                      </span>
+                                            {cycle.isCurrent && (
+                                                <span style={{
+                                                    fontSize: "11px", padding: "2px 8px",
+                                                    borderRadius: "10px", backgroundColor: "#0F6E56",
+                                                    color: "#fff", fontWeight: "500",
+                                                }}>
+                          Current
+                        </span>
+                                            )}
+                                        </button>
                                     ))}
-                                </select>
-                                <input
-                                    {...register("periodYear", {required: true})}
-                                    type="number" style={{...inputStyle, flex: 1}} placeholder="2026"
-                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                />
+                                </div>
+                                {!selectedCycle && (
+                                    <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                        Select the period this payment covers
+                                    </p>
+                                )}
                             </div>
-                        </div>
+                        )}
 
+                        {/* Amount */}
                         <div>
                             <label style={labelStyle}>
                                 Amount (UGX)
                                 {selectedAgreement && (
-                                    <span style={{color: "#9ca3af", fontWeight: "400", marginLeft: "6px"}}>
+                                    <span style={{ color: "#9ca3af", fontWeight: "400", marginLeft: "6px" }}>
                     — expected {formatUGX(selectedAgreement.rentAmount)}
                   </span>
                                 )}
@@ -175,14 +269,14 @@ function RecordPaymentModal({onClose}) {
                             <input
                                 {...register("amount", {
                                     required: "Amount is required",
-                                    min: {value: 1, message: "Must be greater than 0"},
+                                    min: { value: 1, message: "Must be greater than 0" },
                                 })}
                                 type="number" style={inputStyle} placeholder="350000"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.amount && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.amount.message}
                                 </p>
                             )}
@@ -192,7 +286,7 @@ function RecordPaymentModal({onClose}) {
                                     backgroundColor: "#FAEEDA", borderRadius: "8px",
                                     borderLeft: "3px solid #EF9F27", fontSize: "13px", color: "#854F0B",
                                 }}>
-                                    Overpayment of {formatUGX(overpayment)} — will roll over to next month
+                                    Overpayment of {formatUGX(overpayment)} — will roll over to next cycle
                                 </div>
                             )}
                             {enteredAmount && parseFloat(enteredAmount) > 0 &&
@@ -202,22 +296,23 @@ function RecordPaymentModal({onClose}) {
                                         backgroundColor: "#fef2f2", borderRadius: "8px",
                                         borderLeft: "3px solid #ef4444", fontSize: "13px", color: "#dc2626",
                                     }}>
-                                        Partial — {formatUGX(expectedAmount - parseFloat(enteredAmount))} still
-                                        outstanding
+                                        Partial — {formatUGX(expectedAmount - parseFloat(enteredAmount))} still outstanding
                                     </div>
                                 )}
                         </div>
 
+                        {/* Payment date */}
                         <div>
                             <label style={labelStyle}>Payment date</label>
                             <input
-                                {...register("paymentDate", {required: "Payment date is required"})}
+                                {...register("paymentDate", { required: "Payment date is required" })}
                                 type="date" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                         </div>
 
+                        {/* Method */}
                         <div>
                             <label style={labelStyle}>Payment method</label>
                             <div style={{
@@ -229,28 +324,31 @@ function RecordPaymentModal({onClose}) {
                     borderRadius: "20px", fontSize: "12px", fontWeight: "500",
                     backgroundColor: "#E1F5EE", color: "#0F6E56",
                 }}>CASH</span>
-                                <span style={{fontSize: "13px"}}>Cash payment (MVP)</span>
+                                <span style={{ fontSize: "13px" }}>Cash payment (MVP)</span>
                             </div>
                         </div>
 
+                        {/* Reference */}
                         <div>
                             <label style={labelStyle}>
-                                Reference <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
+                                Reference <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <input
-                                {...register("reference")} type="text" style={inputStyle} placeholder="RCP-001"
+                                {...register("reference")} type="text"
+                                style={inputStyle} placeholder="RCP-001"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                         </div>
 
+                        {/* Notes */}
                         <div>
                             <label style={labelStyle}>
-                                Notes <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
+                                Notes <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <textarea
                                 {...register("notes")} rows={2}
-                                style={{...inputStyle, resize: "vertical"}}
+                                style={{ ...inputStyle, resize: "vertical" }}
                                 placeholder="April rent payment..."
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -469,7 +567,7 @@ export default function PaymentsPage() {
                                             {p.roomNumber}
                                         </td>
                                         <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
-                                            {p.periodMonth ? `${getMonthName(p.periodMonth)} ${p.periodYear}` : "—"}
+                                            {formatCycle(p.periodStartDate, p.periodEndDate)}
                                         </td>
                                         <td style={{
                                             padding: "14px 20px",
@@ -548,9 +646,8 @@ export default function PaymentsPage() {
 
                                     {/* Row 2 — unit · period */}
                                     <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "8px"}}>
-                                        Unit {p.roomNumber} · {p.periodMonth
-                                        ? `${getMonthName(p.periodMonth)} ${p.periodYear}`
-                                        : "—"}
+                                        Unit {p.roomNumber} · {formatCycle(p.periodStartDate, p.periodEndDate)}
+
                                     </div>
 
                                     {/* Row 3 — amount bar */}

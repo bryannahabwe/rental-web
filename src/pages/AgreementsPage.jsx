@@ -33,23 +33,40 @@ const formatDate = (dateStr) => {
 
 const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
 
-function CreateAgreementModal({onClose}) {
-    const [balanceSign, setBalanceSign] = useState("positive")
+function CreateAgreementModal({ onClose }) {
     const createAgreement = useCreateAgreement()
-    const {data: tenants = [], isLoading: tenantsLoading} = useAllTenants()
-    const {data: units = [], isLoading: unitsLoading} = useAllUnits()
+    const { data: tenants = [], isLoading: tenantsLoading } = useAllTenants()
+    const { data: units = [], isLoading: unitsLoading } = useAllUnits()
     const [error, setError] = useState("")
     const [tenantType, setTenantType] = useState("NEW")
+    const [billingModel, setBillingModel] = useState("ADVANCE")
+    const [balanceSign, setBalanceSign] = useState("positive")
 
     const availableUnits = units.filter(u => u.isAvailable)
-    const {register, handleSubmit, watch, formState: {errors}} = useForm()
+    const { register, handleSubmit, watch, formState: { errors } } = useForm()
     const selectedUnitId = watch("unitId")
     const selectedUnit = units.find(u => u.id === selectedUnitId)
+    const startDate = watch("startDate")
+
+    // Derive billing day from start date
+    const billingDay = startDate
+        ? Math.min(new Date(startDate).getDate(), 28)
+        : null
+
+    const nullIfEmpty = (val) =>
+        val === "" || val === undefined ? null : val
 
     const onSubmit = async (data) => {
         setError("")
         try {
-            const rawBalance = data.openingBalance ? parseFloat(data.openingBalance) : 0
+            const rawBalance = data.openingBalance
+                ? parseFloat(data.openingBalance) : 0
+            const openingBalance = tenantType === "EXISTING"
+                ? (balanceSign === "negative"
+                    ? -Math.abs(rawBalance)
+                    : Math.abs(rawBalance))
+                : 0
+
             const payload = {
                 tenantId: data.tenantId,
                 unitId: data.unitId,
@@ -57,9 +74,8 @@ function CreateAgreementModal({onClose}) {
                 rentAmount: data.rentAmount ? parseFloat(data.rentAmount) : null,
                 depositAmount: data.depositAmount ? parseFloat(data.depositAmount) : null,
                 tenantType,
-                openingBalance: tenantType === "EXISTING"
-                    ? (balanceSign === "negative" ? -Math.abs(rawBalance) : Math.abs(rawBalance))
-                    : 0,
+                billingModel,
+                openingBalance,
             }
             await createAgreement.mutateAsync(payload)
             onClose()
@@ -85,71 +101,114 @@ function CreateAgreementModal({onClose}) {
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
                     position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
-                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
+                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
                         New Agreement
                     </h2>
                     <button onClick={onClose} style={{
-                        background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: "4px",
+                        background: "none", border: "none", cursor: "pointer",
+                        color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20}/>
+                        <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
+                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
+                        {/* Tenant type */}
                         <div>
                             <label style={labelStyle}>Tenant type</label>
-                            <div style={{display: "flex", gap: "8px"}}>
+                            <div style={{ display: "flex", gap: "8px" }}>
                                 {["NEW", "EXISTING"].map(type => (
-                                    <button key={type} type="button" onClick={() => setTenantType(type)} style={{
-                                        flex: 1, padding: "10px", borderRadius: "8px",
-                                        fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
-                                        cursor: "pointer", fontWeight: "500", border: "1px solid",
-                                        borderColor: tenantType === type ? "#0F6E56" : "#e5e7eb",
-                                        backgroundColor: tenantType === type ? "#0F6E56" : "#fff",
-                                        color: tenantType === type ? "#fff" : "#6b7280",
-                                    }}>
+                                    <button key={type} type="button"
+                                            onClick={() => setTenantType(type)}
+                                            style={{
+                                                flex: 1, padding: "10px", borderRadius: "8px",
+                                                fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+                                                cursor: "pointer", fontWeight: "500", border: "1px solid",
+                                                borderColor: tenantType === type ? "#0F6E56" : "#e5e7eb",
+                                                backgroundColor: tenantType === type ? "#0F6E56" : "#fff",
+                                                color: tenantType === type ? "#fff" : "#6b7280",
+                                            }}>
                                         {type === "NEW" ? "New Tenant" : "Existing Tenant"}
                                     </button>
                                 ))}
                             </div>
-                            <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
+                            <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
                                 {tenantType === "NEW"
                                     ? "Moving in fresh — full details required"
-                                    : "Already living here — onboarding into the system"}
+                                    : "Already living here — being onboarded into the system"}
                             </p>
                         </div>
 
+                        {/* Billing model */}
+                        <div>
+                            <label style={labelStyle}>Billing model</label>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                {[
+                                    { value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle" },
+                                    { value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle" },
+                                ].map(opt => (
+                                    <button key={opt.value} type="button"
+                                            onClick={() => setBillingModel(opt.value)}
+                                            style={{
+                                                flex: 1, padding: "10px 8px", borderRadius: "8px",
+                                                fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+                                                cursor: "pointer", fontWeight: "500", border: "1px solid",
+                                                borderColor: billingModel === opt.value ? "#0F6E56" : "#e5e7eb",
+                                                backgroundColor: billingModel === opt.value ? "#0F6E56" : "#fff",
+                                                color: billingModel === opt.value ? "#fff" : "#6b7280",
+                                                textAlign: "center",
+                                            }}>
+                                        <div>{opt.label}</div>
+                                        <div style={{
+                                            fontSize: "10px", marginTop: "2px",
+                                            opacity: 0.8,
+                                        }}>
+                                            {opt.desc}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tenant */}
                         <div>
                             <label style={labelStyle}>Tenant</label>
                             <select
-                                {...register("tenantId", {required: "Please select a tenant"})}
+                                {...register("tenantId", { required: "Please select a tenant" })}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             >
-                                <option value="">{tenantsLoading ? "Loading..." : "Select a tenant"}</option>
+                                <option value="">
+                                    {tenantsLoading ? "Loading..." : "Select a tenant"}
+                                </option>
                                 {tenants.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name} — {t.phone}</option>
+                                    <option key={t.id} value={t.id}>
+                                        {t.name} — {t.phone}
+                                    </option>
                                 ))}
                             </select>
                             {errors.tenantId && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.tenantId.message}
                                 </p>
                             )}
                         </div>
 
+                        {/* Unit */}
                         <div>
                             <label style={labelStyle}>Unit</label>
                             <select
-                                {...register("unitId", {required: "Please select a unit"})}
+                                {...register("unitId", { required: "Please select a unit" })}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             >
-                                <option value="">{unitsLoading ? "Loading..." : "Select an available unit"}</option>
+                                <option value="">
+                                    {unitsLoading ? "Loading..." : "Select an available unit"}
+                                </option>
                                 {availableUnits.map(u => (
                                     <option key={u.id} value={u.id}>
                                         {u.roomNumber} — {formatUGX(u.rentAmount)}/mo
@@ -157,62 +216,101 @@ function CreateAgreementModal({onClose}) {
                                 ))}
                             </select>
                             {errors.unitId && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.unitId.message}
                                 </p>
                             )}
                         </div>
 
+                        {/* Rent amount */}
                         <div>
                             <label style={labelStyle}>
                                 Agreed rent (UGX){" "}
-                                <span style={{color: "#9ca3af", fontWeight: "400"}}>
-                  {selectedUnit ? `— defaults to ${formatUGX(selectedUnit.rentAmount)}` : "(optional)"}
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>
+                  {selectedUnit
+                      ? `— defaults to ${formatUGX(selectedUnit.rentAmount)}`
+                      : "(optional)"}
                 </span>
                             </label>
                             <input
-                                {...register("rentAmount")} type="number" style={inputStyle}
-                                placeholder={selectedUnit ? String(selectedUnit.rentAmount) : "Leave blank to use unit rent"}
+                                {...register("rentAmount")} type="number"
+                                style={inputStyle}
+                                placeholder={selectedUnit
+                                    ? String(selectedUnit.rentAmount)
+                                    : "Leave blank to use unit rent"}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                         </div>
 
+                        {/* Start date */}
                         <div>
                             <label style={labelStyle}>
-                                Move-in date{" "}
-                                <span style={{color: "#9ca3af", fontWeight: "400"}}>
-                  {tenantType === "NEW" ? "(required)" : "(optional)"}
+                                {tenantType === "NEW"
+                                    ? "Move-in date"
+                                    : "First billing cycle start date"}
+                                {" "}
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>
+                  {tenantType === "NEW" ? "(required)" : "(required)"}
                 </span>
                             </label>
                             <input
                                 {...register("startDate", {
-                                    required: tenantType === "NEW" ? "Move-in date is required for new tenants" : false,
+                                    required: "Start date is required",
                                 })}
                                 type="date" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.startDate && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.startDate.message}
                                 </p>
                             )}
+
+                            {/* Billing day derived hint */}
+                            {billingDay && (
+                                <div style={{
+                                    marginTop: "8px", padding: "10px 14px",
+                                    backgroundColor: "#E1F5EE", borderRadius: "8px",
+                                    fontSize: "12px", color: "#0F6E56",
+                                }}>
+                                    Rent will be due on the <strong>{billingDay}th</strong> of every month.
+                                    {billingModel === "ARREARS"
+                                        ? " Payment collected at end of each cycle."
+                                        : " Payment collected at start of each cycle."}
+                                </div>
+                            )}
+
+                            {/* Existing tenant helper */}
+                            {tenantType === "EXISTING" && (
+                                <div style={{
+                                    marginTop: "8px", padding: "10px 14px",
+                                    backgroundColor: "#FAEEDA", borderRadius: "8px",
+                                    fontSize: "12px", color: "#854F0B", lineHeight: "1.5",
+                                }}>
+                                    {billingModel === "ARREARS"
+                                        ? "For ARREARS tenants: enter the start of the NEXT cycle you want to track. Enter any unpaid amount before this date in the opening balance below."
+                                        : "For ADVANCE tenants: enter the start of the current cycle. Enter any unpaid amount before this date in the opening balance below."}
+                                </div>
+                            )}
                         </div>
 
+                        {/* Deposit */}
                         <div>
                             <label style={labelStyle}>
                                 Deposit (UGX){" "}
-                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <input
-                                {...register("depositAmount")} type="number" style={inputStyle}
-                                placeholder="Leave blank if not applicable"
+                                {...register("depositAmount")} type="number"
+                                style={inputStyle} placeholder="Leave blank if not applicable"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                         </div>
 
+                        {/* Opening balance — EXISTING only */}
                         {tenantType === "EXISTING" && (
                             <div style={{
                                 backgroundColor: "#f8faf9", borderRadius: "10px",
@@ -220,27 +318,24 @@ function CreateAgreementModal({onClose}) {
                             }}>
                                 <label style={labelStyle}>Opening balance (UGX)</label>
 
-                                {/* Positive/Negative toggle */}
+                                {/* Sign toggle */}
                                 <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
                                     {[
                                         { label: "Paid ahead (+)", value: "positive" },
                                         { label: "Owes arrears (−)", value: "negative" },
                                     ].map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            type="button"
-                                            onClick={() => setBalanceSign(opt.value)}
-                                            style={{
-                                                flex: 1, padding: "8px", borderRadius: "8px",
-                                                fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
-                                                cursor: "pointer", fontWeight: "500", border: "1px solid",
-                                                borderColor: balanceSign === opt.value ? "#0F6E56" : "#e5e7eb",
-                                                backgroundColor: balanceSign === opt.value
-                                                    ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
-                                                    : "#fff",
-                                                color: balanceSign === opt.value ? "#fff" : "#6b7280",
-                                            }}
-                                        >
+                                        <button key={opt.value} type="button"
+                                                onClick={() => setBalanceSign(opt.value)}
+                                                style={{
+                                                    flex: 1, padding: "8px", borderRadius: "8px",
+                                                    fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
+                                                    cursor: "pointer", fontWeight: "500", border: "1px solid",
+                                                    borderColor: balanceSign === opt.value ? "#0F6E56" : "#e5e7eb",
+                                                    backgroundColor: balanceSign === opt.value
+                                                        ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
+                                                        : "#fff",
+                                                    color: balanceSign === opt.value ? "#fff" : "#6b7280",
+                                                }}>
                                             {opt.label}
                                         </button>
                                     ))}
@@ -248,20 +343,23 @@ function CreateAgreementModal({onClose}) {
 
                                 <input
                                     {...register("openingBalance")}
-                                    type="number"
-                                    min="0"
-                                    style={inputStyle}
-                                    placeholder="0"
+                                    type="number" min="0"
+                                    style={inputStyle} placeholder="0"
                                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                     onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                 />
-                                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px", lineHeight: "1.5" }}>
-                                    {balanceSign === "positive"
-                                        ? "Tenant has already paid ahead — this credit reduces their current balance."
-                                        : "Tenant owes this amount in arrears — added to their current balance."}
+
+                                <p style={{
+                                    fontSize: "12px", color: "#9ca3af",
+                                    marginTop: "8px", lineHeight: "1.6",
+                                }}>
+                                    {balanceSign === "negative"
+                                        ? "Enter the total unpaid amount BEFORE the start date above. For example, if the tenant owes 3 months at 180,000, enter 540,000."
+                                        : "Enter the amount the tenant has paid ahead before the start date above."}
                                 </p>
                             </div>
                         )}
+
                         {error && (
                             <div style={{
                                 backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",

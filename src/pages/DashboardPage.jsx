@@ -7,6 +7,17 @@ import { Building2, CreditCard, TrendingUp, Users } from "lucide-react"
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
+const formatCycleDate = (dateStr) => {
+    if (!dateStr) return "—"
+    const d = new Date(dateStr)
+    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
+}
+
+const formatCycle = (start, end) => {
+    if (!start || !end) return "—"
+    return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
+}
+
 const formatUGXShort = (amount) => {
     if (amount == null) return "—"
     const n = Number(amount)
@@ -339,8 +350,8 @@ export default function DashboardPage() {
                                             {t.currentUnit || "—"}
                                         </td>
                                         <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
-                                            {t.currentPeriodMonth
-                                                ? `${getMonthName(t.currentPeriodMonth)} ${t.currentPeriodYear}`
+                                            {t.currentCycleStart
+                                                ? `${formatCycleDate(t.currentCycleStart)} – ${formatCycleDate(t.currentCycleEnd)}`
                                                 : "—"}
                                         </td>
                                         <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
@@ -479,7 +490,7 @@ export default function DashboardPage() {
                                             {p.roomNumber}
                                         </td>
                                         <td style={{ padding: "14px 22px", fontSize: "14px", color: "#6b7280" }}>
-                                            {p.periodMonth ? `${getMonthName(p.periodMonth)} ${p.periodYear}` : "—"}
+                                            {formatCycle(p.periodStartDate, p.periodEndDate)}
                                         </td>
                                         <td style={{ padding: "14px 22px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
                                             {formatUGX(p.amount)}
@@ -543,8 +554,7 @@ export default function DashboardPage() {
 
                                         {/* Row 2 — unit + period */}
                                         <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "6px" }}>
-                                            Unit {p.roomNumber} · {p.periodMonth
-                                            ? `${getMonthName(p.periodMonth)} ${p.periodYear}` : "—"}
+                                            Unit {p.roomNumber} · {formatCycle(p.periodStartDate, p.periodEndDate)}
                                         </div>
 
                                         {/* Row 3 — amount + date */}

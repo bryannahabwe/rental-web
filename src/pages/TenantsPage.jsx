@@ -21,6 +21,12 @@ const labelStyle = {
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
+const formatCycleDate = (dateStr) => {
+    if (!dateStr) return "—"
+    const d = new Date(dateStr)
+    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
+}
+
 const getMonthName = (month) =>
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
@@ -456,9 +462,9 @@ export default function TenantsPage() {
                                             {tenant.currentUnit || "—"}
                                         </td>
                                         <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
-                                            {tenant.currentPeriodMonth
-                                                ? `${getMonthName(tenant.currentPeriodMonth)} ${tenant.currentPeriodYear}`
-                                                : "—"}
+                                            {tenant.currentCycleStart
+                                                ? `${formatCycleDate(tenant.currentCycleStart)} – ${formatCycleDate(tenant.currentCycleEnd)}`
+                                                : ""}
                                         </td>
                                         <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
                                             {formatUGX(tenant.monthlyRent)}
