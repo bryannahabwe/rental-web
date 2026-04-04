@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import {useAgreements, useCreateAgreement, useMoveOut} from "@/hooks/useAgreements"
+import {useAgreements, useCreateAgreement, useMoveOut, useUpdateAgreement } from "@/hooks/useAgreements"
 import {useAllTenants} from "@/hooks/useTenants"
 import {useAllUnits} from "@/hooks/useUnits"
 import {useForm} from "react-hook-form"
@@ -52,9 +52,6 @@ function CreateAgreementModal({ onClose }) {
     const billingDay = startDate
         ? Math.min(new Date(startDate).getDate(), 28)
         : null
-
-    const nullIfEmpty = (val) =>
-        val === "" || val === undefined ? null : val
 
     const onSubmit = async (data) => {
         setError("")
@@ -522,9 +519,8 @@ function EditAgreementModal({ agreement, onClose }) {
                     tenantId: agreement.tenantId,
                     unitId: agreement.unitId,
                     rentAmount: data.rentAmount ? parseFloat(data.rentAmount) : null,
-                    depositAmount: data.depositAmount
-                        ? parseFloat(data.depositAmount) : null,
-                    startDate: data.startDate || null,
+                    depositAmount: data.depositAmount ? parseFloat(data.depositAmount) : null,
+                    startDate: nullIfEmpty(data.startDate),
                     billingModel,
                     openingBalance,
                 },
@@ -964,18 +960,20 @@ export default function AgreementsPage() {
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-        <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
-          {ag.tenantName}
-        </span>
-                                        <span style={{
-                                            display: "inline-block", padding: "3px 8px",
-                                            borderRadius: "20px", fontSize: "11px", fontWeight: "500",
-                                            backgroundColor: ag.status === "ACTIVE" ? "#E1F5EE" : "#f3f4f6",
-                                            color: ag.status === "ACTIVE" ? "#0F6E56" : "#6b7280",
-                                        }}>
-          {ag.status === "ACTIVE" ? "Active" : "Terminated"}
-        </span>
-                                        <ChevronRight size={16} color="#9ca3af" />
+  <span style={{ fontSize: "15px", fontWeight: "600", color: "#111827" }}>
+    {ag.tenantName}
+  </span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+    <span style={{
+        display: "inline-block", padding: "3px 8px",
+        borderRadius: "20px", fontSize: "11px", fontWeight: "500",
+        backgroundColor: ag.status === "ACTIVE" ? "#E1F5EE" : "#f3f4f6",
+        color: ag.status === "ACTIVE" ? "#0F6E56" : "#6b7280",
+    }}>
+      {ag.status === "ACTIVE" ? "Active" : "Terminated"}
+    </span>
+                                            <ChevronRight size={16} color="#9ca3af" />
+                                        </div>
                                     </div>
 
                                     {/* Row 2 — unit · type · rent */}
@@ -1061,13 +1059,6 @@ export default function AgreementsPage() {
             {moveOutAgreement && (
                 <MoveOutModal agreement={moveOutAgreement} onClose={() => setMoveOutAgreement(null)}/>
             )}
-            {selectedAgreementId && (
-                <AgreementDetailSheet
-                    agreementId={selectedAgreementId}
-                    onClose={() => setSelectedAgreementId(null)}
-                    onMoveOut={(ag) => setMoveOutAgreement(ag)}
-                />
-            )}
             {editAgreement && (
                 <EditAgreementModal
                     agreement={editAgreement}
@@ -1075,13 +1066,13 @@ export default function AgreementsPage() {
                 />
             )}
             {selectedAgreementId && (
-            <AgreementDetailSheet
-                agreementId={selectedAgreementId}
-                onClose={() => setSelectedAgreementId(null)}
-                onMoveOut={(ag) => setMoveOutAgreement(ag)}
-                onEdit={(ag) => setEditAgreement(ag)}
-            />
-        )}
+                <AgreementDetailSheet
+                    agreementId={selectedAgreementId}
+                    onClose={() => setSelectedAgreementId(null)}
+                    onMoveOut={(ag) => setMoveOutAgreement(ag)}
+                    onEdit={(ag) => setEditAgreement(ag)}
+                />
+            )}
 
         </PageWrapper>
     )

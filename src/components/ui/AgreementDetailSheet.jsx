@@ -1,6 +1,6 @@
 import BottomSheet from "./BottomSheet"
 import { useAgreement } from "@/hooks/useAgreements"
-import { LogOut } from "lucide-react"
+import { LogOut, Pencil } from "lucide-react"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
