@@ -3,7 +3,8 @@ import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreatePayment, usePayments} from "@/hooks/usePayments"
 import {useAgreements} from "@/hooks/useAgreements"
 import {useForm} from "react-hook-form"
-import {Plus, X} from "lucide-react"
+import {Plus, X, ChevronRight} from "lucide-react"
+import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -27,6 +28,8 @@ const formatDate = (dateStr) => {
         day: "numeric", month: "short", year: "numeric",
     })
 }
+
+const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
 
 const getMonthName = (month) =>
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -77,8 +80,8 @@ function RecordPaymentModal({onClose}) {
                 method: "CASH",
                 periodMonth: parseInt(data.periodMonth),
                 periodYear: parseInt(data.periodYear),
-                reference: data.reference || null,
-                notes: data.notes || null,
+                reference: nullIfEmpty(data.reference),
+                notes: nullIfEmpty(data.notes),
             })
             onClose()
         } catch (err) {
@@ -297,6 +300,7 @@ export default function PaymentsPage() {
     const [fromDate, setFromDate] = useState("")
     const [toDate, setToDate] = useState("")
     const [showModal, setShowModal] = useState(false)
+    const [selectedPaymentId, setSelectedPaymentId] = useState(null)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -323,7 +327,7 @@ export default function PaymentsPage() {
             backgroundColor: "#0F6E56", color: "#fff", border: "none",
             cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
         }}>
-            <Plus size={16} /> Record Payment
+            <Plus size={16}/> Record Payment
         </button>
     )
 
@@ -509,10 +513,14 @@ export default function PaymentsPage() {
                         {/* Mobile cards */}
                         <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {payments.map((p, i) => (
-                                <div key={p.id} style={{
-                                    padding: "14px 16px",
-                                    borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
-                                }}>
+                                <div key={p.id}
+                                     onClick={() => setSelectedPaymentId(p.id)}
+                                     style={{
+                                         padding: "14px 16px",
+                                         borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
+                                         cursor: "pointer"
+                                     }}
+                                >
                                     {/* Row 1 — tenant + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
@@ -535,6 +543,7 @@ export default function PaymentsPage() {
                                         }}>
           {p.periodStatus || "—"}
         </span>
+                                        <ChevronRight size={16} color="#9ca3af"/>
                                     </div>
 
                                     {/* Row 2 — unit · period */}
@@ -625,6 +634,12 @@ export default function PaymentsPage() {
             </div>
 
             {showModal && <RecordPaymentModal onClose={() => setShowModal(false)}/>}
+            {selectedPaymentId && (
+                <PaymentDetailSheet
+                    paymentId={selectedPaymentId}
+                    onClose={() => setSelectedPaymentId(null)}
+                />
+            )}
         </PageWrapper>
     )
 }

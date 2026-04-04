@@ -2,7 +2,9 @@ import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreateUnit, useDeleteUnit, useUnits, useUpdateUnit} from "@/hooks/useUnits"
 import {useForm} from "react-hook-form"
-import {Pencil, Plus, Trash2, X} from "lucide-react"
+import {Plus, Pencil, Trash2, X, ChevronRight} from "lucide-react"
+import UnitDetailSheet from "@/components/ui/UnitDetailSheet"
+
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -19,6 +21,8 @@ const labelStyle = {
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
+
+const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
 
 function UnitModal({unit, onClose}) {
     const isEdit = !!unit
@@ -40,7 +44,7 @@ function UnitModal({unit, onClose}) {
         try {
             const payload = {
                 roomNumber: data.roomNumber,
-                description: data.description || null,
+                description: nullIfEmpty(data.description),
                 rentAmount: parseFloat(data.rentAmount),
                 isAvailable,
             }
@@ -269,6 +273,7 @@ export default function UnitsPage() {
     const [showModal, setShowModal] = useState(false)
     const [editUnit, setEditUnit] = useState(null)
     const [deleteUnit, setDeleteUnit] = useState(null)
+    const [selectedUnitId, setSelectedUnitId] = useState(null)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -294,7 +299,7 @@ export default function UnitsPage() {
             backgroundColor: "#0F6E56", color: "#fff", border: "none",
             cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
         }}>
-            <Plus size={16} /> Add Unit
+            <Plus size={16}/> Add Unit
         </button>
     )
 
@@ -464,26 +469,31 @@ export default function UnitsPage() {
                         {/* Mobile cards */}
                         <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {units.map((unit, i) => (
-                                <div key={unit.id} style={{
-                                    padding: "14px 16px",
-                                    borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
-                                }}>
+                                <div key={unit.id}
+                                     onClick={() => setSelectedUnitId(unit.id)}
+                                     style={{
+                                         padding: "14px 16px",
+                                         borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
+                                         cursor: "pointer"
+                                     }}
+                                >
                                     {/* Row 1 — room + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-        <span style={{fontSize: "18px", fontWeight: "700", color: "#111827"}}>
-          {unit.roomNumber}
-        </span>
+                                    <span style={{fontSize: "18px", fontWeight: "700", color: "#111827"}}>
+                                      {unit.roomNumber}
+                                    </span>
                                         <span style={{
                                             display: "inline-block", padding: "3px 10px",
                                             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
                                             backgroundColor: unit.isAvailable ? "#E1F5EE" : "#fef2f2",
                                             color: unit.isAvailable ? "#0F6E56" : "#dc2626",
                                         }}>
-          {unit.isAvailable ? "Available" : "Occupied"}
-        </span>
+                                          {unit.isAvailable ? "Available" : "Occupied"}
+                                        </span>
+                                        <ChevronRight size={16} color="#9ca3af"/>
                                     </div>
 
                                     {/* Row 2 — rent */}
@@ -504,30 +514,30 @@ export default function UnitsPage() {
                                     )}
 
                                     {/* Row 4 — actions */}
-                                    <div style={{
-                                        display: "flex",
-                                        gap: "8px",
-                                        marginTop: unit.description ? "0" : "10px"
-                                    }}>
-                                        <button onClick={() => setEditUnit(unit)} style={{
-                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
-                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                            color: "#374151", cursor: "pointer",
-                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
-                                            fontFamily: "'DM Sans', sans-serif",
-                                        }}>
-                                            <Pencil size={13}/> Edit
-                                        </button>
-                                        <button onClick={() => setDeleteUnit(unit)} style={{
-                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
-                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                            color: "#dc2626", cursor: "pointer",
-                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
-                                            fontFamily: "'DM Sans', sans-serif",
-                                        }}>
-                                            <Trash2 size={13}/> Delete
-                                        </button>
-                                    </div>
+                                    {/*<div style={{*/}
+                                    {/*    display: "flex",*/}
+                                    {/*    gap: "8px",*/}
+                                    {/*    marginTop: unit.description ? "0" : "10px"*/}
+                                    {/*}}>*/}
+                                    {/*    <button onClick={() => setEditUnit(unit)} style={{*/}
+                                    {/*        flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",*/}
+                                    {/*        border: "1px solid #e5e7eb", backgroundColor: "#fff",*/}
+                                    {/*        color: "#374151", cursor: "pointer",*/}
+                                    {/*        display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",*/}
+                                    {/*        fontFamily: "'DM Sans', sans-serif",*/}
+                                    {/*    }}>*/}
+                                    {/*        <Pencil size={13}/> Edit*/}
+                                    {/*    </button>*/}
+                                    {/*    <button onClick={() => setDeleteUnit(unit)} style={{*/}
+                                    {/*        flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",*/}
+                                    {/*        border: "1px solid #fee2e2", backgroundColor: "#fff",*/}
+                                    {/*        color: "#dc2626", cursor: "pointer",*/}
+                                    {/*        display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",*/}
+                                    {/*        fontFamily: "'DM Sans', sans-serif",*/}
+                                    {/*    }}>*/}
+                                    {/*        <Trash2 size={13}/> Delete*/}
+                                    {/*    </button>*/}
+                                    {/*</div>*/}
                                 </div>
                             ))}
                         </div>
@@ -570,6 +580,14 @@ export default function UnitsPage() {
             {showModal && <UnitModal onClose={() => setShowModal(false)}/>}
             {editUnit && <UnitModal unit={editUnit} onClose={() => setEditUnit(null)}/>}
             {deleteUnit && <DeleteConfirm unit={deleteUnit} onClose={() => setDeleteUnit(null)}/>}
+            {selectedUnitId && (
+                <UnitDetailSheet
+                    unitId={selectedUnitId}
+                    onClose={() => setSelectedUnitId(null)}
+                    onEdit={(unit) => setEditUnit(unit)}
+                    onDelete={(unit) => setDeleteUnit(unit)}
+                />
+            )}
         </PageWrapper>
     )
 }

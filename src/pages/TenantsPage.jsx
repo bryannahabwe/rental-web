@@ -2,7 +2,8 @@ import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant} from "@/hooks/useTenants"
 import {useForm} from "react-hook-form"
-import {Pencil, Plus, Trash2, X} from "lucide-react"
+import { Plus, Pencil, Trash2, X, ChevronRight } from "lucide-react"
+import TenantDetailSheet from "@/components/ui/TenantDetailSheet"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -23,6 +24,9 @@ const formatUGX = (amount) =>
 const getMonthName = (month) =>
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
+
+const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
+
 
 function StatusPill({status}) {
     if (!status) return (
@@ -62,9 +66,19 @@ function TenantModal({tenant, onClose}) {
         setError("")
         try {
             if (isEdit) {
-                await updateTenant.mutateAsync({id: tenant.id, data})
+                await updateTenant.mutateAsync({ id: tenant.id, data: {
+                        name: data.name,
+                        phone: data.phone,
+                        email: nullIfEmpty(data.email),
+                        address: nullIfEmpty(data.address),
+                    }})
             } else {
-                await createTenant.mutateAsync(data)
+                await createTenant.mutateAsync({
+                    name: data.name,
+                    phone: data.phone,
+                    email: nullIfEmpty(data.email),
+                    address: nullIfEmpty(data.address),
+                })
             }
             onClose()
         } catch (err) {
@@ -264,6 +278,7 @@ export default function TenantsPage() {
     const [showModal, setShowModal] = useState(false)
     const [editTenant, setEditTenant] = useState(null)
     const [deleteTenant, setDeleteTenant] = useState(null)
+    const [selectedTenantId, setSelectedTenantId] = useState(null)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -492,25 +507,33 @@ export default function TenantsPage() {
                         </div>
 
                         {/* Mobile cards */}
-                        <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
+                        <div className="mobile-cards" style={{ display: "none", flexDirection: "column" }}>
                             {tenants.map((tenant, i) => (
-                                <div key={tenant.id} style={{
-                                    padding: "14px 16px",
-                                    borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
-                                }}>
-                                    {/* Row 1 — name + status */}
+                                <div
+                                    key={tenant.id}
+                                    onClick={() => setSelectedTenantId(tenant.id)}
+                                    style={{
+                                        padding: "14px 16px",
+                                        borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    {/* Row 1 — name + status + chevron */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-        <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
+        <span style={{ fontSize: "15px", fontWeight: "600", color: "#111827" }}>
           {tenant.name}
         </span>
-                                        <StatusPill status={tenant.periodStatus}/>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <StatusPill status={tenant.periodStatus} />
+                                            <ChevronRight size={16} color="#9ca3af" />
+                                        </div>
                                     </div>
 
                                     {/* Row 2 — unit + period */}
-                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "8px"}}>
+                                    <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>
                                         {tenant.currentUnit
                                             ? `Unit ${tenant.currentUnit} · ${tenant.currentPeriodMonth
                                                 ? `${getMonthName(tenant.currentPeriodMonth)} ${tenant.currentPeriodYear}`
@@ -523,7 +546,7 @@ export default function TenantsPage() {
                                         <div style={{
                                             display: "flex", alignItems: "center", justifyContent: "space-between",
                                             backgroundColor: tenant.currentBalance > 0 ? "#fef2f2" : "#E1F5EE",
-                                            borderRadius: "8px", padding: "8px 12px", marginBottom: "10px",
+                                            borderRadius: "8px", padding: "8px 12px",
                                         }}>
           <span style={{
               fontSize: "13px", fontWeight: "500",
@@ -534,34 +557,13 @@ export default function TenantsPage() {
                 : "Fully paid up"}
           </span>
                                             {tenant.monthlyRent && (
-                                                <span style={{fontSize: "12px", color: "#9ca3af"}}>
+                                                <span style={{ fontSize: "12px", color: "#9ca3af" }}>
               of {formatUGX(tenant.monthlyRent)}
             </span>
                                             )}
                                         </div>
                                     )}
-
-                                    {/* Row 4 — actions */}
-                                    <div style={{display: "flex", gap: "8px"}}>
-                                        <button onClick={() => setEditTenant(tenant)} style={{
-                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
-                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                            color: "#374151", cursor: "pointer",
-                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
-                                            fontFamily: "'DM Sans', sans-serif",
-                                        }}>
-                                            <Pencil size={13}/> Edit
-                                        </button>
-                                        <button onClick={() => setDeleteTenant(tenant)} style={{
-                                            flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
-                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                            color: "#dc2626", cursor: "pointer",
-                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
-                                            fontFamily: "'DM Sans', sans-serif",
-                                        }}>
-                                            <Trash2 size={13}/> Delete
-                                        </button>
-                                    </div>
+                                    {/* No Edit/Delete buttons here — they are in the detail sheet */}
                                 </div>
                             ))}
                         </div>
@@ -608,7 +610,14 @@ export default function TenantsPage() {
             {showModal && <TenantModal onClose={() => setShowModal(false)}/>}
             {editTenant && <TenantModal tenant={editTenant} onClose={() => setEditTenant(null)}/>}
             {deleteTenant && <DeleteConfirm tenant={deleteTenant} onClose={() => setDeleteTenant(null)}/>}
-
+            {selectedTenantId && (
+                <TenantDetailSheet
+                    tenantId={selectedTenantId}
+                    onClose={() => setSelectedTenantId(null)}
+                    onEdit={(tenant) => setEditTenant(tenant)}
+                    onDelete={(tenant) => setDeleteTenant(tenant)}
+                />
+            )}
         </PageWrapper>
     )
 }

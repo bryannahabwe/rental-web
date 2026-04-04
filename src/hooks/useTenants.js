@@ -44,3 +44,11 @@ export function useDeleteTenant() {
         },
     })
 }
+
+export function useTenant(id) {
+    return useQuery({
+        queryKey: ["tenants", id],
+        queryFn: () => tenantsService.getById(id).then(r => r.data),
+        enabled: !!id,
+    })
+}

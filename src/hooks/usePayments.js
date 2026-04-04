@@ -18,3 +18,11 @@ export function useCreatePayment() {
         },
     })
 }
+
+export function usePayment(id) {
+    return useQuery({
+        queryKey: ["payments", id],
+        queryFn: () => paymentsService.getById(id).then(r => r.data),
+        enabled: !!id,
+    })
+}

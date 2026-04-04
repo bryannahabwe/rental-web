@@ -31,3 +31,11 @@ export function useMoveOut() {
         },
     })
 }
+
+export function useAgreement(id) {
+    return useQuery({
+        queryKey: ["agreements", id],
+        queryFn: () => agreementsService.getById(id).then(r => r.data),
+        enabled: !!id,
+    })
+}

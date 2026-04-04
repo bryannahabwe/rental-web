@@ -4,7 +4,9 @@ import {useAgreements, useCreateAgreement, useMoveOut} from "@/hooks/useAgreemen
 import {useAllTenants} from "@/hooks/useTenants"
 import {useAllUnits} from "@/hooks/useUnits"
 import {useForm} from "react-hook-form"
-import {LogOut, Plus, X} from "lucide-react"
+import {LogOut, Plus, X, ChevronRight} from "lucide-react"
+import AgreementDetailSheet from "@/components/ui/AgreementDetailSheet"
+
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -29,7 +31,10 @@ const formatDate = (dateStr) => {
     })
 }
 
+const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
+
 function CreateAgreementModal({onClose}) {
+    const [balanceSign, setBalanceSign] = useState("positive")
     const createAgreement = useCreateAgreement()
     const {data: tenants = [], isLoading: tenantsLoading} = useAllTenants()
     const {data: units = [], isLoading: unitsLoading} = useAllUnits()
@@ -44,15 +49,17 @@ function CreateAgreementModal({onClose}) {
     const onSubmit = async (data) => {
         setError("")
         try {
+            const rawBalance = data.openingBalance ? parseFloat(data.openingBalance) : 0
             const payload = {
                 tenantId: data.tenantId,
                 unitId: data.unitId,
-                startDate: data.startDate || null,
+                startDate: nullIfEmpty(data.startDate),
                 rentAmount: data.rentAmount ? parseFloat(data.rentAmount) : null,
                 depositAmount: data.depositAmount ? parseFloat(data.depositAmount) : null,
                 tenantType,
-                openingBalance: tenantType === "EXISTING" && data.openingBalance
-                    ? parseFloat(data.openingBalance) : 0,
+                openingBalance: tenantType === "EXISTING"
+                    ? (balanceSign === "negative" ? -Math.abs(rawBalance) : Math.abs(rawBalance))
+                    : 0,
             }
             await createAgreement.mutateAsync(payload)
             onClose()
@@ -212,18 +219,49 @@ function CreateAgreementModal({onClose}) {
                                 border: "1px solid #e5e7eb", padding: "16px",
                             }}>
                                 <label style={labelStyle}>Opening balance (UGX)</label>
+
+                                {/* Positive/Negative toggle */}
+                                <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                                    {[
+                                        { label: "Paid ahead (+)", value: "positive" },
+                                        { label: "Owes arrears (−)", value: "negative" },
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setBalanceSign(opt.value)}
+                                            style={{
+                                                flex: 1, padding: "8px", borderRadius: "8px",
+                                                fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
+                                                cursor: "pointer", fontWeight: "500", border: "1px solid",
+                                                borderColor: balanceSign === opt.value ? "#0F6E56" : "#e5e7eb",
+                                                backgroundColor: balanceSign === opt.value
+                                                    ? (opt.value === "positive" ? "#0F6E56" : "#dc2626")
+                                                    : "#fff",
+                                                color: balanceSign === opt.value ? "#fff" : "#6b7280",
+                                            }}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <input
-                                    {...register("openingBalance")} type="number" style={inputStyle}
+                                    {...register("openingBalance")}
+                                    type="number"
+                                    min="0"
+                                    style={inputStyle}
                                     placeholder="0"
                                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                     onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                 />
-                                <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px", lineHeight: "1.5"}}>
-                                    Positive (+) = tenant paid ahead. Negative (−) = tenant owes arrears.
+                                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px", lineHeight: "1.5" }}>
+                                    {balanceSign === "positive"
+                                        ? "Tenant has already paid ahead — this credit reduces their current balance."
+                                        : "Tenant owes this amount in arrears — added to their current balance."}
                                 </p>
                             </div>
                         )}
-
                         {error && (
                             <div style={{
                                 backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
@@ -358,6 +396,7 @@ export default function AgreementsPage() {
     const [statusFilter, setStatusFilter] = useState("ACTIVE")
     const [showCreate, setShowCreate] = useState(false)
     const [moveOutAgreement, setMoveOutAgreement] = useState(null)
+    const [selectedAgreementId, setSelectedAgreementId] = useState(null)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -551,10 +590,10 @@ export default function AgreementsPage() {
                         {/* Mobile cards */}
                         <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {agreements.map((ag, i) => (
-                                <div key={ag.id} style={{
-                                    padding: "14px 16px",
-                                    borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
-                                }}>
+                                <div key={ag.id}
+                                     onClick={() => setSelectedAgreementId(ag.id)}
+                                     style={{ padding: "14px 16px", borderTop: i === 0 ? "none" : "1px solid #f3f4f6", cursor: "pointer" }}
+                                >
                                     {/* Row 1 — tenant name + agreement status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
@@ -571,6 +610,7 @@ export default function AgreementsPage() {
                                         }}>
           {ag.status === "ACTIVE" ? "Active" : "Terminated"}
         </span>
+                                        <ChevronRight size={16} color="#9ca3af" />
                                     </div>
 
                                     {/* Row 2 — unit · type · rent */}
@@ -604,16 +644,16 @@ export default function AgreementsPage() {
                                     </div>
 
                                     {/* Row 4 — move-out button */}
-                                    {ag.status === "ACTIVE" && (
-                                        <button onClick={() => setMoveOutAgreement(ag)} style={{
-                                            width: "100%", padding: "9px", borderRadius: "8px", fontSize: "13px",
-                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                            color: "#dc2626", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                                            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                                        }}>
-                                            <LogOut size={14}/> Record Move-Out
-                                        </button>
-                                    )}
+                                    {/*{ag.status === "ACTIVE" && (*/}
+                                    {/*    <button onClick={() => setMoveOutAgreement(ag)} style={{*/}
+                                    {/*        width: "100%", padding: "9px", borderRadius: "8px", fontSize: "13px",*/}
+                                    {/*        border: "1px solid #fee2e2", backgroundColor: "#fff",*/}
+                                    {/*        color: "#dc2626", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",*/}
+                                    {/*        display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",*/}
+                                    {/*    }}>*/}
+                                    {/*        <LogOut size={14}/> Record Move-Out*/}
+                                    {/*    </button>*/}
+                                    {/*)}*/}
                                 </div>
                             ))}
                         </div>
@@ -655,6 +695,13 @@ export default function AgreementsPage() {
             {showCreate && <CreateAgreementModal onClose={() => setShowCreate(false)}/>}
             {moveOutAgreement && (
                 <MoveOutModal agreement={moveOutAgreement} onClose={() => setMoveOutAgreement(null)}/>
+            )}
+            {selectedAgreementId && (
+                <AgreementDetailSheet
+                    agreementId={selectedAgreementId}
+                    onClose={() => setSelectedAgreementId(null)}
+                    onMoveOut={(ag) => setMoveOutAgreement(ag)}
+                />
             )}
         </PageWrapper>
     )

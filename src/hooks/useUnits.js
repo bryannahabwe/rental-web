@@ -38,3 +38,11 @@ export function useDeleteUnit() {
         onSuccess: () => queryClient.invalidateQueries({queryKey: ["units"]}),
     })
 }
+
+export function useUnit(id) {
+    return useQuery({
+        queryKey: ["units", id],
+        queryFn: () => unitsService.getById(id).then(r => r.data),
+        enabled: !!id,
+    })
+}
