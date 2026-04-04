@@ -3,37 +3,56 @@ import useAuthStore from "@/store/authStore"
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api/v1",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
 })
 
-// Attach JWT token to every request
+// Attach access token to every request
 api.interceptors.request.use((config) => {
     const token = useAuthStore.getState().accessToken
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
     return config
 })
 
-// Handle token refresh on 401
+// Handle expired tokens
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const original = error.config
-        if (error.response?.status === 401 && !original._retry) {
-            original._retry = true
+        const originalRequest = error.config
+
+        // If 401 and we haven't already retried
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true
+
             try {
                 const refreshToken = useAuthStore.getState().refreshToken
-                const {data} = await axios.post(
+
+                if (!refreshToken) {
+                    throw new Error("No refresh token")
+                }
+
+                // Try to get a new access token
+                const response = await axios.post(
                     `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api/v1"}/auth/refresh`,
-                    {refreshToken}
+                    { refreshToken }
                 )
-                useAuthStore.getState().setTokens(data.accessToken, data.refreshToken)
-                original.headers.Authorization = `Bearer ${data.accessToken}`
-                return api(original)
-            } catch {
+
+                const { accessToken } = response.data
+                useAuthStore.getState().setAccessToken(accessToken)
+
+                // Retry original request with new token
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`
+                return api(originalRequest)
+
+            } catch (refreshError) {
+                // Refresh failed — log out and redirect to login
                 useAuthStore.getState().logout()
                 window.location.href = "/login"
+                return Promise.reject(refreshError)
             }
         }
+
         return Promise.reject(error)
     }
 )
