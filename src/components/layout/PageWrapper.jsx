@@ -5,7 +5,7 @@ import useAuthStore from "@/store/authStore"
 import { useNavigate } from "react-router-dom"
 import { LogOut } from "lucide-react"
 
-// ── Mobile avatar + dropdown ─────────────────────────────
+// ── Avatar dropdown ──────────────────────────────────────
 function AvatarMenu() {
     const { landlord, logout } = useAuthStore()
     const navigate = useNavigate()
@@ -30,7 +30,7 @@ function AvatarMenu() {
             <div
                 onClick={() => setOpen(v => !v)}
                 style={{
-                    width: "34px", height: "34px", borderRadius: "50%",
+                    width: "36px", height: "36px", borderRadius: "50%",
                     backgroundColor: "#1D9E75",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: "13px", color: "#fff", fontWeight: "600",
@@ -45,7 +45,7 @@ function AvatarMenu() {
             {/* Dropdown */}
             {open && (
                 <div style={{
-                    position: "absolute", top: "42px", right: 0,
+                    position: "absolute", top: "44px", right: 0,
                     backgroundColor: "#fff", borderRadius: "12px",
                     boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                     minWidth: "220px", zIndex: 300,
@@ -54,11 +54,12 @@ function AvatarMenu() {
                 }}>
                     {/* User info */}
                     <div style={{
-                        padding: "16px", borderBottom: "1px solid #f3f4f6",
+                        padding: "14px 16px",
+                        borderBottom: "1px solid #f3f4f6",
                         display: "flex", alignItems: "center", gap: "12px",
                     }}>
                         <div style={{
-                            width: "40px", height: "40px", borderRadius: "50%",
+                            width: "38px", height: "38px", borderRadius: "50%",
                             backgroundColor: "#0a4a38",
                             display: "flex", alignItems: "center", justifyContent: "center",
                             fontSize: "14px", color: "#fff", fontWeight: "600", flexShrink: 0,
@@ -81,11 +82,41 @@ function AvatarMenu() {
                         </div>
                     </div>
 
+                    {/* RentFlow brand line */}
+                    <div style={{
+                        padding: "10px 16px",
+                        borderBottom: "1px solid #f3f4f6",
+                        display: "flex", alignItems: "center", gap: "10px",
+                    }}>
+                        <div style={{
+                            width: "28px", height: "28px", borderRadius: "8px",
+                            backgroundColor: "#E1F5EE",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0,
+                        }}>
+              <span style={{
+                  fontFamily: "'DM Serif Display', serif",
+                  fontSize: "12px", color: "#0F6E56",
+              }}>R</span>
+                        </div>
+                        <div>
+                            <div style={{
+                                fontFamily: "'DM Serif Display', serif",
+                                fontSize: "13px", color: "#0a4a38", lineHeight: 1,
+                            }}>
+                                RentFlow
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
+                                Property Management
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Sign out */}
                     <button
                         onClick={() => { logout(); navigate("/login") }}
                         style={{
-                            width: "100%", padding: "14px 16px",
+                            width: "100%", padding: "13px 16px",
                             display: "flex", alignItems: "center", gap: "10px",
                             backgroundColor: "#fff", border: "none",
                             cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
@@ -104,32 +135,26 @@ function AvatarMenu() {
 }
 
 // ── Main PageWrapper ─────────────────────────────────────
-// Props:
-//   title        — page title shown in both headers
-//   actions      — desktop button(s) shown in top right of desktop header
-//   mobileAction — FAB shown bottom-right on mobile (optional)
-//   children     — page content
-
 export default function PageWrapper({ title, actions, mobileAction, children }) {
     return (
         <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9" }}>
 
-            {/* ── Sidebar (desktop only) ── */}
+            {/* Sidebar — desktop only */}
             <Sidebar />
 
-            {/* ── Main area ── */}
+            {/* Main area */}
             <div
                 className="main-content"
                 style={{
                     flex: 1,
-                    marginLeft: "240px",   // overridden to 0 on mobile via CSS
+                    marginLeft: "240px",
                     display: "flex",
                     flexDirection: "column",
                     minHeight: "100vh",
                 }}
             >
 
-                {/* ── Desktop top bar ── */}
+                {/* Desktop top bar */}
                 <div
                     className="desktop-topbar"
                     style={{
@@ -153,8 +178,6 @@ export default function PageWrapper({ title, actions, mobileAction, children }) 
                     }}>
                         {title}
                     </h1>
-
-                    {/* Desktop action buttons e.g. "+ Add Tenant" */}
                     {actions && (
                         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                             {actions}
@@ -162,49 +185,63 @@ export default function PageWrapper({ title, actions, mobileAction, children }) 
                     )}
                 </div>
 
-                {/* ── Mobile top bar ── */}
+                {/* Mobile top bar — two-line: RentFlow + page title */}
                 <div
                     className="mobile-topbar"
                     style={{
-                        height: "56px",
                         backgroundColor: "#0a4a38",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        padding: "0 16px",
+                        padding: "10px 16px",
                         flexShrink: 0,
                         position: "sticky",
                         top: 0,
                         zIndex: 50,
+                        minHeight: "60px",
                     }}
                 >
-                    <h1 style={{
-                        fontSize: "16px", fontWeight: "600",
-                        color: "#ffffff", margin: 0,
-                        fontFamily: "'DM Sans', sans-serif",
-                    }}>
-                        {title}
-                    </h1>
+                    {/* Left — brand + page title stacked */}
+                    <div>
+                        <div style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: "16px",
+                            color: "#ffffff",
+                            lineHeight: 1,
+                            letterSpacing: "0.01em",
+                        }}>
+                            RentFlow
+                        </div>
+                        <div style={{
+                            fontSize: "12px",
+                            color: "rgba(255,255,255,0.55)",
+                            marginTop: "3px",
+                            fontFamily: "'DM Sans', sans-serif",
+                            fontWeight: "400",
+                        }}>
+                            {title}
+                        </div>
+                    </div>
 
-                    {/* Avatar + dropdown — no action buttons here */}
+                    {/* Right — avatar */}
                     <AvatarMenu />
                 </div>
 
-                {/* ── Page content ── */}
-                <div style={{
-                    flex: 1,
-                    padding: "20px 28px",       // desktop padding
-                    paddingBottom: "40px",
-                }}
-                     className="page-content"
+                {/* Page content */}
+                <div
+                    className="page-content"
+                    style={{
+                        flex: 1,
+                        padding: "20px 28px",
+                        paddingBottom: "40px",
+                    }}
                 >
                     {children}
                 </div>
 
             </div>
 
-            {/* ── Mobile FAB ── */}
-            {/* Shown only on mobile when mobileAction is provided */}
+            {/* Mobile FAB */}
             {mobileAction && (
                 <div
                     className="mobile-topbar"
@@ -220,7 +257,7 @@ export default function PageWrapper({ title, actions, mobileAction, children }) 
                 </div>
             )}
 
-            {/* ── Bottom nav (mobile only) ── */}
+            {/* Bottom nav — mobile only */}
             <BottomNav />
 
         </div>
