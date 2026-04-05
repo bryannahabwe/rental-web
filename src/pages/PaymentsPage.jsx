@@ -110,18 +110,20 @@ function RecordPaymentModal({ onClose }) {
     const { register, handleSubmit, watch, formState: { errors } } = useForm({
         defaultValues: {
             paymentDate: new Date().toISOString().split("T")[0],
+            agreementId: "",
         },
     })
 
     const selectedAgreementId = watch("agreementId")
     const enteredAmount = watch("amount")
-    const selectedAgreement = activeAgreements.find(
-        ag => ag.id === selectedAgreementId
-    )
 
-    // Generate last 6 cycles for selected agreement
+    // Reset cycle when agreement changes
+    useEffect(() => {
+        setSelectedCycle(null)
+    }, [selectedAgreementId])
+
+    const selectedAgreement = activeAgreements.find(ag => ag.id === selectedAgreementId)
     const cycles = generateCycles(selectedAgreement)
-
     const expectedAmount = selectedAgreement?.rentAmount || 0
     const overpayment = enteredAmount && parseFloat(enteredAmount) > expectedAmount
         ? parseFloat(enteredAmount) - expectedAmount : 0
@@ -140,8 +142,8 @@ function RecordPaymentModal({ onClose }) {
                 method: "CASH",
                 periodStartDate: selectedCycle.start,
                 periodEndDate: selectedCycle.end,
-                reference: data.reference || null,
-                notes: data.notes || null,
+                reference: nullIfEmpty(data.reference),
+                notes: nullIfEmpty(data.notes),
             })
             onClose()
         } catch (err) {
@@ -186,7 +188,6 @@ function RecordPaymentModal({ onClose }) {
                             <select
                                 {...register("agreementId", { required: "Please select an agreement" })}
                                 style={inputStyle}
-                                onChange={() => setSelectedCycle(null)}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             >
@@ -207,47 +208,56 @@ function RecordPaymentModal({ onClose }) {
                         </div>
 
                         {/* Billing cycle selector */}
-                        {selectedAgreement && (
+                        {selectedAgreementId && selectedAgreement && (
                             <div>
                                 <label style={labelStyle}>Payment period</label>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                    {cycles.map((cycle, i) => (
-                                        <button
-                                            key={i}
-                                            type="button"
-                                            onClick={() => setSelectedCycle(cycle)}
-                                            style={{
-                                                padding: "10px 14px", borderRadius: "8px",
-                                                border: "1px solid",
-                                                borderColor: selectedCycle?.start === cycle.start
-                                                    ? "#0F6E56" : "#e5e7eb",
-                                                backgroundColor: selectedCycle?.start === cycle.start
-                                                    ? "#E1F5EE" : "#fff",
-                                                cursor: "pointer", textAlign: "left",
-                                                fontFamily: "'DM Sans', sans-serif",
-                                                display: "flex", alignItems: "center",
-                                                justifyContent: "space-between",
-                                            }}
-                                        >
-                      <span style={{
-                          fontSize: "14px", fontWeight: "500",
-                          color: selectedCycle?.start === cycle.start
-                              ? "#0F6E56" : "#111827",
-                      }}>
-                        {formatCycleDate(cycle.start)} – {formatCycleDate(cycle.end)}
-                      </span>
-                                            {cycle.isCurrent && (
+                                {cycles.length === 0 ? (
+                                    <div style={{
+                                        padding: "12px 14px", backgroundColor: "#FAEEDA",
+                                        borderRadius: "8px", fontSize: "13px", color: "#854F0B",
+                                    }}>
+                                        No billing cycles available — check the agreement start date.
+                                    </div>
+                                ) : (
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                        {cycles.map((cycle, i) => (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onClick={() => setSelectedCycle(cycle)}
+                                                style={{
+                                                    padding: "10px 14px", borderRadius: "8px",
+                                                    border: "1px solid",
+                                                    borderColor: selectedCycle?.start === cycle.start
+                                                        ? "#0F6E56" : "#e5e7eb",
+                                                    backgroundColor: selectedCycle?.start === cycle.start
+                                                        ? "#E1F5EE" : "#fff",
+                                                    cursor: "pointer", textAlign: "left",
+                                                    fontFamily: "'DM Sans', sans-serif",
+                                                    display: "flex", alignItems: "center",
+                                                    justifyContent: "space-between",
+                                                }}
+                                            >
                                                 <span style={{
-                                                    fontSize: "11px", padding: "2px 8px",
-                                                    borderRadius: "10px", backgroundColor: "#0F6E56",
-                                                    color: "#fff", fontWeight: "500",
+                                                    fontSize: "14px", fontWeight: "500",
+                                                    color: selectedCycle?.start === cycle.start
+                                                        ? "#0F6E56" : "#111827",
                                                 }}>
-                          Current
-                        </span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                                                    {formatCycleDate(cycle.start)} – {formatCycleDate(cycle.end)}
+                                                </span>
+                                                {cycle.isCurrent && (
+                                                    <span style={{
+                                                        fontSize: "11px", padding: "2px 8px",
+                                                        borderRadius: "10px", backgroundColor: "#0F6E56",
+                                                        color: "#fff", fontWeight: "500",
+                                                    }}>
+                                                        Current
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                                 {!selectedCycle && (
                                     <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
                                         Select the period this payment covers
@@ -262,8 +272,8 @@ function RecordPaymentModal({ onClose }) {
                                 Amount (UGX)
                                 {selectedAgreement && (
                                     <span style={{ color: "#9ca3af", fontWeight: "400", marginLeft: "6px" }}>
-                    — expected {formatUGX(selectedAgreement.rentAmount)}
-                  </span>
+                                        — expected {formatUGX(selectedAgreement.rentAmount)}
+                                    </span>
                                 )}
                             </label>
                             <input
@@ -319,11 +329,11 @@ function RecordPaymentModal({ onClose }) {
                                 ...inputStyle, backgroundColor: "#f9fafb", color: "#6b7280",
                                 display: "flex", alignItems: "center", gap: "8px",
                             }}>
-                <span style={{
-                    display: "inline-block", padding: "2px 10px",
-                    borderRadius: "20px", fontSize: "12px", fontWeight: "500",
-                    backgroundColor: "#E1F5EE", color: "#0F6E56",
-                }}>CASH</span>
+                                <span style={{
+                                    display: "inline-block", padding: "2px 10px",
+                                    borderRadius: "20px", fontSize: "12px", fontWeight: "500",
+                                    backgroundColor: "#E1F5EE", color: "#0F6E56",
+                                }}>CASH</span>
                                 <span style={{ fontSize: "13px" }}>Cash payment (MVP)</span>
                             </div>
                         </div>
@@ -331,7 +341,8 @@ function RecordPaymentModal({ onClose }) {
                         {/* Reference */}
                         <div>
                             <label style={labelStyle}>
-                                Reference <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                Reference{" "}
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <input
                                 {...register("reference")} type="text"
@@ -344,7 +355,8 @@ function RecordPaymentModal({ onClose }) {
                         {/* Notes */}
                         <div>
                             <label style={labelStyle}>
-                                Notes <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                Notes{" "}
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <textarea
                                 {...register("notes")} rows={2}
