@@ -18,10 +18,11 @@ const formatCycle = (start, end) => {
     return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
 }
 
+// Fixed: shows 1.51M not 1.5M, trims trailing zeros
 const formatUGXShort = (amount) => {
     if (amount == null) return "—"
     const n = Number(amount)
-    if (n >= 1_000_000) return `UGX ${(n / 1_000_000).toFixed(1)}M`
+    if (n >= 1_000_000) return `UGX ${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`
     if (n >= 1_000) return `UGX ${(n / 1_000).toFixed(0)}K`
     return `UGX ${n.toLocaleString()}`
 }
@@ -33,11 +34,6 @@ const formatDate = (dateStr) => {
     })
 }
 
-const getMonthName = (month) =>
-    ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
-
-// ── Desktop stat card ──────────────────────────────────
 function StatCard({ icon: Icon, label, value, sub, color }) {
     return (
         <div style={{
@@ -67,7 +63,6 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
     )
 }
 
-// ── Mobile stat card — compact ─────────────────────────
 function MobileStatCard({ icon: Icon, label, value, sub, color }) {
     return (
         <div style={{
@@ -108,8 +103,8 @@ function PeriodStatusPill({ status }) {
             borderRadius: "20px", fontSize: "11px", fontWeight: "500",
             backgroundColor: s.bg, color: s.color,
         }}>
-      {status}
-    </span>
+            {status}
+        </span>
     )
 }
 
@@ -130,17 +125,21 @@ export default function DashboardPage() {
         t => t.periodStatus === "UNPAID" || t.periodStatus === "PARTIAL"
     )
 
-    const totalExpected = allTenants
+    // Total monthly rent across all active tenants
+    const totalMonthlyRent = allTenants
         .filter(t => t.monthlyRent != null)
         .reduce((sum, t) => sum + Number(t.monthlyRent), 0)
 
+    // Cumulative outstanding across all due cycles (may exceed monthly rent)
     const totalOutstanding = outstandingTenants
         .reduce((sum, t) => sum + Number(t.currentBalance || 0), 0)
 
-    const totalCollected = totalExpected - totalOutstanding
-
-    const collectionPct = totalExpected > 0
-        ? Math.round((totalCollected / totalExpected) * 100)
+    // Progress bar: how much of this month's rent has been covered
+    // Cap outstanding at monthly rent for display purposes only
+    const outstandingThisMonth = Math.min(totalOutstanding, totalMonthlyRent)
+    const collectedThisMonth = Math.max(0, totalMonthlyRent - outstandingThisMonth)
+    const collectionPct = totalMonthlyRent > 0
+        ? Math.round((collectedThisMonth / totalMonthlyRent) * 100)
         : 0
 
     return (
@@ -176,7 +175,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* ── MOBILE stat cards — 2x2 compact grid ── */}
+            {/* ── MOBILE stat cards ── */}
             <div className="mobile-cards">
                 <div style={{
                     display: "grid", gridTemplateColumns: "1fr 1fr",
@@ -205,30 +204,30 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* ── This month's collection ── */}
+            {/* ── Outstanding summary ── */}
             {!tenantsLoading && allTenants.some(t => t.monthlyRent != null) && (
                 <div style={{
                     backgroundColor: "#fff", borderRadius: "12px",
                     border: "1px solid #f0f0f0", padding: "16px 20px",
                     marginBottom: "16px",
                 }}>
-                    {/* Header row */}
+                    {/* Header */}
                     <div style={{
                         display: "flex", alignItems: "center",
                         justifyContent: "space-between", marginBottom: "12px",
                     }}>
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
-              This Month's Collection
-            </span>
+                        <span style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
+                            Outstanding Summary
+                        </span>
                         <span style={{
                             fontSize: "12px", fontWeight: "600",
                             color: collectionPct >= 100 ? "#0F6E56" : "#854F0B",
                         }}>
-              {collectionPct}% collected
-            </span>
+                            {collectionPct}% of this month covered
+                        </span>
                     </div>
 
-                    {/* Progress bar */}
+                    {/* Progress bar — this month coverage only */}
                     <div style={{
                         height: "8px", borderRadius: "8px",
                         backgroundColor: "#f3f4f6", overflow: "hidden",
@@ -242,13 +241,20 @@ export default function DashboardPage() {
                         }} />
                     </div>
 
-                    {/* ── Desktop — inline stats ── */}
+                    {/* Desktop stats */}
                     <div className="desktop-table">
                         <div style={{ display: "flex", gap: "24px", justifyContent: "flex-end" }}>
                             {[
-                                { label: "EXPECTED", value: formatUGX(totalExpected), color: "#111827" },
-                                { label: "COLLECTED", value: formatUGX(totalCollected), color: "#0F6E56" },
-                                { label: "OUTSTANDING", value: formatUGX(totalOutstanding), color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56" },
+                                {
+                                    label: "MONTHLY RENT",
+                                    value: formatUGX(totalMonthlyRent),
+                                    color: "#111827",
+                                },
+                                {
+                                    label: "TOTAL OUTSTANDING",
+                                    value: formatUGX(totalOutstanding),
+                                    color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56",
+                                },
                             ].map((s, i) => (
                                 <div key={i} style={{ textAlign: "right" }}>
                                     <div style={{ fontSize: "11px", color: "#9ca3af", marginBottom: "2px" }}>
@@ -262,26 +268,33 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* ── Mobile — 3 mini boxes ── */}
+                    {/* Mobile stats — 2 boxes, no "Collected" */}
                     <div className="mobile-cards">
                         <div style={{
-                            display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+                            display: "grid", gridTemplateColumns: "1fr 1fr",
                             gap: "8px", width: "100%",
                         }}>
                             {[
-                                { label: "Expected", value: formatUGXShort(totalExpected), color: "#111827" },
-                                { label: "Collected", value: formatUGXShort(totalCollected), color: "#0F6E56" },
-                                { label: "Outstanding", value: formatUGXShort(totalOutstanding), color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56" },
+                                {
+                                    label: "Monthly Rent",
+                                    value: formatUGXShort(totalMonthlyRent),
+                                    color: "#111827",
+                                },
+                                {
+                                    label: "Outstanding",
+                                    value: formatUGXShort(totalOutstanding),
+                                    color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56",
+                                },
                             ].map((s, i) => (
                                 <div key={i} style={{
                                     backgroundColor: "#f9fafb", borderRadius: "8px",
-                                    padding: "8px 6px", textAlign: "center",
+                                    padding: "10px 8px", textAlign: "center",
                                 }}>
                                     <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "3px" }}>
                                         {s.label.toUpperCase()}
                                     </div>
                                     <div style={{
-                                        fontSize: "12px", fontWeight: "700",
+                                        fontSize: "13px", fontWeight: "700",
                                         color: s.color, wordBreak: "break-word",
                                     }}>
                                         {s.value}
@@ -300,21 +313,20 @@ export default function DashboardPage() {
                     border: "1px solid #f0f0f0", overflow: "hidden",
                     marginBottom: "16px",
                 }}>
-                    {/* Section header */}
                     <div style={{
                         display: "flex", alignItems: "center", justifyContent: "space-between",
                         padding: "14px 16px", borderBottom: "1px solid #f9f9f9",
                     }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
-                Outstanding
-              </span>
+                            <span style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
+                                Outstanding Tenants
+                            </span>
                             <span style={{
                                 padding: "2px 8px", borderRadius: "20px", fontSize: "11px",
                                 fontWeight: "500", backgroundColor: "#FCEBEB", color: "#A32D2D",
                             }}>
-                {outstandingTenants.length}
-              </span>
+                                {outstandingTenants.length}
+                            </span>
                         </div>
                         <a href="/tenants" style={{
                             fontSize: "12px", color: "#0F6E56",
@@ -324,12 +336,12 @@ export default function DashboardPage() {
                         </a>
                     </div>
 
-                    {/* ── Desktop — table ── */}
+                    {/* Desktop table */}
                     <div className="desktop-table">
                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
                             <thead>
                             <tr style={{ backgroundColor: "#f9fafb" }}>
-                                {["Tenant", "Unit", "Period", "Expected", "Paid", "Outstanding", "Status"].map((h, i) => (
+                                {["Tenant", "Unit", "Current Cycle", "Monthly Rent", "Total Outstanding", "Status"].map((h, i) => (
                                     <th key={i} style={{
                                         padding: "10px 22px", textAlign: "left",
                                         fontSize: "11px", fontWeight: "500", color: "#9ca3af",
@@ -339,98 +351,89 @@ export default function DashboardPage() {
                             </tr>
                             </thead>
                             <tbody>
-                            {outstandingTenants.map((t, i) => {
-                                const paid = Number(t.monthlyRent || 0) - Number(t.currentBalance || 0)
-                                return (
-                                    <tr key={t.id} style={{ borderTop: i === 0 ? "none" : "1px solid #f9f9f9" }}>
-                                        <td style={{ padding: "13px 22px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
-                                            {t.name}
-                                        </td>
-                                        <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
-                                            {t.currentUnit || "—"}
-                                        </td>
-                                        <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
-                                            {t.currentCycleStart
-                                                ? `${formatCycleDate(t.currentCycleStart)} – ${formatCycleDate(t.currentCycleEnd)}`
-                                                : "—"}
-                                        </td>
-                                        <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
-                                            {formatUGX(t.monthlyRent)}
-                                        </td>
-                                        <td style={{ padding: "13px 22px", fontSize: "14px", color: "#0F6E56" }}>
-                                            {formatUGX(Math.max(0, paid))}
-                                        </td>
-                                        <td style={{ padding: "13px 22px", fontSize: "14px", color: "#dc2626", fontWeight: "500" }}>
-                                            {formatUGX(t.currentBalance)}
-                                        </td>
-                                        <td style={{ padding: "13px 22px" }}>
-                                            <PeriodStatusPill status={t.periodStatus} />
-                                        </td>
-                                    </tr>
-                                )
-                            })}
+                            {outstandingTenants.map((t, i) => (
+                                <tr key={t.id} style={{ borderTop: i === 0 ? "none" : "1px solid #f9f9f9" }}>
+                                    <td style={{ padding: "13px 22px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
+                                        {t.name}
+                                    </td>
+                                    <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
+                                        {t.currentUnit || "—"}
+                                    </td>
+                                    <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
+                                        {t.currentCycleStart
+                                            ? formatCycle(t.currentCycleStart, t.currentCycleEnd)
+                                            : "—"}
+                                    </td>
+                                    <td style={{ padding: "13px 22px", fontSize: "14px", color: "#6b7280" }}>
+                                        {formatUGX(t.monthlyRent)}
+                                    </td>
+                                    <td style={{ padding: "13px 22px", fontSize: "14px", color: "#dc2626", fontWeight: "600" }}>
+                                        {formatUGX(t.currentBalance)}
+                                    </td>
+                                    <td style={{ padding: "13px 22px" }}>
+                                        <PeriodStatusPill status={t.periodStatus} />
+                                    </td>
+                                </tr>
+                            ))}
                             </tbody>
                         </table>
                     </div>
 
-                    {/* ── Mobile — cards ── */}
+                    {/* Mobile cards */}
                     <div className="mobile-cards">
                         <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                            {outstandingTenants.map((t, i) => {
-                                const paid = Number(t.monthlyRent || 0) - Number(t.currentBalance || 0)
-                                return (
-                                    <div key={t.id} style={{
-                                        padding: "12px 16px",
-                                        borderTop: i === 0 ? "none" : "1px solid #f9f9f9",
+                            {outstandingTenants.map((t, i) => (
+                                <div key={t.id} style={{
+                                    padding: "12px 16px",
+                                    borderTop: i === 0 ? "none" : "1px solid #f9f9f9",
+                                }}>
+                                    {/* Row 1 — name + status */}
+                                    <div style={{
+                                        display: "flex", alignItems: "center",
+                                        justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-                                        {/* Row 1 — name + status */}
+                                        <span style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
+                                            {t.name}
+                                        </span>
+                                        <PeriodStatusPill status={t.periodStatus} />
+                                    </div>
+
+                                    {/* Row 2 — unit + cycle */}
+                                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>
+                                        Unit {t.currentUnit} · {t.currentCycleStart
+                                        ? formatCycle(t.currentCycleStart, t.currentCycleEnd)
+                                        : "—"}
+                                    </div>
+
+                                    {/* Row 3 — monthly rent vs total outstanding */}
+                                    <div style={{ display: "flex", gap: "8px" }}>
                                         <div style={{
-                                            display: "flex", alignItems: "center",
-                                            justifyContent: "space-between", marginBottom: "4px",
+                                            flex: 1, backgroundColor: "#f9fafb",
+                                            borderRadius: "8px", padding: "8px",
+                                            textAlign: "center",
                                         }}>
-                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
-                        {t.name}
-                      </span>
-                                            <PeriodStatusPill status={t.periodStatus} />
-                                        </div>
-
-                                        {/* Row 2 — unit + period */}
-                                        <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>
-                                            Unit {t.currentUnit} · {t.currentPeriodMonth
-                                            ? `${getMonthName(t.currentPeriodMonth)} ${t.currentPeriodYear}`
-                                            : "—"}
-                                        </div>
-
-                                        {/* Row 3 — paid vs outstanding boxes */}
-                                        <div style={{ display: "flex", gap: "8px" }}>
-                                            <div style={{
-                                                flex: 1, backgroundColor: "#f9fafb",
-                                                borderRadius: "8px", padding: "8px",
-                                                textAlign: "center",
-                                            }}>
-                                                <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px" }}>
-                                                    PAID
-                                                </div>
-                                                <div style={{ fontSize: "13px", fontWeight: "600", color: "#0F6E56" }}>
-                                                    {formatUGX(Math.max(0, paid))}
-                                                </div>
+                                            <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px" }}>
+                                                MONTHLY RENT
                                             </div>
-                                            <div style={{
-                                                flex: 1, backgroundColor: "#fef2f2",
-                                                borderRadius: "8px", padding: "8px",
-                                                textAlign: "center",
-                                            }}>
-                                                <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px" }}>
-                                                    OUTSTANDING
-                                                </div>
-                                                <div style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>
-                                                    {formatUGX(t.currentBalance)}
-                                                </div>
+                                            <div style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
+                                                {formatUGX(t.monthlyRent)}
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            flex: 1, backgroundColor: "#fef2f2",
+                                            borderRadius: "8px", padding: "8px",
+                                            textAlign: "center",
+                                        }}>
+                                            <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px" }}>
+                                                OUTSTANDING
+                                            </div>
+                                            <div style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>
+                                                {formatUGXShort(t.currentBalance)}
                                             </div>
                                         </div>
                                     </div>
-                                )
-                            })}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -445,9 +448,9 @@ export default function DashboardPage() {
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "14px 16px", borderBottom: "1px solid #f9f9f9",
                 }}>
-          <span style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
-            Recent Payments
-          </span>
+                    <span style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>
+                        Recent Payments
+                    </span>
                     <a href="/payments" style={{
                         fontSize: "12px", color: "#0F6E56",
                         textDecoration: "none", fontWeight: "500",
@@ -466,15 +469,15 @@ export default function DashboardPage() {
                     </div>
                 ) : (
                     <>
-                        {/* ── Desktop — table ── */}
+                        {/* Desktop table */}
                         <div className="desktop-table">
                             <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <thead>
                                 <tr style={{ backgroundColor: "#f9fafb" }}>
                                     {["Tenant", "Unit", "Period", "Amount", "Status", "Date"].map(h => (
                                         <th key={h} style={{
-                                            padding: "10px 22px", textAlign: "left", fontSize: "11px",
-                                            fontWeight: "500", color: "#9ca3af",
+                                            padding: "10px 22px", textAlign: "left",
+                                            fontSize: "11px", fontWeight: "500", color: "#9ca3af",
                                             textTransform: "uppercase", letterSpacing: "0.05em",
                                         }}>{h}</th>
                                     ))}
@@ -496,20 +499,20 @@ export default function DashboardPage() {
                                             {formatUGX(p.amount)}
                                         </td>
                                         <td style={{ padding: "14px 22px" }}>
-                        <span style={{
-                            display: "inline-block", padding: "3px 10px",
-                            borderRadius: "20px", fontSize: "12px", fontWeight: "500",
-                            backgroundColor:
-                                p.periodStatus === "PAID" ? "#E1F5EE" :
-                                    p.periodStatus === "PARTIAL" ? "#FAEEDA" :
-                                        p.periodStatus === "ROLLOVER" ? "#E6F1FB" : "#f3f4f6",
-                            color:
-                                p.periodStatus === "PAID" ? "#0F6E56" :
-                                    p.periodStatus === "PARTIAL" ? "#854F0B" :
-                                        p.periodStatus === "ROLLOVER" ? "#185FA5" : "#6b7280",
-                        }}>
-                          {p.periodStatus || "Paid"}
-                        </span>
+                                                <span style={{
+                                                    display: "inline-block", padding: "3px 10px",
+                                                    borderRadius: "20px", fontSize: "12px", fontWeight: "500",
+                                                    backgroundColor:
+                                                        p.periodStatus === "PAID" ? "#E1F5EE" :
+                                                            p.periodStatus === "PARTIAL" ? "#FAEEDA" :
+                                                                p.periodStatus === "ROLLOVER" ? "#E6F1FB" : "#f3f4f6",
+                                                    color:
+                                                        p.periodStatus === "PAID" ? "#0F6E56" :
+                                                            p.periodStatus === "PARTIAL" ? "#854F0B" :
+                                                                p.periodStatus === "ROLLOVER" ? "#185FA5" : "#6b7280",
+                                                }}>
+                                                    {p.periodStatus || "Paid"}
+                                                </span>
                                         </td>
                                         <td style={{ padding: "14px 22px", fontSize: "14px", color: "#6b7280" }}>
                                             {formatDate(p.paymentDate)}
@@ -520,7 +523,7 @@ export default function DashboardPage() {
                             </table>
                         </div>
 
-                        {/* ── Mobile — payment cards ── */}
+                        {/* Mobile payment cards */}
                         <div className="mobile-cards">
                             <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
                                 {payments.map((p, i) => (
@@ -528,14 +531,13 @@ export default function DashboardPage() {
                                         padding: "12px 16px",
                                         borderTop: i === 0 ? "none" : "1px solid #f9f9f9",
                                     }}>
-                                        {/* Row 1 — tenant + status */}
                                         <div style={{
                                             display: "flex", alignItems: "center",
                                             justifyContent: "space-between", marginBottom: "4px",
                                         }}>
-                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
-                        {p.tenantName}
-                      </span>
+                                            <span style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
+                                                {p.tenantName}
+                                            </span>
                                             <span style={{
                                                 display: "inline-block", padding: "2px 8px",
                                                 borderRadius: "20px", fontSize: "11px", fontWeight: "500",
@@ -548,26 +550,22 @@ export default function DashboardPage() {
                                                         p.periodStatus === "PARTIAL" ? "#854F0B" :
                                                             p.periodStatus === "ROLLOVER" ? "#185FA5" : "#6b7280",
                                             }}>
-                        {p.periodStatus || "—"}
-                      </span>
+                                                {p.periodStatus || "—"}
+                                            </span>
                                         </div>
-
-                                        {/* Row 2 — unit + period */}
                                         <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "6px" }}>
                                             Unit {p.roomNumber} · {formatCycle(p.periodStartDate, p.periodEndDate)}
                                         </div>
-
-                                        {/* Row 3 — amount + date */}
                                         <div style={{
                                             display: "flex", alignItems: "center",
                                             justifyContent: "space-between",
                                         }}>
-                      <span style={{ fontSize: "15px", fontWeight: "700", color: "#111827" }}>
-                        {formatUGX(p.amount)}
-                      </span>
+                                            <span style={{ fontSize: "15px", fontWeight: "700", color: "#111827" }}>
+                                                {formatUGX(p.amount)}
+                                            </span>
                                             <span style={{ fontSize: "12px", color: "#9ca3af" }}>
-                        {formatDate(p.paymentDate)}
-                      </span>
+                                                {formatDate(p.paymentDate)}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
