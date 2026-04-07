@@ -281,7 +281,7 @@ function RecordPaymentModal({ onClose }) {
                                     required: "Amount is required",
                                     min: { value: 1, message: "Must be greater than 0" },
                                 })}
-                                type="number" style={inputStyle} placeholder="350000"
+                                type="number" style={inputStyle} placeholder="180000"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
@@ -334,7 +334,7 @@ function RecordPaymentModal({ onClose }) {
                                     borderRadius: "20px", fontSize: "12px", fontWeight: "500",
                                     backgroundColor: "#E1F5EE", color: "#0F6E56",
                                 }}>CASH</span>
-                                <span style={{ fontSize: "13px" }}>Cash payment (MVP)</span>
+                                <span style={{ fontSize: "13px" }}>Cash payment</span>
                             </div>
                         </div>
 

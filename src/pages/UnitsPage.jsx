@@ -113,7 +113,7 @@ function UnitModal({unit, onClose}) {
                                     required: "Rent amount is required",
                                     min: {value: 1, message: "Must be greater than 0"},
                                 })}
-                                type="number" style={inputStyle} placeholder="350000"
+                                type="number" style={inputStyle} placeholder="180000"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
