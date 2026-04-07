@@ -147,7 +147,7 @@ export default function PaymentDetailSheet({ paymentId, onClose }) {
                         </p>
                         <DetailRow
                             label="Period"
-                            value={`${formatCycle(p.periodStartDate, p.periodEndDate)}`}
+                            value={`${formatCycle(payment.periodStartDate, payment.periodEndDate)}`}
                         />
                         <DetailRow label="Payment Date" value={formatDate(payment.paymentDate)} />
                         <DetailRow label="Method" value={payment.method} />
