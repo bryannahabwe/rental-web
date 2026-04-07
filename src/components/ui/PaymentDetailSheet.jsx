@@ -11,6 +11,21 @@ const formatDate = (dateStr) => {
     })
 }
 
+// Format cycle date: 2026-04-15 → "Apr 15"
+const formatCycleDate = (dateStr) => {
+    if (!dateStr) return "—"
+    const d = new Date(dateStr)
+    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
+}
+
+
+// Format full cycle: "Apr 15 – May 14"
+const formatCycle = (start, end) => {
+    if (!start || !end) return "—"
+    return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
+}
+
+
 const getMonthName = (month) =>
     ["January","February","March","April","May","June",
         "July","August","September","October","November","December"][month - 1]
