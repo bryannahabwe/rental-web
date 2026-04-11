@@ -3,9 +3,8 @@ import Sidebar from "./Sidebar"
 import BottomNav from "./BottomNav"
 import useAuthStore from "@/store/authStore"
 import { useNavigate } from "react-router-dom"
-import { LogOut } from "lucide-react"
+import { LogOut, ArrowLeft } from "lucide-react"
 
-// ── Avatar dropdown ──────────────────────────────────────
 function AvatarMenu() {
     const { landlord, logout } = useAuthStore()
     const navigate = useNavigate()
@@ -26,7 +25,6 @@ function AvatarMenu() {
 
     return (
         <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
-            {/* Avatar circle */}
             <div
                 onClick={() => setOpen(v => !v)}
                 style={{
@@ -42,7 +40,6 @@ function AvatarMenu() {
                 {initials}
             </div>
 
-            {/* Dropdown */}
             {open && (
                 <div style={{
                     position: "absolute", top: "44px", right: 0,
@@ -54,8 +51,7 @@ function AvatarMenu() {
                 }}>
                     {/* User info */}
                     <div style={{
-                        padding: "14px 16px",
-                        borderBottom: "1px solid #f3f4f6",
+                        padding: "14px 16px", borderBottom: "1px solid #f3f4f6",
                         display: "flex", alignItems: "center", gap: "12px",
                     }}>
                         <div style={{
@@ -82,10 +78,9 @@ function AvatarMenu() {
                         </div>
                     </div>
 
-                    {/* RentFlow brand line */}
+                    {/* RentFlow brand */}
                     <div style={{
-                        padding: "10px 16px",
-                        borderBottom: "1px solid #f3f4f6",
+                        padding: "10px 16px", borderBottom: "1px solid #f3f4f6",
                         display: "flex", alignItems: "center", gap: "10px",
                     }}>
                         <div style={{
@@ -134,41 +129,32 @@ function AvatarMenu() {
     )
 }
 
-// ── Main PageWrapper ─────────────────────────────────────
-export default function PageWrapper({ title, actions, mobileAction, children }) {
+export default function PageWrapper({ title, actions, mobileAction, showBack, children }) {
+    const navigate = useNavigate()
+
     return (
         <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9" }}>
 
-            {/* Sidebar — desktop only */}
             <Sidebar />
 
-            {/* Main area */}
             <div
                 className="main-content"
                 style={{
-                    flex: 1,
-                    marginLeft: "240px",
-                    display: "flex",
-                    flexDirection: "column",
+                    flex: 1, marginLeft: "240px",
+                    display: "flex", flexDirection: "column",
                     minHeight: "100vh",
                 }}
             >
-
                 {/* Desktop top bar */}
                 <div
                     className="desktop-topbar"
                     style={{
-                        height: "56px",
-                        backgroundColor: "#ffffff",
+                        height: "56px", backgroundColor: "#ffffff",
                         borderBottom: "1px solid #f0f0f0",
-                        display: "flex",
-                        alignItems: "center",
+                        display: "flex", alignItems: "center",
                         justifyContent: "space-between",
-                        padding: "0 28px",
-                        flexShrink: 0,
-                        position: "sticky",
-                        top: 0,
-                        zIndex: 50,
+                        padding: "0 28px", flexShrink: 0,
+                        position: "sticky", top: 0, zIndex: 50,
                     }}
                 >
                     <h1 style={{
@@ -185,60 +171,61 @@ export default function PageWrapper({ title, actions, mobileAction, children }) 
                     )}
                 </div>
 
-                {/* Mobile top bar — two-line: RentFlow + page title */}
+                {/* Mobile top bar */}
                 <div
                     className="mobile-topbar"
                     style={{
                         backgroundColor: "#0a4a38",
-                        display: "flex",
-                        alignItems: "center",
+                        display: "flex", alignItems: "center",
                         justifyContent: "space-between",
-                        padding: "10px 16px",
-                        flexShrink: 0,
-                        position: "sticky",
-                        top: 0,
-                        zIndex: 50,
+                        padding: "10px 16px", flexShrink: 0,
+                        position: "sticky", top: 0, zIndex: 50,
                         minHeight: "60px",
                     }}
                 >
-                    {/* Left — brand + page title stacked */}
-                    <div>
-                        <div style={{
-                            fontFamily: "'DM Serif Display', serif",
-                            fontSize: "16px",
-                            color: "#ffffff",
-                            lineHeight: 1,
-                            letterSpacing: "0.01em",
-                        }}>
-                            RentFlow
-                        </div>
-                        <div style={{
-                            fontSize: "12px",
-                            color: "rgba(255,255,255,0.55)",
-                            marginTop: "3px",
-                            fontFamily: "'DM Sans', sans-serif",
-                            fontWeight: "400",
-                        }}>
-                            {title}
+                    {/* Left — back button or brand */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {showBack && (
+                            <button
+                                onClick={() => navigate(-1)}
+                                style={{
+                                    background: "none", border: "none",
+                                    cursor: "pointer", padding: "4px",
+                                    display: "flex", alignItems: "center",
+                                    color: "rgba(255,255,255,0.8)",
+                                }}
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
+                        )}
+                        <div>
+                            <div style={{
+                                fontFamily: "'DM Serif Display', serif",
+                                fontSize: "16px", color: "#ffffff",
+                                lineHeight: 1, letterSpacing: "0.01em",
+                            }}>
+                                RentFlow
+                            </div>
+                            <div style={{
+                                fontSize: "12px",
+                                color: "rgba(255,255,255,0.55)",
+                                marginTop: "3px",
+                                fontFamily: "'DM Sans', sans-serif",
+                            }}>
+                                {title}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right — avatar */}
                     <AvatarMenu />
                 </div>
 
                 {/* Page content */}
-                <div
-                    className="page-content"
-                    style={{
-                        flex: 1,
-                        padding: "20px 28px",
-                        paddingBottom: "40px",
-                    }}
-                >
+                <div className="page-content" style={{
+                    flex: 1, padding: "20px 28px", paddingBottom: "40px",
+                }}>
                     {children}
                 </div>
-
             </div>
 
             {/* Mobile FAB */}
@@ -246,20 +233,15 @@ export default function PageWrapper({ title, actions, mobileAction, children }) 
                 <div
                     className="mobile-topbar"
                     style={{
-                        display: "none",
-                        position: "fixed",
-                        bottom: "80px",
-                        right: "20px",
-                        zIndex: 150,
+                        display: "none", position: "fixed",
+                        bottom: "80px", right: "20px", zIndex: 150,
                     }}
                 >
                     {mobileAction}
                 </div>
             )}
 
-            {/* Bottom nav — mobile only */}
             <BottomNav />
-
         </div>
     )
 }

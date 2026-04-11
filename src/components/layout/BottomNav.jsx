@@ -1,13 +1,11 @@
-import {NavLink} from "react-router-dom"
-import {BarChart3, Building2, CreditCard, FileText, LayoutDashboard, Users} from "lucide-react"
+import { NavLink } from "react-router-dom"
+import { LayoutDashboard, Users, CreditCard, Settings } from "lucide-react"
 
 const navItems = [
-    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
-    {label: "Tenants", path: "/tenants", icon: Users},
-    {label: "Units", path: "/units", icon: Building2},
-    {label: "Agreements", path: "/agreements", icon: FileText},
-    {label: "Payments", path: "/payments", icon: CreditCard},
-    {label: "Reports", path: "/reports", icon: BarChart3},
+    { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { label: "Tenants",   path: "/tenants",   icon: Users },
+    { label: "Payments",  path: "/payments",  icon: CreditCard },
+    { label: "Settings",  path: "/settings",  icon: Settings },
 ]
 
 export default function BottomNav() {
@@ -19,20 +17,20 @@ export default function BottomNav() {
             display: "flex", zIndex: 100,
             paddingBottom: "env(safe-area-inset-bottom)",
         }}>
-            {navItems.map(({label, path, icon: Icon}) => (
+            {navItems.map(({ label, path, icon: Icon }) => (
                 <NavLink
                     key={path}
                     to={path}
-                    style={({isActive}) => ({
+                    style={({ isActive }) => ({
                         flex: 1, display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center",
-                        padding: "8px 2px", textDecoration: "none",
+                        padding: "10px 2px", textDecoration: "none",
                         color: isActive ? "#5DCAA5" : "rgba(255,255,255,0.45)",
-                        fontSize: "9px", fontFamily: "'DM Sans', sans-serif",
-                        gap: "3px",
+                        fontSize: "10px", fontFamily: "'DM Sans', sans-serif",
+                        gap: "4px",
                     })}
                 >
-                    <Icon size={18}/>
+                    <Icon size={20} />
                     {label}
                 </NavLink>
             ))}

@@ -731,7 +731,7 @@ export default function AgreementsPage() {
     )
 
     return (
-        <PageWrapper title="Agreements" actions={actions} mobileAction={mobileAction}>
+        <PageWrapper title="Agreements" actions={actions} mobileAction={mobileAction} showBack>
 
             {/* Search */}
             <div style={{ marginBottom: "12px" }}>

@@ -82,7 +82,7 @@ export default function ReportsPage() {
     ] : []
 
     return (
-        <PageWrapper title="Reports">
+        <PageWrapper title="Reports" showBack>
 
             {/* ── Summary cards ── */}
             <div style={{ marginBottom: "12px" }}>

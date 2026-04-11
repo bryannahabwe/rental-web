@@ -316,7 +316,7 @@ export default function UnitsPage() {
     )
 
     return (
-        <PageWrapper title="Units" actions={actions} mobileAction={mobileAction}>
+        <PageWrapper title="Units" actions={actions} mobileAction={mobileAction} showBack>
 
             {/* Search + filter */}
             <div style={{
