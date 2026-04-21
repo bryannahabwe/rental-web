@@ -18,7 +18,6 @@ const formatCycle = (start, end) => {
     return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
 }
 
-// Fixed: shows 1.51M not 1.5M, trims trailing zeros
 const formatUGXShort = (amount) => {
     if (amount == null) return "—"
     const n = Number(amount)
@@ -125,21 +124,24 @@ export default function DashboardPage() {
         t => t.periodStatus === "UNPAID" || t.periodStatus === "PARTIAL"
     )
 
+    // Tenants with active agreements
+    const tenantsWithAgreements = allTenants.filter(t => t.monthlyRent != null)
+
     // Total monthly rent across all active tenants
-    const totalMonthlyRent = allTenants
-        .filter(t => t.monthlyRent != null)
+    const totalMonthlyRent = tenantsWithAgreements
         .reduce((sum, t) => sum + Number(t.monthlyRent), 0)
 
-    // Cumulative outstanding across all due cycles (may exceed monthly rent)
+    // Cumulative outstanding (may exceed monthly rent due to arrears)
     const totalOutstanding = outstandingTenants
         .reduce((sum, t) => sum + Number(t.currentBalance || 0), 0)
 
-    // Progress bar: how much of this month's rent has been covered
-    // Cap outstanding at monthly rent for display purposes only
-    const outstandingThisMonth = Math.min(totalOutstanding, totalMonthlyRent)
-    const collectedThisMonth = Math.max(0, totalMonthlyRent - outstandingThisMonth)
+    // Progress bar — count tenants whose current cycle is PAID
+    const paidThisMonth = tenantsWithAgreements
+        .filter(t => t.currentCyclePaid === true)
+        .reduce((sum, t) => sum + Number(t.monthlyRent), 0)
+
     const collectionPct = totalMonthlyRent > 0
-        ? Math.round((collectedThisMonth / totalMonthlyRent) * 100)
+        ? Math.round((paidThisMonth / totalMonthlyRent) * 100)
         : 0
 
     return (
@@ -205,7 +207,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Outstanding summary ── */}
-            {!tenantsLoading && allTenants.some(t => t.monthlyRent != null) && (
+            {!tenantsLoading && tenantsWithAgreements.length > 0 && (
                 <div style={{
                     backgroundColor: "#fff", borderRadius: "12px",
                     border: "1px solid #f0f0f0", padding: "16px 20px",
@@ -223,11 +225,11 @@ export default function DashboardPage() {
                             fontSize: "12px", fontWeight: "600",
                             color: collectionPct >= 100 ? "#0F6E56" : "#854F0B",
                         }}>
-                            {collectionPct}% of this month covered
+                            {collectionPct}% paid this month
                         </span>
                     </div>
 
-                    {/* Progress bar — this month coverage only */}
+                    {/* Progress bar — based on PAID tenants this cycle */}
                     <div style={{
                         height: "8px", borderRadius: "8px",
                         backgroundColor: "#f3f4f6", overflow: "hidden",
@@ -241,7 +243,7 @@ export default function DashboardPage() {
                         }} />
                     </div>
 
-                    {/* Desktop stats */}
+                    {/* Desktop — 3 stats */}
                     <div className="desktop-table">
                         <div style={{ display: "flex", gap: "24px", justifyContent: "flex-end" }}>
                             {[
@@ -249,6 +251,11 @@ export default function DashboardPage() {
                                     label: "MONTHLY RENT",
                                     value: formatUGX(totalMonthlyRent),
                                     color: "#111827",
+                                },
+                                {
+                                    label: "PAID THIS MONTH",
+                                    value: formatUGX(paidThisMonth),
+                                    color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
                                 },
                                 {
                                     label: "TOTAL OUTSTANDING",
@@ -268,17 +275,22 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Mobile stats — 2 boxes, no "Collected" */}
+                    {/* Mobile — 3 boxes */}
                     <div className="mobile-cards">
                         <div style={{
-                            display: "grid", gridTemplateColumns: "1fr 1fr",
+                            display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
                             gap: "8px", width: "100%",
                         }}>
                             {[
                                 {
-                                    label: "Monthly Rent",
+                                    label: "Monthly",
                                     value: formatUGXShort(totalMonthlyRent),
                                     color: "#111827",
+                                },
+                                {
+                                    label: "Paid",
+                                    value: formatUGXShort(paidThisMonth),
+                                    color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
                                 },
                                 {
                                     label: "Outstanding",
@@ -288,13 +300,13 @@ export default function DashboardPage() {
                             ].map((s, i) => (
                                 <div key={i} style={{
                                     backgroundColor: "#f9fafb", borderRadius: "8px",
-                                    padding: "10px 8px", textAlign: "center",
+                                    padding: "8px 6px", textAlign: "center",
                                 }}>
                                     <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "3px" }}>
                                         {s.label.toUpperCase()}
                                     </div>
                                     <div style={{
-                                        fontSize: "13px", fontWeight: "700",
+                                        fontSize: "12px", fontWeight: "700",
                                         color: s.color, wordBreak: "break-word",
                                     }}>
                                         {s.value}
@@ -387,7 +399,6 @@ export default function DashboardPage() {
                                     padding: "12px 16px",
                                     borderTop: i === 0 ? "none" : "1px solid #f9f9f9",
                                 }}>
-                                    {/* Row 1 — name + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
@@ -397,15 +408,11 @@ export default function DashboardPage() {
                                         </span>
                                         <PeriodStatusPill status={t.periodStatus} />
                                     </div>
-
-                                    {/* Row 2 — unit + cycle */}
                                     <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>
                                         Unit {t.currentUnit} · {t.currentCycleStart
                                         ? formatCycle(t.currentCycleStart, t.currentCycleEnd)
                                         : "—"}
                                     </div>
-
-                                    {/* Row 3 — monthly rent vs total outstanding */}
                                     <div style={{ display: "flex", gap: "8px" }}>
                                         <div style={{
                                             flex: 1, backgroundColor: "#f9fafb",
