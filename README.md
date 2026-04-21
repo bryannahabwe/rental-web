@@ -1,21 +1,83 @@
-# React + Vite
+### Rental Management Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, responsive web application for managing rental properties, tenants, agreements, and payments. Built with React 19 and Vite, this frontend provides a comprehensive dashboard and management tools for property owners and managers.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react)
-  uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc)
-  uses [SWC](https://swc.rs/)
+### 🚀 Features
 
-## React Compiler
+*   **Dashboard:** Real-time overview of occupancy rates, revenue summaries, and key performance indicators.
+*   **Property Management:** Manage rental units, their status, and details.
+*   **Tenant Management:** Track tenant information, history, and contact details.
+*   **Lease Agreements:** Digital management of rental agreements between tenants and units.
+*   **Payment Tracking:** Monitor rent payments, track balances, and identify overdue accounts.
+*   **Reporting:** Generate occupancy and financial reports.
+*   **Authentication:** Secure login and registration with JWT-based session management (Access/Refresh tokens).
+*   **Responsive Design:** Fully optimized for both desktop and mobile users with a persistent sidebar and mobile bottom navigation.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it,
-see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+### 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check
-out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information
-on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+*   **Framework:** [React 19](https://react.dev/)
+*   **Build Tool:** [Vite 8](https://vitejs.dev/)
+*   **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
+*   **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+*   **Data Fetching:** [TanStack Query v5](https://tanstack.com/query/latest)
+*   **Routing:** [React Router 7](https://reactrouter.com/)
+*   **Icons:** [Lucide React](https://lucide.dev/)
+*   **Charts:** [Recharts](https://recharts.org/)
+*   **HTTP Client:** [Axios](https://axios-http.com/)
+*   **Form Handling:** [React Hook Form](https://react-hook-form.com/)
+
+---
+
+### 📦 Getting Started
+
+#### Prerequisites
+*   Node.js (Latest LTS recommended)
+*   npm or yarn
+
+#### Installation
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd rental-frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file in the root directory and add the API base URL:
+   ```env
+   VITE_API_BASE_URL=https://rental-api.askmoozo.com/api/v1
+   ```
+
+#### Development
+Start the development server:
+```bash
+npm run dev
+```
+
+#### Production
+Build the project for production:
+```bash
+npm run build
+```
+The output will be in the `dist/` folder.
+
+---
+
+### 📂 Project Structure
+
+*   `src/components/`: Reusable UI components and layout elements (Sidebar, BottomNav, PageWrapper).
+*   `src/pages/`: Main application views (Dashboard, Tenants, Units, etc.).
+*   `src/hooks/`: Custom React hooks for data fetching and logic.
+*   `src/services/`: API service layer for communicating with the backend.
+*   `src/store/`: Zustand store definitions for global state (e.g., authStore).
+*   `src/lib/`: Utility functions and configurations.
+*   `public/`: Static assets.
+
+---
