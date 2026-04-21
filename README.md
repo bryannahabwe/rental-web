@@ -52,7 +52,7 @@ A modern, responsive web application for managing rental properties, tenants, ag
 
 3. Create a `.env` file in the root directory and add the API base URL:
    ```env
-   VITE_API_BASE_URL=https://rental-api.askmoozo.com/api/v1
+   VITE_API_BASE_URL=https://localhost:8080/api/v1
    ```
 
 #### Development
