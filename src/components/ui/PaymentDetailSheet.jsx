@@ -1,5 +1,9 @@
+import { useState } from "react"
 import BottomSheet from "./BottomSheet"
-import {usePayment} from "@/hooks/usePayments"
+import { usePayment } from "@/hooks/usePayments"
+import { generateReceipt } from "@/utils/receiptGenerator"
+import { settingsService } from "@/services/settingsService"
+import useSettingsStore from "@/store/settingsStore"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
@@ -11,26 +15,18 @@ const formatDate = (dateStr) => {
     })
 }
 
-// Format cycle date: 2026-04-15 → "Apr 15"
 const formatCycleDate = (dateStr) => {
     if (!dateStr) return "—"
     const d = new Date(dateStr)
-    return d.toLocaleDateString("en-UG", {day: "numeric", month: "short"})
+    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
 }
 
-
-// Format full cycle: "Apr 15 – May 14"
 const formatCycle = (start, end) => {
     if (!start || !end) return "—"
     return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
 }
 
-
-const getMonthName = (month) =>
-    ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"][month - 1]
-
-function DetailRow({label, value, valueColor}) {
+function DetailRow({ label, value, valueColor }) {
     return (
         <div style={{
             display: "flex", justifyContent: "space-between",
@@ -38,33 +34,52 @@ function DetailRow({label, value, valueColor}) {
             paddingBottom: "14px", marginBottom: "14px",
             borderBottom: "1px solid #f3f4f6",
         }}>
-      <span style={{fontSize: "13px", color: "#9ca3af", flexShrink: 0}}>
-        {label}
-      </span>
+            <span style={{ fontSize: "13px", color: "#9ca3af", flexShrink: 0 }}>
+                {label}
+            </span>
             <span style={{
                 fontSize: "13px", fontWeight: "500",
                 color: valueColor || "#111827", textAlign: "right",
             }}>
-        {value}
-      </span>
+                {value}
+            </span>
         </div>
     )
 }
 
-export default function PaymentDetailSheet({paymentId, onClose}) {
-    const {data: payment, isLoading} = usePayment(paymentId)
+export default function PaymentDetailSheet({ paymentId, onClose }) {
+    const { data: payment, isLoading } = usePayment(paymentId)
+    const { settings } = useSettingsStore()
+    const [downloading, setDownloading] = useState(false)
+    const [error, setError] = useState("")
 
     const statusStyles = {
-        PAID: {bg: "#E1F5EE", color: "#0F6E56"},
-        PARTIAL: {bg: "#FAEEDA", color: "#854F0B"},
-        ROLLOVER: {bg: "#E6F1FB", color: "#185FA5"},
+        PAID:     { bg: "#E1F5EE", color: "#0F6E56" },
+        PARTIAL:  { bg: "#FAEEDA", color: "#854F0B" },
+        ROLLOVER: { bg: "#E6F1FB", color: "#185FA5" },
     }
-    const s = payment ? (statusStyles[payment.periodStatus] || {bg: "#f3f4f6", color: "#6b7280"}) : {}
+    const s = payment
+        ? (statusStyles[payment.periodStatus] || { bg: "#f3f4f6", color: "#6b7280" })
+        : {}
+
+    const handleDownload = async () => {
+        setDownloading(true)
+        setError("")
+        try {
+            const receiptRes = await settingsService.getNextReceiptNumber()
+            await generateReceipt(payment, settings, receiptRes.data)
+        } catch (err) {
+            console.error("Receipt generation failed", err)
+            setError("Failed to generate receipt. Please try again.")
+        } finally {
+            setDownloading(false)
+        }
+    }
 
     return (
         <BottomSheet title="Payment Details" onClose={onClose}>
             {isLoading ? (
-                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
+                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
                     Loading...
                 </div>
             ) : payment ? (
@@ -74,13 +89,13 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                         textAlign: "center", marginBottom: "24px",
                         padding: "20px", backgroundColor: "#f9fafb", borderRadius: "12px",
                     }}>
-                        <div style={{fontSize: "11px", color: "#9ca3af", marginBottom: "6px"}}>
+                        <div style={{ fontSize: "11px", color: "#9ca3af", marginBottom: "6px" }}>
                             AMOUNT PAID
                         </div>
-                        <div style={{fontSize: "32px", fontWeight: "800", color: "#111827"}}>
+                        <div style={{ fontSize: "32px", fontWeight: "800", color: "#111827" }}>
                             {formatUGX(payment.amount)}
                         </div>
-                        <div style={{fontSize: "13px", color: "#9ca3af", marginTop: "4px"}}>
+                        <div style={{ fontSize: "13px", color: "#9ca3af", marginTop: "4px" }}>
                             of {formatUGX(payment.expectedAmount)} expected
                         </div>
 
@@ -94,10 +109,10 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                                 <div style={{
                                     height: "100%", borderRadius: "6px",
                                     backgroundColor:
-                                        payment.periodStatus === "PAID" ? "#0F6E56" :
+                                        payment.periodStatus === "PAID"     ? "#0F6E56" :
                                             payment.periodStatus === "ROLLOVER" ? "#185FA5" : "#EF9F27",
                                     width: `${Math.min(100, (payment.amount / payment.expectedAmount) * 100)}%`,
-                                }}/>
+                                }} />
                             </div>
                         )}
 
@@ -106,8 +121,8 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
                             backgroundColor: s.bg, color: s.color,
                         }}>
-              {payment.periodStatus}
-            </span>
+                            {payment.periodStatus}
+                        </span>
                     </div>
 
                     {/* Tenant + unit */}
@@ -122,14 +137,15 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                         }}>
                             Tenant
                         </p>
-                        <DetailRow label="Name" value={payment.tenantName}/>
+                        <DetailRow label="Name" value={payment.tenantName} />
                         <div style={{
-                            display: "flex", justifyContent: "space-between", alignItems: "center",
+                            display: "flex", justifyContent: "space-between",
+                            alignItems: "center",
                         }}>
-                            <span style={{fontSize: "13px", color: "#9ca3af"}}>Unit</span>
-                            <span style={{fontSize: "13px", fontWeight: "500", color: "#111827"}}>
-                {payment.roomNumber}
-              </span>
+                            <span style={{ fontSize: "13px", color: "#9ca3af" }}>Unit</span>
+                            <span style={{ fontSize: "13px", fontWeight: "500", color: "#111827" }}>
+                                {payment.roomNumber}
+                            </span>
                         </div>
                     </div>
 
@@ -147,10 +163,10 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                         </p>
                         <DetailRow
                             label="Period"
-                            value={`${formatCycle(payment.periodStartDate, payment.periodEndDate)}`}
+                            value={formatCycle(payment.periodStartDate, payment.periodEndDate)}
                         />
-                        <DetailRow label="Payment Date" value={formatDate(payment.paymentDate)}/>
-                        <DetailRow label="Method" value={payment.method}/>
+                        <DetailRow label="Payment Date" value={formatDate(payment.paymentDate)} />
+                        <DetailRow label="Method"       value={payment.method} />
                         <DetailRow
                             label="Source"
                             value={payment.source}
@@ -169,7 +185,7 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                     {(payment.reference || payment.notes) && (
                         <div style={{
                             backgroundColor: "#f9fafb", borderRadius: "12px",
-                            padding: "16px",
+                            padding: "16px", marginBottom: "16px",
                         }}>
                             <p style={{
                                 fontSize: "11px", fontWeight: "500", color: "#9ca3af",
@@ -179,27 +195,59 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                                 Additional Info
                             </p>
                             {payment.reference && (
-                                <DetailRow label="Reference" value={payment.reference}/>
+                                <DetailRow label="Reference" value={payment.reference} />
                             )}
                             {payment.notes && (
                                 <div style={{
                                     display: "flex", justifyContent: "space-between",
                                     alignItems: "flex-start", gap: "16px",
                                 }}>
-                                    <span style={{fontSize: "13px", color: "#9ca3af", flexShrink: 0}}>Notes</span>
+                                    <span style={{ fontSize: "13px", color: "#9ca3af", flexShrink: 0 }}>
+                                        Notes
+                                    </span>
                                     <span style={{
-                                        fontSize: "13px", fontWeight: "500", color: "#111827",
-                                        textAlign: "right",
+                                        fontSize: "13px", fontWeight: "500",
+                                        color: "#111827", textAlign: "right",
                                     }}>
-                    {payment.notes}
-                  </span>
+                                        {payment.notes}
+                                    </span>
                                 </div>
                             )}
                         </div>
                     )}
+
+                    {/* Error */}
+                    {error && (
+                        <div style={{
+                            backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
+                            padding: "10px 14px", borderRadius: "8px",
+                            borderLeft: "3px solid #ef4444", marginBottom: "12px",
+                        }}>
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Download receipt button */}
+                    <button
+                        onClick={handleDownload}
+                        disabled={downloading}
+                        style={{
+                            width: "100%", padding: "13px", borderRadius: "10px",
+                            backgroundColor: downloading ? "#6b9e8f" : "#0F6E56",
+                            color: "#fff", border: "none",
+                            cursor: downloading ? "not-allowed" : "pointer",
+                            fontSize: "14px", fontWeight: "500",
+                            fontFamily: "'DM Sans', sans-serif",
+                            display: "flex", alignItems: "center",
+                            justifyContent: "center", gap: "8px",
+                            marginTop: "8px",
+                        }}
+                    >
+                        {downloading ? "Generating..." : "↓ Download Receipt"}
+                    </button>
                 </>
             ) : (
-                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
+                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
                     Payment not found
                 </div>
             )}
