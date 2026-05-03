@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from "react"
 import Sidebar from "./Sidebar"
 import BottomNav from "./BottomNav"
 import useAuthStore from "@/store/authStore"
+import useSettingsStore from "@/store/settingsStore"
 import { useNavigate } from "react-router-dom"
 import { LogOut, ArrowLeft } from "lucide-react"
 
 function AvatarMenu() {
     const { landlord, logout } = useAuthStore()
+    const { settings, clearSettings } = useSettingsStore()
     const navigate = useNavigate()
     const [open, setOpen] = useState(false)
     const ref = useRef(null)
@@ -14,6 +16,9 @@ function AvatarMenu() {
     const initials = landlord?.name
         ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
         : "RL"
+
+    const companyName = settings?.companyName || "RentFlow"
+    const logoUrl = settings?.logoUrl || null
 
     useEffect(() => {
         const handler = (e) => {
@@ -23,8 +28,15 @@ function AvatarMenu() {
         return () => document.removeEventListener("mousedown", handler)
     }, [])
 
+    const handleLogout = () => {
+        logout()
+        clearSettings()
+        navigate("/login")
+    }
+
     return (
         <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+            {/* Avatar circle */}
             <div
                 onClick={() => setOpen(v => !v)}
                 style={{
@@ -40,6 +52,7 @@ function AvatarMenu() {
                 {initials}
             </div>
 
+            {/* Dropdown */}
             {open && (
                 <div style={{
                     position: "absolute", top: "44px", right: 0,
@@ -78,28 +91,42 @@ function AvatarMenu() {
                         </div>
                     </div>
 
-                    {/* RentFlow brand */}
+                    {/* Brand line — shows company name + logo if set */}
                     <div style={{
                         padding: "10px 16px", borderBottom: "1px solid #f3f4f6",
                         display: "flex", alignItems: "center", gap: "10px",
                     }}>
-                        <div style={{
-                            width: "28px", height: "28px", borderRadius: "8px",
-                            backgroundColor: "#E1F5EE",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            flexShrink: 0,
-                        }}>
-              <span style={{
-                  fontFamily: "'DM Serif Display', serif",
-                  fontSize: "12px", color: "#0F6E56",
-              }}>R</span>
-                        </div>
+                        {logoUrl ? (
+                            <img
+                                src={logoUrl}
+                                alt={companyName}
+                                style={{
+                                    width: "28px", height: "28px", borderRadius: "6px",
+                                    objectFit: "contain", border: "1px solid #f0f0f0",
+                                    flexShrink: 0,
+                                }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: "28px", height: "28px", borderRadius: "8px",
+                                backgroundColor: "#E1F5EE",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                flexShrink: 0,
+                            }}>
+                                <span style={{
+                                    fontFamily: "'DM Serif Display', serif",
+                                    fontSize: "12px", color: "#0F6E56",
+                                }}>
+                                    {companyName.charAt(0)}
+                                </span>
+                            </div>
+                        )}
                         <div>
                             <div style={{
                                 fontFamily: "'DM Serif Display', serif",
                                 fontSize: "13px", color: "#0a4a38", lineHeight: 1,
                             }}>
-                                RentFlow
+                                {companyName}
                             </div>
                             <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
                                 Property Management
@@ -109,7 +136,7 @@ function AvatarMenu() {
 
                     {/* Sign out */}
                     <button
-                        onClick={() => { logout(); navigate("/login") }}
+                        onClick={handleLogout}
                         style={{
                             width: "100%", padding: "13px 16px",
                             display: "flex", alignItems: "center", gap: "10px",
@@ -131,6 +158,8 @@ function AvatarMenu() {
 
 export default function PageWrapper({ title, actions, mobileAction, showBack, children }) {
     const navigate = useNavigate()
+    const { settings } = useSettingsStore()
+    const companyName = settings?.companyName || "RentFlow"
 
     return (
         <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9" }}>
@@ -183,7 +212,7 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                         minHeight: "60px",
                     }}
                 >
-                    {/* Left — back button or brand */}
+                    {/* Left — back button + brand */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         {showBack && (
                             <button
@@ -199,12 +228,13 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                             </button>
                         )}
                         <div>
+                            {/* Company name or RentFlow */}
                             <div style={{
                                 fontFamily: "'DM Serif Display', serif",
                                 fontSize: "16px", color: "#ffffff",
                                 lineHeight: 1, letterSpacing: "0.01em",
                             }}>
-                                RentFlow
+                                {companyName}
                             </div>
                             <div style={{
                                 fontSize: "12px",

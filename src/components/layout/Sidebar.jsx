@@ -2,9 +2,10 @@ import { NavLink } from "react-router-dom"
 import {
     LayoutDashboard, Users, Building2,
     FileText, CreditCard, BarChart3,
-    Settings, LogOut,
+    LogOut,
 } from "lucide-react"
 import useAuthStore from "@/store/authStore"
+import useSettingsStore from "@/store/settingsStore"
 import { useNavigate } from "react-router-dom"
 
 const mainLinks = [
@@ -54,11 +55,21 @@ function SidebarSection({ label, links }) {
 
 export default function Sidebar() {
     const { landlord, logout } = useAuthStore()
+    const { settings, clearSettings } = useSettingsStore()
     const navigate = useNavigate()
 
     const initials = landlord?.name
         ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
         : "RL"
+
+    const companyName = settings?.companyName || "RentFlow"
+    const logoUrl = settings?.logoUrl || null
+
+    const handleLogout = () => {
+        logout()
+        clearSettings()
+        navigate("/login")
+    }
 
     return (
         <aside className="sidebar-desktop" style={{
@@ -69,30 +80,54 @@ export default function Sidebar() {
         }}>
             {/* Brand */}
             <div style={{ padding: "24px 20px 20px" }}>
-                <h1 style={{
-                    fontFamily: "'DM Serif Display', serif",
-                    fontSize: "22px", color: "#fff", margin: 0, lineHeight: 1,
+                {logoUrl ? (
+                    <img
+                        src={logoUrl}
+                        alt={companyName}
+                        style={{
+                            height: "44px", maxWidth: "160px",
+                            objectFit: "contain", marginBottom: "4px",
+                        }}
+                    />
+                ) : (
+                    <h1 style={{
+                        fontFamily: "'DM Serif Display', serif",
+                        fontSize: "22px", color: "#fff",
+                        margin: 0, lineHeight: 1,
+                    }}>
+                        {companyName}
+                    </h1>
+                )}
+                <p style={{
+                    fontSize: "11px", color: "rgba(255,255,255,0.4)",
+                    margin: "4px 0 0",
                 }}>
-                    RentFlow
-                </h1>
-                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: "4px 0 0" }}>
                     Property Management
                 </p>
             </div>
 
-            <div style={{ height: "1px", backgroundColor: "rgba(255,255,255,0.08)", margin: "0 16px" }} />
+            <div style={{
+                height: "1px",
+                backgroundColor: "rgba(255,255,255,0.08)",
+                margin: "0 16px",
+            }} />
 
             {/* Nav links */}
             <nav style={{ flex: 1, padding: "16px 8px" }}>
-                <SidebarSection label="Main" links={mainLinks} />
+                <SidebarSection label="Main"       links={mainLinks} />
                 <SidebarSection label="Financials" links={financialLinks} />
-                <SidebarSection label="Manage" links={manageLinks} />
+                <SidebarSection label="Manage"     links={manageLinks} />
             </nav>
 
-            <div style={{ height: "1px", backgroundColor: "rgba(255,255,255,0.08)", margin: "0 16px" }} />
+            <div style={{
+                height: "1px",
+                backgroundColor: "rgba(255,255,255,0.08)",
+                margin: "0 16px",
+            }} />
 
             {/* User + sign out */}
             <div style={{ padding: "16px 8px" }}>
+                {/* User card */}
                 <div style={{
                     display: "flex", alignItems: "center", gap: "10px",
                     padding: "10px 16px", borderRadius: "8px",
@@ -123,8 +158,9 @@ export default function Sidebar() {
                     </div>
                 </div>
 
+                {/* Sign out */}
                 <button
-                    onClick={() => { logout(); navigate("/login") }}
+                    onClick={handleLogout}
                     style={{
                         width: "100%", display: "flex", alignItems: "center", gap: "10px",
                         padding: "9px 16px", borderRadius: "8px",

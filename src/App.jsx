@@ -11,6 +11,8 @@ import PaymentsPage from "@/pages/PaymentsPage"
 import ReportsPage from "@/pages/ReportsPage"
 import SettingsPage from "@/pages/SettingsPage"
 import useAuthStore from "@/store/authStore"
+import BusinessProfilePage from "@/pages/BusinessProfilePage"
+import ReceiptSettingsPage from "@/pages/ReceiptSettingsPage"
 
 // ── Token guard — checks on PWA resume ──────────────────
 function TokenGuard() {
@@ -57,6 +59,8 @@ export default function App() {
                                 <Route path="/payments"   element={<PaymentsPage />} />
                                 <Route path="/reports"    element={<ReportsPage />} />
                                 <Route path="/settings"   element={<SettingsPage />} />
+                                <Route path="/settings/business-profile" element={<BusinessProfilePage />} />
+                                <Route path="/settings/receipt-settings" element={<ReceiptSettingsPage />} />
                                 <Route path="*"           element={<Navigate to="/dashboard" replace />} />
                             </Routes>
                         </ProtectedRoute>

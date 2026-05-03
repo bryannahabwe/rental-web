@@ -1,11 +1,16 @@
 import { useNavigate } from "react-router-dom"
 import PageWrapper from "@/components/layout/PageWrapper"
 import useAuthStore from "@/store/authStore"
-import { Building2, FileText, BarChart3, ChevronRight, LogOut } from "lucide-react"
+import useSettingsStore from "@/store/settingsStore"
+import {
+    Building2, FileText, BarChart3,
+    ChevronRight, LogOut, Briefcase, Receipt,
+} from "lucide-react"
 
 export default function SettingsPage() {
     const navigate = useNavigate()
     const { landlord, logout } = useAuthStore()
+    const { settings, clearSettings } = useSettingsStore()
 
     const initials = landlord?.name
         ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -13,38 +18,58 @@ export default function SettingsPage() {
 
     const handleLogout = () => {
         logout()
+        clearSettings()
         navigate("/login")
     }
 
-    const menuItems = [
+    const sections = [
         {
-            section: "MANAGE",
+            label: "ACCOUNT",
+            items: [
+                {
+                    icon: Briefcase,
+                    label: "Business Profile",
+                    description: "Company name, logo and address",
+                    path: "/settings/business-profile",
+                    color: "#0F6E56",
+                },
+                {
+                    icon: Receipt,
+                    label: "Receipt Settings",
+                    description: "Prefix, numbering and style",
+                    path: "/settings/receipt-settings",
+                    color: "#854F0B",
+                },
+            ],
+        },
+        {
+            label: "MANAGE",
             items: [
                 {
                     icon: Building2,
                     label: "Units",
                     description: "Manage your rental units",
                     path: "/units",
-                    color: "#0F6E56",
+                    color: "#185FA5",
                 },
                 {
                     icon: FileText,
                     label: "Agreements",
                     description: "Tenant agreements & billing",
                     path: "/agreements",
-                    color: "#185FA5",
+                    color: "#0a4a38",
                 },
             ],
         },
         {
-            section: "REPORTS",
+            label: "REPORTS",
             items: [
                 {
                     icon: BarChart3,
                     label: "Reports",
                     description: "Revenue & occupancy analytics",
                     path: "/reports",
-                    color: "#854F0B",
+                    color: "#6b7280",
                 },
             ],
         },
@@ -60,20 +85,31 @@ export default function SettingsPage() {
                 marginBottom: "20px",
                 display: "flex", alignItems: "center", gap: "16px",
             }}>
-                <div style={{
-                    width: "56px", height: "56px", borderRadius: "50%",
-                    backgroundColor: "#0a4a38",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "20px", color: "#fff", fontWeight: "600", flexShrink: 0,
-                }}>
-                    {initials}
-                </div>
+                {settings?.logoUrl ? (
+                    <img
+                        src={settings.logoUrl}
+                        alt={settings.companyName || "Logo"}
+                        style={{
+                            width: "56px", height: "56px", borderRadius: "12px",
+                            objectFit: "contain", border: "1px solid #f0f0f0",
+                        }}
+                    />
+                ) : (
+                    <div style={{
+                        width: "56px", height: "56px", borderRadius: "50%",
+                        backgroundColor: "#0a4a38",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "20px", color: "#fff", fontWeight: "600", flexShrink: 0,
+                    }}>
+                        {initials}
+                    </div>
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                         fontSize: "17px", fontWeight: "700", color: "#111827",
                         whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                     }}>
-                        {landlord?.name || "Landlord"}
+                        {settings?.companyName || landlord?.name || "Landlord"}
                     </div>
                     <div style={{ fontSize: "13px", color: "#9ca3af", marginTop: "2px" }}>
                         {landlord?.phoneNumber || ""}
@@ -87,14 +123,14 @@ export default function SettingsPage() {
             </div>
 
             {/* Menu sections */}
-            {menuItems.map((section) => (
-                <div key={section.section} style={{ marginBottom: "20px" }}>
+            {sections.map((section) => (
+                <div key={section.label} style={{ marginBottom: "20px" }}>
                     <p style={{
                         fontSize: "11px", fontWeight: "500", color: "#9ca3af",
                         textTransform: "uppercase", letterSpacing: "0.08em",
                         marginBottom: "8px", paddingLeft: "4px",
                     }}>
-                        {section.section}
+                        {section.label}
                     </p>
                     <div style={{
                         backgroundColor: "#fff", borderRadius: "12px",
@@ -115,7 +151,6 @@ export default function SettingsPage() {
                                 onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f9fafb"}
                                 onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
                             >
-                                {/* Icon */}
                                 <div style={{
                                     width: "40px", height: "40px", borderRadius: "10px",
                                     backgroundColor: item.color + "15",
@@ -124,19 +159,14 @@ export default function SettingsPage() {
                                 }}>
                                     <item.icon size={18} color={item.color} />
                                 </div>
-
-                                {/* Label + description */}
                                 <div style={{ flex: 1 }}>
-                                    <div style={{
-                                        fontSize: "14px", fontWeight: "600", color: "#111827",
-                                    }}>
+                                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
                                         {item.label}
                                     </div>
                                     <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>
                                         {item.description}
                                     </div>
                                 </div>
-
                                 <ChevronRight size={16} color="#9ca3af" />
                             </button>
                         ))}
@@ -144,14 +174,14 @@ export default function SettingsPage() {
                 </div>
             ))}
 
-            {/* Account section */}
+            {/* Sign out */}
             <div style={{ marginBottom: "20px" }}>
                 <p style={{
                     fontSize: "11px", fontWeight: "500", color: "#9ca3af",
                     textTransform: "uppercase", letterSpacing: "0.08em",
                     marginBottom: "8px", paddingLeft: "4px",
                 }}>
-                    ACCOUNT
+                    DANGER ZONE
                 </p>
                 <div style={{
                     backgroundColor: "#fff", borderRadius: "12px",
@@ -163,8 +193,7 @@ export default function SettingsPage() {
                             width: "100%", padding: "16px 20px",
                             display: "flex", alignItems: "center", gap: "14px",
                             backgroundColor: "#fff", border: "none",
-                            cursor: "pointer", textAlign: "left",
-                            fontFamily: "'DM Sans', sans-serif",
+                            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                         }}
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = "#fef2f2"}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
@@ -190,7 +219,6 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* App version */}
             <p style={{
                 textAlign: "center", fontSize: "12px",
                 color: "#d1d5db", marginTop: "8px",
