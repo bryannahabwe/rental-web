@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { settingsService } from "@/services/settingsService"
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
+import {settingsService} from "@/services/settingsService"
 import useSettingsStore from "@/store/settingsStore"
 
 export function useSettings() {
@@ -24,7 +24,7 @@ export function useUpdateSettings() {
         mutationFn: (data) => settingsService.updateSettings(data),
         onSuccess: (res) => {
             setSettings(res.data)
-            void queryClient.invalidateQueries({ queryKey: ["settings"] })
+            void queryClient.invalidateQueries({queryKey: ["settings"]})
         },
     })
 }
@@ -37,7 +37,7 @@ export function useUploadLogo() {
         mutationFn: (formData) => settingsService.uploadLogo(formData),
         onSuccess: (res) => {
             setSettings(res.data)
-            void queryClient.invalidateQueries({ queryKey: ["settings"] })
+            void queryClient.invalidateQueries({queryKey: ["settings"]})
         },
     })
 }

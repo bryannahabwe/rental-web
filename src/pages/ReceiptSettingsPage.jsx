@@ -1,7 +1,7 @@
-import { useState } from "react"
+import {useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import { useSettings, useUpdateSettings } from "@/hooks/useSettings"
-import { useForm } from "react-hook-form"
+import {useSettings, useUpdateSettings} from "@/hooks/useSettings"
+import {useForm} from "react-hook-form"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -17,7 +17,7 @@ const labelStyle = {
 }
 
 export default function ReceiptSettingsPage() {
-    const { data: settings, isLoading } = useSettings()
+    const {data: settings, isLoading} = useSettings()
     const updateSettings = useUpdateSettings()
     const [numbering, setNumbering] = useState(
         settings?.receiptNumbering || "AUTO"
@@ -28,7 +28,7 @@ export default function ReceiptSettingsPage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
-    const { register, handleSubmit } = useForm({
+    const {register, handleSubmit} = useForm({
         values: {
             receiptPrefix: settings?.receiptPrefix || "RCP",
             nextReceiptNo: settings?.nextReceiptNo || 1,
@@ -40,11 +40,11 @@ export default function ReceiptSettingsPage() {
         setError("")
         try {
             await updateSettings.mutateAsync({
-                receiptPrefix:    data.receiptPrefix || "RCP",
-                nextReceiptNo:    parseInt(data.nextReceiptNo),
+                receiptPrefix: data.receiptPrefix || "RCP",
+                nextReceiptNo: parseInt(data.nextReceiptNo),
                 receiptNumbering: numbering,
-                receiptFooter:    data.receiptFooter || null,
-                receiptStyle:     receiptStyle,
+                receiptFooter: data.receiptFooter || null,
+                receiptStyle: receiptStyle,
             })
             setSuccess("Receipt settings saved")
             setTimeout(() => setSuccess(""), 3000)
@@ -61,12 +61,12 @@ export default function ReceiptSettingsPage() {
     return (
         <PageWrapper title="Receipt Settings" showBack>
             {isLoading ? (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "60px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "60px 0"}}>
                     Loading...
                 </div>
             ) : (
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    <div style={{display: "flex", flexDirection: "column", gap: "20px"}}>
 
                         {/* Numbering */}
                         <div style={{
@@ -74,17 +74,17 @@ export default function ReceiptSettingsPage() {
                             border: "1px solid #f0f0f0", padding: "24px",
                             display: "flex", flexDirection: "column", gap: "16px",
                         }}>
-                            <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                            <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
                                 Receipt Numbering
                             </p>
 
                             {/* Mode toggle */}
                             <div>
                                 <label style={labelStyle}>Numbering mode</label>
-                                <div style={{ display: "flex", gap: "8px" }}>
+                                <div style={{display: "flex", gap: "8px"}}>
                                     {[
-                                        { value: "AUTO", label: "Auto-increment", desc: "RCP-001, RCP-002..." },
-                                        { value: "MANUAL", label: "Manual start", desc: "Set starting number" },
+                                        {value: "AUTO", label: "Auto-increment", desc: "RCP-001, RCP-002..."},
+                                        {value: "MANUAL", label: "Manual start", desc: "Set starting number"},
                                     ].map(opt => (
                                         <button
                                             key={opt.value}
@@ -101,7 +101,7 @@ export default function ReceiptSettingsPage() {
                                             }}
                                         >
                                             <div>{opt.label}</div>
-                                            <div style={{ fontSize: "10px", marginTop: "2px", opacity: 0.8 }}>
+                                            <div style={{fontSize: "10px", marginTop: "2px", opacity: 0.8}}>
                                                 {opt.desc}
                                             </div>
                                         </button>
@@ -114,13 +114,13 @@ export default function ReceiptSettingsPage() {
                                 <label style={labelStyle}>Receipt prefix</label>
                                 <input
                                     {...register("receiptPrefix")}
-                                    style={{ ...inputStyle, maxWidth: "160px" }}
+                                    style={{...inputStyle, maxWidth: "160px"}}
                                     placeholder="RCP"
                                     maxLength={10}
                                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                     onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                 />
-                                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
                                     e.g. RCP, INV, RCPT
                                 </p>
                             </div>
@@ -136,13 +136,13 @@ export default function ReceiptSettingsPage() {
                                     {...register("nextReceiptNo")}
                                     type="number"
                                     min={1}
-                                    style={{ ...inputStyle, maxWidth: "160px" }}
+                                    style={{...inputStyle, maxWidth: "160px"}}
                                     placeholder="1"
                                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                     onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                 />
                                 {numbering === "MANUAL" && (
-                                    <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                    <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
                                         Match your physical receipt book — e.g. 1954
                                     </p>
                                 )}
@@ -154,10 +154,10 @@ export default function ReceiptSettingsPage() {
                                 padding: "12px 16px", display: "flex",
                                 alignItems: "center", justifyContent: "space-between",
                             }}>
-                <span style={{ fontSize: "13px", color: "#0F6E56", fontWeight: "500" }}>
+                <span style={{fontSize: "13px", color: "#0F6E56", fontWeight: "500"}}>
                   Next receipt will be:
                 </span>
-                                <span style={{ fontSize: "16px", fontWeight: "700", color: "#0F6E56" }}>
+                                <span style={{fontSize: "16px", fontWeight: "700", color: "#0F6E56"}}>
                   {previewNo}
                 </span>
                             </div>
@@ -169,11 +169,11 @@ export default function ReceiptSettingsPage() {
                             border: "1px solid #f0f0f0", padding: "24px",
                             display: "flex", flexDirection: "column", gap: "16px",
                         }}>
-                            <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                            <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
                                 Receipt Style
                             </p>
 
-                            <div style={{ display: "flex", gap: "8px" }}>
+                            <div style={{display: "flex", gap: "8px"}}>
                                 {[
                                     {
                                         value: "DIGITAL",
@@ -202,17 +202,17 @@ export default function ReceiptSettingsPage() {
                                             textAlign: "center",
                                         }}
                                     >
-                                        <div style={{ fontSize: "18px", marginBottom: "6px" }}>
+                                        <div style={{fontSize: "18px", marginBottom: "6px"}}>
                                             {opt.preview}
                                         </div>
-                                        <div style={{ fontWeight: "600" }}>{opt.label}</div>
-                                        <div style={{ fontSize: "11px", marginTop: "2px", opacity: 0.8 }}>
+                                        <div style={{fontWeight: "600"}}>{opt.label}</div>
+                                        <div style={{fontSize: "11px", marginTop: "2px", opacity: 0.8}}>
                                             {opt.desc}
                                         </div>
                                     </button>
                                 ))}
                             </div>
-                            <p style={{ fontSize: "12px", color: "#9ca3af" }}>
+                            <p style={{fontSize: "12px", color: "#9ca3af"}}>
                                 You can also choose the style each time you generate a receipt.
                             </p>
                         </div>
@@ -223,7 +223,7 @@ export default function ReceiptSettingsPage() {
                             border: "1px solid #f0f0f0", padding: "24px",
                             display: "flex", flexDirection: "column", gap: "16px",
                         }}>
-                            <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                            <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
                                 Receipt Footer
                             </p>
                             <div>
@@ -231,12 +231,12 @@ export default function ReceiptSettingsPage() {
                                 <textarea
                                     {...register("receiptFooter")}
                                     rows={2}
-                                    style={{ ...inputStyle, resize: "vertical" }}
+                                    style={{...inputStyle, resize: "vertical"}}
                                     placeholder="Thank you for your business"
                                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                     onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                 />
-                                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
                                     Shown at the bottom of every receipt
                                 </p>
                             </div>

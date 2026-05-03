@@ -1,15 +1,15 @@
 import BottomSheet from "./BottomSheet"
-import { useTenant } from "@/hooks/useTenants"
-import { Pencil, Trash2 } from "lucide-react"
+import {useTenant} from "@/hooks/useTenants"
+import {Pencil, Trash2} from "lucide-react"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
 const getMonthName = (month) =>
-    ["Jan","Feb","Mar","Apr","May","Jun",
-        "Jul","Aug","Sep","Oct","Nov","Dec"][month - 1]
+    ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
 
-function DetailRow({ label, value, valueColor }) {
+function DetailRow({label, value, valueColor}) {
     return (
         <div style={{
             display: "flex", justifyContent: "space-between",
@@ -17,7 +17,7 @@ function DetailRow({ label, value, valueColor }) {
             paddingBottom: "14px", marginBottom: "14px",
             borderBottom: "1px solid #f3f4f6",
         }}>
-      <span style={{ fontSize: "13px", color: "#9ca3af", flexShrink: 0 }}>
+      <span style={{fontSize: "13px", color: "#9ca3af", flexShrink: 0}}>
         {label}
       </span>
             <span style={{
@@ -31,14 +31,14 @@ function DetailRow({ label, value, valueColor }) {
     )
 }
 
-function StatusPill({ status }) {
-    if (!status) return <span style={{ color: "#9ca3af", fontSize: "13px" }}>No agreement</span>
+function StatusPill({status}) {
+    if (!status) return <span style={{color: "#9ca3af", fontSize: "13px"}}>No agreement</span>
     const styles = {
-        PAID:    { bg: "#E1F5EE", color: "#0F6E56" },
-        PARTIAL: { bg: "#FAEEDA", color: "#854F0B" },
-        UNPAID:  { bg: "#FCEBEB", color: "#A32D2D" },
+        PAID: {bg: "#E1F5EE", color: "#0F6E56"},
+        PARTIAL: {bg: "#FAEEDA", color: "#854F0B"},
+        UNPAID: {bg: "#FCEBEB", color: "#A32D2D"},
     }
-    const s = styles[status] || { bg: "#f3f4f6", color: "#6b7280" }
+    const s = styles[status] || {bg: "#f3f4f6", color: "#6b7280"}
     return (
         <span style={{
             display: "inline-block", padding: "3px 10px",
@@ -50,13 +50,13 @@ function StatusPill({ status }) {
     )
 }
 
-export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete }) {
-    const { data: tenant, isLoading } = useTenant(tenantId)
+export default function TenantDetailSheet({tenantId, onClose, onEdit, onDelete}) {
+    const {data: tenant, isLoading} = useTenant(tenantId)
 
     return (
         <BottomSheet title="Tenant Details" onClose={onClose}>
             {isLoading ? (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
                     Loading...
                 </div>
             ) : tenant ? (
@@ -75,10 +75,10 @@ export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete 
                             {tenant.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                         </div>
                         <div>
-                            <div style={{ fontSize: "18px", fontWeight: "700", color: "#111827" }}>
+                            <div style={{fontSize: "18px", fontWeight: "700", color: "#111827"}}>
                                 {tenant.name}
                             </div>
-                            <div style={{ fontSize: "13px", color: "#9ca3af", marginTop: "2px" }}>
+                            <div style={{fontSize: "13px", color: "#9ca3af", marginTop: "2px"}}>
                                 {tenant.phone}
                             </div>
                         </div>
@@ -96,8 +96,8 @@ export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete 
                         }}>
                             Contact
                         </p>
-                        <DetailRow label="Phone" value={tenant.phone} />
-                        <DetailRow label="Email" value={tenant.email || "—"} />
+                        <DetailRow label="Phone" value={tenant.phone}/>
+                        <DetailRow label="Email" value={tenant.email || "—"}/>
                         <DetailRow
                             label="Address"
                             value={tenant.address || "—"}
@@ -117,7 +117,7 @@ export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete 
                             }}>
                                 Current Tenancy
                             </p>
-                            <DetailRow label="Unit" value={tenant.currentUnit} />
+                            <DetailRow label="Unit" value={tenant.currentUnit}/>
                             <DetailRow
                                 label="Monthly Rent"
                                 value={formatUGX(tenant.monthlyRent)}
@@ -138,16 +138,19 @@ export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete 
                             <div style={{
                                 display: "flex", justifyContent: "space-between", alignItems: "center",
                             }}>
-                                <span style={{ fontSize: "13px", color: "#9ca3af" }}>Status</span>
-                                <StatusPill status={tenant.periodStatus} />
+                                <span style={{fontSize: "13px", color: "#9ca3af"}}>Status</span>
+                                <StatusPill status={tenant.periodStatus}/>
                             </div>
                         </div>
                     )}
 
                     {/* Actions */}
-                    <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                    <div style={{display: "flex", gap: "10px", marginTop: "8px"}}>
                         <button
-                            onClick={() => { onEdit(tenant); onClose() }}
+                            onClick={() => {
+                                onEdit(tenant);
+                                onClose()
+                            }}
                             style={{
                                 flex: 1, padding: "12px", borderRadius: "10px",
                                 border: "1px solid #e5e7eb", backgroundColor: "#fff",
@@ -156,10 +159,13 @@ export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete 
                                 display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
                             }}
                         >
-                            <Pencil size={15} /> Edit
+                            <Pencil size={15}/> Edit
                         </button>
                         <button
-                            onClick={() => { onDelete(tenant); onClose() }}
+                            onClick={() => {
+                                onDelete(tenant);
+                                onClose()
+                            }}
                             style={{
                                 flex: 1, padding: "12px", borderRadius: "10px",
                                 border: "1px solid #fee2e2", backgroundColor: "#fff",
@@ -168,12 +174,12 @@ export default function TenantDetailSheet({ tenantId, onClose, onEdit, onDelete 
                                 display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
                             }}
                         >
-                            <Trash2 size={15} /> Delete
+                            <Trash2 size={15}/> Delete
                         </button>
                     </div>
                 </>
             ) : (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
                     Tenant not found
                 </div>
             )}

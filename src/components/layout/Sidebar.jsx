@@ -1,26 +1,22 @@
-import { NavLink } from "react-router-dom"
-import {
-    LayoutDashboard, Users, Building2,
-    FileText, CreditCard, BarChart3,
-    LogOut,
-} from "lucide-react"
+import {NavLink, useNavigate} from "react-router-dom"
+import {BarChart3, Building2, CreditCard, FileText, LayoutDashboard, LogOut, Settings, Users,} from "lucide-react"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
-import { useNavigate } from "react-router-dom"
 
 const mainLinks = [
-    { label: "Dashboard",  path: "/dashboard",  icon: LayoutDashboard },
-    { label: "Tenants",    path: "/tenants",    icon: Users },
+    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
+    {label: "Tenants", path: "/tenants", icon: Users},
 ]
 
 const financialLinks = [
-    { label: "Payments",   path: "/payments",   icon: CreditCard },
-    { label: "Reports",    path: "/reports",    icon: BarChart3 },
+    {label: "Payments", path: "/payments", icon: CreditCard},
+    {label: "Reports", path: "/reports", icon: BarChart3},
 ]
 
 const manageLinks = [
-    { label: "Units",       path: "/units",       icon: Building2 },
-    { label: "Agreements",  path: "/agreements",  icon: FileText },
+    {label: "Units", path: "/units", icon: Building2},
+    {label: "Agreements", path: "/agreements", icon: FileText},
+    {label: "Settings", path: "/settings", icon: Settings},
 ]
 
 const linkStyle = (isActive) => ({
@@ -33,9 +29,9 @@ const linkStyle = (isActive) => ({
     transition: "all 0.15s",
 })
 
-function SidebarSection({ label, links }) {
+function SidebarSection({label, links}) {
     return (
-        <div style={{ marginBottom: "8px" }}>
+        <div style={{marginBottom: "8px"}}>
             <p style={{
                 fontSize: "10px", fontWeight: "500", color: "rgba(255,255,255,0.3)",
                 textTransform: "uppercase", letterSpacing: "0.08em",
@@ -43,9 +39,9 @@ function SidebarSection({ label, links }) {
             }}>
                 {label}
             </p>
-            {links.map(({ label, path, icon: Icon }) => (
-                <NavLink key={path} to={path} style={({ isActive }) => linkStyle(isActive)}>
-                    <Icon size={16} />
+            {links.map(({label, path, icon: Icon}) => (
+                <NavLink key={path} to={path} style={({isActive}) => linkStyle(isActive)}>
+                    <Icon size={16}/>
                     {label}
                 </NavLink>
             ))}
@@ -54,8 +50,8 @@ function SidebarSection({ label, links }) {
 }
 
 export default function Sidebar() {
-    const { landlord, logout } = useAuthStore()
-    const { settings, clearSettings } = useSettingsStore()
+    const {landlord, logout} = useAuthStore()
+    const {settings, clearSettings} = useSettingsStore()
     const navigate = useNavigate()
 
     const initials = landlord?.name
@@ -79,7 +75,7 @@ export default function Sidebar() {
             zIndex: 100, overflowY: "auto",
         }}>
             {/* Brand */}
-            <div style={{ padding: "24px 20px 20px" }}>
+            <div style={{padding: "24px 20px 20px"}}>
                 {logoUrl ? (
                     <img
                         src={logoUrl}
@@ -110,23 +106,23 @@ export default function Sidebar() {
                 height: "1px",
                 backgroundColor: "rgba(255,255,255,0.08)",
                 margin: "0 16px",
-            }} />
+            }}/>
 
             {/* Nav links */}
-            <nav style={{ flex: 1, padding: "16px 8px" }}>
-                <SidebarSection label="Main"       links={mainLinks} />
-                <SidebarSection label="Financials" links={financialLinks} />
-                <SidebarSection label="Manage"     links={manageLinks} />
+            <nav style={{flex: 1, padding: "16px 8px"}}>
+                <SidebarSection label="Main" links={mainLinks}/>
+                <SidebarSection label="Financials" links={financialLinks}/>
+                <SidebarSection label="Manage" links={manageLinks}/>
             </nav>
 
             <div style={{
                 height: "1px",
                 backgroundColor: "rgba(255,255,255,0.08)",
                 margin: "0 16px",
-            }} />
+            }}/>
 
             {/* User + sign out */}
-            <div style={{ padding: "16px 8px" }}>
+            <div style={{padding: "16px 8px"}}>
                 {/* User card */}
                 <div style={{
                     display: "flex", alignItems: "center", gap: "10px",
@@ -142,7 +138,7 @@ export default function Sidebar() {
                     }}>
                         {initials}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{flex: 1, minWidth: 0}}>
                         <div style={{
                             fontSize: "13px", fontWeight: "600", color: "#fff",
                             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -178,7 +174,7 @@ export default function Sidebar() {
                         e.currentTarget.style.color = "rgba(255,255,255,0.5)"
                     }}
                 >
-                    <LogOut size={16} />
+                    <LogOut size={16}/>
                     Sign out
                 </button>
             </div>

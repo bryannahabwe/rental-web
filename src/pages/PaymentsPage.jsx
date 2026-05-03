@@ -3,14 +3,14 @@ import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreatePayment, usePayments} from "@/hooks/usePayments"
 import {useAgreements} from "@/hooks/useAgreements"
 import {useForm} from "react-hook-form"
-import {Plus, X, ChevronRight} from "lucide-react"
+import {ChevronRight, Plus, X} from "lucide-react"
 import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
 
 // Format cycle date: 2026-04-15 → "Apr 15"
 const formatCycleDate = (dateStr) => {
     if (!dateStr) return "—"
     const d = new Date(dateStr)
-    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
+    return d.toLocaleDateString("en-UG", {day: "numeric", month: "short"})
 }
 
 // Format full cycle: "Apr 15 – May 14"
@@ -97,9 +97,9 @@ const months = [
     {value: 11, label: "November"}, {value: 12, label: "December"},
 ]
 
-function RecordPaymentModal({ onClose }) {
+function RecordPaymentModal({onClose}) {
     const createPayment = useCreatePayment()
-    const { data: agreementsData, isLoading: agreementsLoading } = useAgreements({
+    const {data: agreementsData, isLoading: agreementsLoading} = useAgreements({
         page: 0, size: 100, status: "ACTIVE",
     })
     const [error, setError] = useState("")
@@ -107,7 +107,7 @@ function RecordPaymentModal({ onClose }) {
 
     const activeAgreements = agreementsData?.content || []
 
-    const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    const {register, handleSubmit, watch, formState: {errors}} = useForm({
         defaultValues: {
             paymentDate: new Date().toISOString().split("T")[0],
             agreementId: "",
@@ -168,25 +168,25 @@ function RecordPaymentModal({ onClose }) {
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
                     position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
-                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
                         Record Payment
                     </h2>
                     <button onClick={onClose} style={{
                         background: "none", border: "none", cursor: "pointer",
                         color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20} />
+                        <X size={20}/>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
 
                         {/* Tenant / Agreement */}
                         <div>
                             <label style={labelStyle}>Tenant / Agreement</label>
                             <select
-                                {...register("agreementId", { required: "Please select an agreement" })}
+                                {...register("agreementId", {required: "Please select an agreement"})}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -201,7 +201,7 @@ function RecordPaymentModal({ onClose }) {
                                 ))}
                             </select>
                             {errors.agreementId && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.agreementId.message}
                                 </p>
                             )}
@@ -219,7 +219,7 @@ function RecordPaymentModal({ onClose }) {
                                         No billing cycles available — check the agreement start date.
                                     </div>
                                 ) : (
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                    <div style={{display: "flex", flexDirection: "column", gap: "6px"}}>
                                         {cycles.map((cycle, i) => (
                                             <button
                                                 key={i}
@@ -259,7 +259,7 @@ function RecordPaymentModal({ onClose }) {
                                     </div>
                                 )}
                                 {!selectedCycle && (
-                                    <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                    <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
                                         Select the period this payment covers
                                     </p>
                                 )}
@@ -271,7 +271,7 @@ function RecordPaymentModal({ onClose }) {
                             <label style={labelStyle}>
                                 Amount (UGX)
                                 {selectedAgreement && (
-                                    <span style={{ color: "#9ca3af", fontWeight: "400", marginLeft: "6px" }}>
+                                    <span style={{color: "#9ca3af", fontWeight: "400", marginLeft: "6px"}}>
                                         — expected {formatUGX(selectedAgreement.rentAmount)}
                                     </span>
                                 )}
@@ -279,14 +279,14 @@ function RecordPaymentModal({ onClose }) {
                             <input
                                 {...register("amount", {
                                     required: "Amount is required",
-                                    min: { value: 1, message: "Must be greater than 0" },
+                                    min: {value: 1, message: "Must be greater than 0"},
                                 })}
                                 type="number" style={inputStyle} placeholder="180000"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.amount && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.amount.message}
                                 </p>
                             )}
@@ -306,7 +306,8 @@ function RecordPaymentModal({ onClose }) {
                                         backgroundColor: "#fef2f2", borderRadius: "8px",
                                         borderLeft: "3px solid #ef4444", fontSize: "13px", color: "#dc2626",
                                     }}>
-                                        Partial — {formatUGX(expectedAmount - parseFloat(enteredAmount))} still outstanding
+                                        Partial — {formatUGX(expectedAmount - parseFloat(enteredAmount))} still
+                                        outstanding
                                     </div>
                                 )}
                         </div>
@@ -315,7 +316,7 @@ function RecordPaymentModal({ onClose }) {
                         <div>
                             <label style={labelStyle}>Payment date</label>
                             <input
-                                {...register("paymentDate", { required: "Payment date is required" })}
+                                {...register("paymentDate", {required: "Payment date is required"})}
                                 type="date" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -334,7 +335,7 @@ function RecordPaymentModal({ onClose }) {
                                     borderRadius: "20px", fontSize: "12px", fontWeight: "500",
                                     backgroundColor: "#E1F5EE", color: "#0F6E56",
                                 }}>CASH</span>
-                                <span style={{ fontSize: "13px" }}>Cash payment</span>
+                                <span style={{fontSize: "13px"}}>Cash payment</span>
                             </div>
                         </div>
 
@@ -342,7 +343,7 @@ function RecordPaymentModal({ onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Reference{" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
                             </label>
                             <input
                                 {...register("reference")} type="text"
@@ -356,11 +357,11 @@ function RecordPaymentModal({ onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Notes{" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
                             </label>
                             <textarea
                                 {...register("notes")} rows={2}
-                                style={{ ...inputStyle, resize: "vertical" }}
+                                style={{...inputStyle, resize: "vertical"}}
                                 placeholder="April rent payment..."
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}

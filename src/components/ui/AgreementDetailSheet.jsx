@@ -1,6 +1,6 @@
 import BottomSheet from "./BottomSheet"
-import { useAgreement } from "@/hooks/useAgreements"
-import { LogOut, Pencil } from "lucide-react"
+import {useAgreement} from "@/hooks/useAgreements"
+import {LogOut, Pencil} from "lucide-react"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
@@ -12,7 +12,7 @@ const formatDate = (dateStr) => {
     })
 }
 
-function DetailRow({ label, value, valueColor }) {
+function DetailRow({label, value, valueColor}) {
     return (
         <div style={{
             display: "flex", justifyContent: "space-between",
@@ -20,7 +20,7 @@ function DetailRow({ label, value, valueColor }) {
             paddingBottom: "14px", marginBottom: "14px",
             borderBottom: "1px solid #f3f4f6",
         }}>
-      <span style={{ fontSize: "13px", color: "#9ca3af", flexShrink: 0 }}>
+      <span style={{fontSize: "13px", color: "#9ca3af", flexShrink: 0}}>
         {label}
       </span>
             <span style={{
@@ -33,13 +33,13 @@ function DetailRow({ label, value, valueColor }) {
     )
 }
 
-export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, onEdit }) {
-    const { data: ag, isLoading } = useAgreement(agreementId)
+export default function AgreementDetailSheet({agreementId, onClose, onMoveOut, onEdit}) {
+    const {data: ag, isLoading} = useAgreement(agreementId)
 
     return (
         <BottomSheet title="Agreement Details" onClose={onClose}>
             {isLoading ? (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
                     Loading...
                 </div>
             ) : ag ? (
@@ -50,14 +50,14 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, 
                         justifyContent: "space-between", marginBottom: "24px",
                     }}>
                         <div>
-                            <div style={{ fontSize: "18px", fontWeight: "700", color: "#111827" }}>
+                            <div style={{fontSize: "18px", fontWeight: "700", color: "#111827"}}>
                                 {ag.tenantName}
                             </div>
-                            <div style={{ fontSize: "13px", color: "#9ca3af", marginTop: "2px" }}>
+                            <div style={{fontSize: "13px", color: "#9ca3af", marginTop: "2px"}}>
                                 Unit {ag.roomNumber}
                             </div>
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+                        <div style={{display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px"}}>
               <span style={{
                   display: "inline-block", padding: "3px 10px",
                   borderRadius: "20px", fontSize: "12px", fontWeight: "500",
@@ -89,11 +89,11 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, 
                         }}>
                             Tenancy
                         </p>
-                        <DetailRow label="Tenant" value={ag.tenantName} />
-                        <DetailRow label="Unit" value={ag.roomNumber} />
-                        <DetailRow label="Move-in Date" value={formatDate(ag.startDate)} />
+                        <DetailRow label="Tenant" value={ag.tenantName}/>
+                        <DetailRow label="Unit" value={ag.roomNumber}/>
+                        <DetailRow label="Move-in Date" value={formatDate(ag.startDate)}/>
                         {ag.moveOutDate && (
-                            <DetailRow label="Move-out Date" value={formatDate(ag.moveOutDate)} />
+                            <DetailRow label="Move-out Date" value={formatDate(ag.moveOutDate)}/>
                         )}
                     </div>
 
@@ -109,7 +109,7 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, 
                         }}>
                             Financials
                         </p>
-                        <DetailRow label="Monthly Rent" value={formatUGX(ag.rentAmount)} />
+                        <DetailRow label="Monthly Rent" value={formatUGX(ag.rentAmount)}/>
                         <DetailRow
                             label="Deposit"
                             value={ag.depositAmount ? formatUGX(ag.depositAmount) : "—"}
@@ -125,7 +125,10 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, 
 
                     {/* Edit button — always shown */}
                     <button
-                        onClick={() => { onEdit(ag); onClose() }}
+                        onClick={() => {
+                            onEdit(ag);
+                            onClose()
+                        }}
                         style={{
                             width: "100%", padding: "13px", borderRadius: "10px",
                             border: "1px solid #e5e7eb", backgroundColor: "#fff",
@@ -135,13 +138,16 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, 
                             gap: "8px", marginBottom: "8px",
                         }}
                     >
-                        <Pencil size={16} /> Edit Agreement
+                        <Pencil size={16}/> Edit Agreement
                     </button>
 
                     {/* Move-out button */}
                     {ag.status === "ACTIVE" && (
                         <button
-                            onClick={() => { onMoveOut(ag); onClose() }}
+                            onClick={() => {
+                                onMoveOut(ag);
+                                onClose()
+                            }}
                             style={{
                                 width: "100%", padding: "13px", borderRadius: "10px",
                                 border: "1px solid #fee2e2", backgroundColor: "#fff",
@@ -150,12 +156,12 @@ export default function AgreementDetailSheet({ agreementId, onClose, onMoveOut, 
                                 display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                             }}
                         >
-                            <LogOut size={16} /> Record Move-Out
+                            <LogOut size={16}/> Record Move-Out
                         </button>
                     )}
                 </>
             ) : (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
                     Agreement not found
                 </div>
             )}

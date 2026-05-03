@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react"
+import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import { useAgreements, useCreateAgreement, useMoveOut, useUpdateAgreement } from "@/hooks/useAgreements"
-import { useAllTenants } from "@/hooks/useTenants"
-import { useAllUnits } from "@/hooks/useUnits"
-import { useForm } from "react-hook-form"
-import { LogOut, Plus, X, ChevronRight, Pencil } from "lucide-react"
+import {useAgreements, useCreateAgreement, useMoveOut, useUpdateAgreement} from "@/hooks/useAgreements"
+import {useAllTenants} from "@/hooks/useTenants"
+import {useAllUnits} from "@/hooks/useUnits"
+import {useForm} from "react-hook-form"
+import {ChevronRight, LogOut, Pencil, Plus, X} from "lucide-react"
 import AgreementDetailSheet from "@/components/ui/AgreementDetailSheet"
 
 // ── Shared styles ────────────────────────────────────────
@@ -42,7 +42,7 @@ const getOrdinal = (n) => {
 }
 
 // ── Billing day hint ─────────────────────────────────────
-function BillingDayHint({ dateStr, billingModel }) {
+function BillingDayHint({dateStr, billingModel}) {
     if (!dateStr) return null
     const day = Math.min(new Date(dateStr).getDate(), 28)
     return (
@@ -60,14 +60,14 @@ function BillingDayHint({ dateStr, billingModel }) {
 }
 
 // ── Billing model toggle ─────────────────────────────────
-function BillingModelToggle({ value, onChange }) {
+function BillingModelToggle({value, onChange}) {
     return (
         <div>
             <label style={labelStyle}>Billing model</label>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{display: "flex", gap: "8px"}}>
                 {[
-                    { value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle" },
-                    { value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle" },
+                    {value: "ADVANCE", label: "Advance", desc: "Pays at start of cycle"},
+                    {value: "ARREARS", label: "Arrears", desc: "Pays at end of cycle"},
                 ].map(opt => (
                     <button
                         key={opt.value}
@@ -84,7 +84,7 @@ function BillingModelToggle({ value, onChange }) {
                         }}
                     >
                         <div>{opt.label}</div>
-                        <div style={{ fontSize: "10px", marginTop: "2px", opacity: 0.8 }}>
+                        <div style={{fontSize: "10px", marginTop: "2px", opacity: 0.8}}>
                             {opt.desc}
                         </div>
                     </button>
@@ -95,17 +95,17 @@ function BillingModelToggle({ value, onChange }) {
 }
 
 // ── Opening balance field ────────────────────────────────
-function OpeningBalanceField({ register, balanceSign, setBalanceSign, helpText }) {
+function OpeningBalanceField({register, balanceSign, setBalanceSign, helpText}) {
     return (
         <div style={{
             backgroundColor: "#f8faf9", borderRadius: "10px",
             border: "1px solid #e5e7eb", padding: "16px",
         }}>
             <label style={labelStyle}>Opening balance (UGX)</label>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+            <div style={{display: "flex", gap: "8px", marginBottom: "10px"}}>
                 {[
-                    { label: "Paid ahead (+)", value: "positive" },
-                    { label: "Owes arrears (−)", value: "negative" },
+                    {label: "Paid ahead (+)", value: "positive"},
+                    {label: "Owes arrears (−)", value: "negative"},
                 ].map(opt => (
                     <button
                         key={opt.value}
@@ -134,7 +134,7 @@ function OpeningBalanceField({ register, balanceSign, setBalanceSign, helpText }
                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
             />
             {helpText && (
-                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "8px", lineHeight: "1.6" }}>
+                <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "8px", lineHeight: "1.6"}}>
                     {helpText}
                 </p>
             )}
@@ -143,10 +143,10 @@ function OpeningBalanceField({ register, balanceSign, setBalanceSign, helpText }
 }
 
 // ── Create Agreement Modal ───────────────────────────────
-function CreateAgreementModal({ onClose }) {
+function CreateAgreementModal({onClose}) {
     const createAgreement = useCreateAgreement()
-    const { data: tenants = [], isLoading: tenantsLoading } = useAllTenants()
-    const { data: units = [], isLoading: unitsLoading } = useAllUnits()
+    const {data: tenants = [], isLoading: tenantsLoading} = useAllTenants()
+    const {data: units = [], isLoading: unitsLoading} = useAllUnits()
     const [error, setError] = useState("")
     const [tenantType, setTenantType] = useState("NEW")
     const [billingModel, setBillingModel] = useState("ADVANCE")
@@ -154,7 +154,7 @@ function CreateAgreementModal({ onClose }) {
 
     const availableUnits = units.filter(u => u.isAvailable)
 
-    const { register, handleSubmit, watch, formState: { errors } } = useForm()
+    const {register, handleSubmit, watch, formState: {errors}} = useForm()
     const selectedUnitId = watch("unitId")
     const selectedUnit = units.find(u => u.id === selectedUnitId)
     const startDate = watch("startDate")
@@ -201,24 +201,24 @@ function CreateAgreementModal({ onClose }) {
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
                     position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
-                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
                         New Agreement
                     </h2>
                     <button onClick={onClose} style={{
                         background: "none", border: "none", cursor: "pointer",
                         color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20} />
+                        <X size={20}/>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
 
                         {/* Tenant type */}
                         <div>
                             <label style={labelStyle}>Tenant type</label>
-                            <div style={{ display: "flex", gap: "8px" }}>
+                            <div style={{display: "flex", gap: "8px"}}>
                                 {["NEW", "EXISTING"].map(type => (
                                     <button key={type} type="button"
                                             onClick={() => setTenantType(type)}
@@ -234,7 +234,7 @@ function CreateAgreementModal({ onClose }) {
                                     </button>
                                 ))}
                             </div>
-                            <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                            <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
                                 {tenantType === "NEW"
                                     ? "Moving in fresh — full details required"
                                     : "Already living here — being onboarded into the system"}
@@ -242,13 +242,13 @@ function CreateAgreementModal({ onClose }) {
                         </div>
 
                         {/* Billing model */}
-                        <BillingModelToggle value={billingModel} onChange={setBillingModel} />
+                        <BillingModelToggle value={billingModel} onChange={setBillingModel}/>
 
                         {/* Tenant */}
                         <div>
                             <label style={labelStyle}>Tenant</label>
                             <select
-                                {...register("tenantId", { required: "Please select a tenant" })}
+                                {...register("tenantId", {required: "Please select a tenant"})}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -263,7 +263,7 @@ function CreateAgreementModal({ onClose }) {
                                 ))}
                             </select>
                             {errors.tenantId && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.tenantId.message}
                                 </p>
                             )}
@@ -273,7 +273,7 @@ function CreateAgreementModal({ onClose }) {
                         <div>
                             <label style={labelStyle}>Unit</label>
                             <select
-                                {...register("unitId", { required: "Please select a unit" })}
+                                {...register("unitId", {required: "Please select a unit"})}
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -288,12 +288,12 @@ function CreateAgreementModal({ onClose }) {
                                 ))}
                             </select>
                             {errors.unitId && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.unitId.message}
                                 </p>
                             )}
                             {availableUnits.length === 0 && !unitsLoading && (
-                                <p style={{ fontSize: "12px", color: "#f59e0b", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#f59e0b", marginTop: "4px"}}>
                                     No available units. Mark a unit as available first.
                                 </p>
                             )}
@@ -303,7 +303,7 @@ function CreateAgreementModal({ onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Agreed rent (UGX){" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>
                   {selectedUnit
                       ? `— defaults to ${formatUGX(selectedUnit.rentAmount)}`
                       : "(optional)"}
@@ -324,20 +324,20 @@ function CreateAgreementModal({ onClose }) {
                             <label style={labelStyle}>
                                 {tenantType === "NEW" ? "Move-in date" : "First billing cycle start date"}
                                 {" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(required)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(required)</span>
                             </label>
                             <input
-                                {...register("startDate", { required: "Start date is required" })}
+                                {...register("startDate", {required: "Start date is required"})}
                                 type="date" style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.startDate && (
-                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                     {errors.startDate.message}
                                 </p>
                             )}
-                            <BillingDayHint dateStr={startDate} billingModel={billingModel} />
+                            <BillingDayHint dateStr={startDate} billingModel={billingModel}/>
                             {tenantType === "EXISTING" && (
                                 <div style={{
                                     marginTop: "8px", padding: "10px 14px",
@@ -355,7 +355,7 @@ function CreateAgreementModal({ onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Deposit (UGX){" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
                             </label>
                             <input
                                 {...register("depositAmount")} type="number" style={inputStyle}
@@ -415,7 +415,7 @@ function CreateAgreementModal({ onClose }) {
 }
 
 // ── Edit Agreement Modal ─────────────────────────────────
-function EditAgreementModal({ agreement, onClose }) {
+function EditAgreementModal({agreement, onClose}) {
     const updateAgreement = useUpdateAgreement()
     const [billingModel, setBillingModel] = useState(agreement.billingModel || "ADVANCE")
     const [balanceSign, setBalanceSign] = useState(
@@ -423,7 +423,7 @@ function EditAgreementModal({ agreement, onClose }) {
     )
     const [error, setError] = useState("")
 
-    const { register, handleSubmit, watch } = useForm({
+    const {register, handleSubmit, watch} = useForm({
         defaultValues: {
             rentAmount: agreement.rentAmount,
             depositAmount: agreement.depositAmount || "",
@@ -479,10 +479,10 @@ function EditAgreementModal({ agreement, onClose }) {
                     position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
                 }}>
                     <div>
-                        <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                        <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
                             Edit Agreement
                         </h2>
-                        <p style={{ fontSize: "12px", color: "#9ca3af", margin: "2px 0 0" }}>
+                        <p style={{fontSize: "12px", color: "#9ca3af", margin: "2px 0 0"}}>
                             {agreement.tenantName} — Unit {agreement.roomNumber}
                         </p>
                     </div>
@@ -490,15 +490,15 @@ function EditAgreementModal({ agreement, onClose }) {
                         background: "none", border: "none",
                         cursor: "pointer", color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20} />
+                        <X size={20}/>
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
 
                         {/* Billing model */}
-                        <BillingModelToggle value={billingModel} onChange={setBillingModel} />
+                        <BillingModelToggle value={billingModel} onChange={setBillingModel}/>
 
                         {/* Start date */}
                         <div>
@@ -509,7 +509,7 @@ function EditAgreementModal({ agreement, onClose }) {
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
-                            <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                            <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>
                                 Billing day is derived from this date automatically.
                             </p>
                             <BillingDayHint
@@ -532,7 +532,7 @@ function EditAgreementModal({ agreement, onClose }) {
                         <div>
                             <label style={labelStyle}>
                                 Deposit (UGX){" "}
-                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
                             </label>
                             <input
                                 {...register("depositAmount")} type="number" style={inputStyle}
@@ -587,15 +587,15 @@ function EditAgreementModal({ agreement, onClose }) {
 }
 
 // ── Move Out Modal ───────────────────────────────────────
-function MoveOutModal({ agreement, onClose }) {
+function MoveOutModal({agreement, onClose}) {
     const moveOut = useMoveOut()
     const [error, setError] = useState("")
-    const { register, handleSubmit, formState: { errors } } = useForm()
+    const {register, handleSubmit, formState: {errors}} = useForm()
 
     const onSubmit = async (data) => {
         setError("")
         try {
-            await moveOut.mutateAsync({ id: agreement.id, data: { moveOutDate: data.moveOutDate } })
+            await moveOut.mutateAsync({id: agreement.id, data: {moveOutDate: data.moveOutDate}})
             onClose()
         } catch (err) {
             setError(err.response?.data?.message || "Something went wrong")
@@ -613,34 +613,34 @@ function MoveOutModal({ agreement, onClose }) {
                 width: "100%", maxWidth: "420px",
                 padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                <div style={{display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px"}}>
                     <div style={{
                         width: "36px", height: "36px", borderRadius: "10px",
                         backgroundColor: "#fef2f2",
                         display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                        <LogOut size={18} color="#dc2626" />
+                        <LogOut size={18} color="#dc2626"/>
                     </div>
-                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
                         Record Move-Out
                     </h2>
                 </div>
-                <p style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5" }}>
+                <p style={{fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5"}}>
                     Move-out for <strong>{agreement.tenantName}</strong> in unit{" "}
                     <strong>{agreement.roomNumber}</strong>. This will terminate the agreement.
                 </p>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ marginBottom: "20px" }}>
+                    <div style={{marginBottom: "20px"}}>
                         <label style={labelStyle}>Move-out date</label>
                         <input
-                            {...register("moveOutDate", { required: "Move-out date is required" })}
+                            {...register("moveOutDate", {required: "Move-out date is required"})}
                             type="date" style={inputStyle}
                             onFocus={e => e.target.style.borderColor = "#0F6E56"}
                             onBlur={e => e.target.style.borderColor = "#d1d5db"}
                         />
                         {errors.moveOutDate && (
-                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                            <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
                                 {errors.moveOutDate.message}
                             </p>
                         )}
@@ -656,7 +656,7 @@ function MoveOutModal({ agreement, onClose }) {
                         </div>
                     )}
 
-                    <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                    <div style={{display: "flex", gap: "10px", justifyContent: "flex-end"}}>
                         <button type="button" onClick={onClose} style={{
                             padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
                             border: "1px solid #e5e7eb", backgroundColor: "#fff",
@@ -698,7 +698,7 @@ export default function AgreementsPage() {
         return () => clearTimeout(timer)
     }, [search])
 
-    const { data, isLoading } = useAgreements({
+    const {data, isLoading} = useAgreements({
         page, size: 10, sortBy: "createdAt", sortDir: "desc",
         status: statusFilter || undefined,
         search: debouncedSearch || undefined,
@@ -714,7 +714,7 @@ export default function AgreementsPage() {
             backgroundColor: "#0F6E56", color: "#fff", border: "none",
             cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
         }}>
-            <Plus size={16} /> New Agreement
+            <Plus size={16}/> New Agreement
         </button>
     )
 
@@ -734,7 +734,7 @@ export default function AgreementsPage() {
         <PageWrapper title="Agreements" actions={actions} mobileAction={mobileAction} showBack>
 
             {/* Search */}
-            <div style={{ marginBottom: "12px" }}>
+            <div style={{marginBottom: "12px"}}>
                 <input
                     type="text" value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -751,14 +751,17 @@ export default function AgreementsPage() {
             </div>
 
             {/* Status filter tabs */}
-            <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+            <div style={{display: "flex", gap: "8px", marginBottom: "20px"}}>
                 {[
-                    { label: "Active", value: "ACTIVE" },
-                    { label: "Terminated", value: "TERMINATED" },
-                    { label: "All", value: "" },
+                    {label: "Active", value: "ACTIVE"},
+                    {label: "Terminated", value: "TERMINATED"},
+                    {label: "All", value: ""},
                 ].map(s => (
                     <button key={s.value}
-                            onClick={() => { setStatusFilter(s.value); setPage(0) }}
+                            onClick={() => {
+                                setStatusFilter(s.value);
+                                setPage(0)
+                            }}
                             style={{
                                 padding: "7px 16px", borderRadius: "8px", fontSize: "13px",
                                 fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: "1px solid",
@@ -777,12 +780,12 @@ export default function AgreementsPage() {
                 border: "1px solid #f0f0f0", overflow: "hidden",
             }}>
                 {isLoading ? (
-                    <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
+                    <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
                         Loading agreements...
                     </div>
                 ) : agreements.length === 0 ? (
-                    <div style={{ padding: "60px", textAlign: "center" }}>
-                        <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "16px" }}>
+                    <div style={{padding: "60px", textAlign: "center"}}>
+                        <p style={{color: "#9ca3af", fontSize: "14px", marginBottom: "16px"}}>
                             {search ? `No agreements found for "${search}"` : "No agreements found."}
                         </p>
                         {!search && statusFilter === "ACTIVE" && (
@@ -792,7 +795,7 @@ export default function AgreementsPage() {
                                 backgroundColor: "#0F6E56", color: "#fff", border: "none",
                                 cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                             }}>
-                                <Plus size={16} /> New Agreement
+                                <Plus size={16}/> New Agreement
                             </button>
                         )}
                     </div>
@@ -800,9 +803,9 @@ export default function AgreementsPage() {
                     <>
                         {/* ── Desktop table ── */}
                         <div className="desktop-table">
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <table style={{width: "100%", borderCollapse: "collapse"}}>
                                 <thead>
-                                <tr style={{ backgroundColor: "#f9fafb" }}>
+                                <tr style={{backgroundColor: "#f9fafb"}}>
                                     {["Tenant", "Unit", "Billing", "Rent / Month", "Move-in", "Move-out", "Status", ""].map((h, i) => (
                                         <th key={i} style={{
                                             padding: "11px 20px", textAlign: "left",
@@ -814,15 +817,20 @@ export default function AgreementsPage() {
                                 </thead>
                                 <tbody>
                                 {agreements.map((ag) => (
-                                    <tr key={ag.id} style={{ borderTop: "1px solid #f9f9f9" }}>
-                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
+                                    <tr key={ag.id} style={{borderTop: "1px solid #f9f9f9"}}>
+                                        <td style={{
+                                            padding: "14px 20px",
+                                            fontSize: "14px",
+                                            color: "#111827",
+                                            fontWeight: "500"
+                                        }}>
                                             {ag.tenantName}
                                         </td>
-                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
+                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
                                             {ag.roomNumber}
                                         </td>
-                                        <td style={{ padding: "14px 20px" }}>
-                                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                        <td style={{padding: "14px 20px"}}>
+                                            <div style={{display: "flex", flexDirection: "column", gap: "4px"}}>
                           <span style={{
                               display: "inline-block", padding: "2px 8px",
                               borderRadius: "20px", fontSize: "11px", fontWeight: "500",
@@ -840,16 +848,16 @@ export default function AgreementsPage() {
                           </span>
                                             </div>
                                         </td>
-                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827" }}>
+                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#111827"}}>
                                             {formatUGX(ag.rentAmount)}
                                         </td>
-                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
+                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
                                             {formatDate(ag.startDate)}
                                         </td>
-                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
+                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
                                             {formatDate(ag.moveOutDate)}
                                         </td>
-                                        <td style={{ padding: "14px 20px" }}>
+                                        <td style={{padding: "14px 20px"}}>
                         <span style={{
                             display: "inline-block", padding: "3px 10px",
                             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
@@ -859,8 +867,8 @@ export default function AgreementsPage() {
                           {ag.status === "ACTIVE" ? "Active" : "Terminated"}
                         </span>
                                         </td>
-                                        <td style={{ padding: "14px 20px" }}>
-                                            <div style={{ display: "flex", gap: "8px" }}>
+                                        <td style={{padding: "14px 20px"}}>
+                                            <div style={{display: "flex", gap: "8px"}}>
                                                 <button
                                                     onClick={() => setEditAgreement(ag)}
                                                     style={{
@@ -871,7 +879,7 @@ export default function AgreementsPage() {
                                                         fontFamily: "'DM Sans', sans-serif",
                                                     }}
                                                 >
-                                                    <Pencil size={13} /> Edit
+                                                    <Pencil size={13}/> Edit
                                                 </button>
                                                 {ag.status === "ACTIVE" && (
                                                     <button
@@ -884,7 +892,7 @@ export default function AgreementsPage() {
                                                             fontFamily: "'DM Sans', sans-serif",
                                                         }}
                                                     >
-                                                        <LogOut size={13} /> Move-out
+                                                        <LogOut size={13}/> Move-out
                                                     </button>
                                                 )}
                                             </div>
@@ -896,7 +904,7 @@ export default function AgreementsPage() {
                         </div>
 
                         {/* ── Mobile cards ── */}
-                        <div className="mobile-cards" style={{ display: "none", flexDirection: "column" }}>
+                        <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
                             {agreements.map((ag, i) => (
                                 <div
                                     key={ag.id}
@@ -912,10 +920,10 @@ export default function AgreementsPage() {
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-                    <span style={{ fontSize: "15px", fontWeight: "600", color: "#111827" }}>
+                    <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
                       {ag.tenantName}
                     </span>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <div style={{display: "flex", alignItems: "center", gap: "6px"}}>
                       <span style={{
                           display: "inline-block", padding: "3px 8px",
                           borderRadius: "20px", fontSize: "11px", fontWeight: "500",
@@ -924,12 +932,12 @@ export default function AgreementsPage() {
                       }}>
                         {ag.status === "ACTIVE" ? "Active" : "Terminated"}
                       </span>
-                                            <ChevronRight size={16} color="#9ca3af" />
+                                            <ChevronRight size={16} color="#9ca3af"/>
                                         </div>
                                     </div>
 
                                     {/* Row 2 — unit · type · billing · rent */}
-                                    <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "4px" }}>
+                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "4px"}}>
                                         Unit {ag.roomNumber} ·{" "}
                                         <span style={{
                                             fontSize: "11px", fontWeight: "500", padding: "1px 6px",
@@ -950,7 +958,7 @@ export default function AgreementsPage() {
                                     </div>
 
                                     {/* Row 3 — move-in */}
-                                    <div style={{ fontSize: "13px", color: "#9ca3af" }}>
+                                    <div style={{fontSize: "13px", color: "#9ca3af"}}>
                                         Move-in: {ag.startDate
                                         ? new Date(ag.startDate).toLocaleDateString("en-UG", {
                                             day: "numeric", month: "short", year: "numeric",
@@ -972,10 +980,10 @@ export default function AgreementsPage() {
                                 display: "flex", alignItems: "center", justifyContent: "space-between",
                                 padding: "14px 20px", borderTop: "1px solid #f3f4f6",
                             }}>
-                <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+                <span style={{fontSize: "13px", color: "#9ca3af"}}>
                   Page {page + 1} of {totalPages}
                 </span>
-                                <div style={{ display: "flex", gap: "8px" }}>
+                                <div style={{display: "flex", gap: "8px"}}>
                                     <button
                                         onClick={() => setPage(p => Math.max(0, p - 1))}
                                         disabled={page === 0}
@@ -1006,7 +1014,7 @@ export default function AgreementsPage() {
             </div>
 
             {/* Modals */}
-            {showCreate && <CreateAgreementModal onClose={() => setShowCreate(false)} />}
+            {showCreate && <CreateAgreementModal onClose={() => setShowCreate(false)}/>}
             {moveOutAgreement && (
                 <MoveOutModal
                     agreement={moveOutAgreement}
@@ -1023,8 +1031,14 @@ export default function AgreementsPage() {
                 <AgreementDetailSheet
                     agreementId={selectedAgreementId}
                     onClose={() => setSelectedAgreementId(null)}
-                    onMoveOut={(ag) => { setMoveOutAgreement(ag); setSelectedAgreementId(null) }}
-                    onEdit={(ag) => { setEditAgreement(ag); setSelectedAgreementId(null) }}
+                    onMoveOut={(ag) => {
+                        setMoveOutAgreement(ag);
+                        setSelectedAgreementId(null)
+                    }}
+                    onEdit={(ag) => {
+                        setEditAgreement(ag);
+                        setSelectedAgreementId(null)
+                    }}
                 />
             )}
 

@@ -1,5 +1,5 @@
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom"
-import { useEffect } from "react"
+import {Navigate, Route, Routes, useNavigate} from "react-router-dom"
+import {useEffect} from "react"
 import ProtectedRoute from "@/components/layout/ProtectedRoute"
 import LoginPage from "@/pages/LoginPage"
 import RegisterPage from "@/pages/RegisterPage"
@@ -17,14 +17,14 @@ import ReceiptSettingsPage from "@/pages/ReceiptSettingsPage"
 // ── Token guard — checks on PWA resume ──────────────────
 function TokenGuard() {
     const navigate = useNavigate()
-    const { isRefreshTokenExpired, logout, accessToken } = useAuthStore()
+    const {isRefreshTokenExpired, logout, accessToken} = useAuthStore()
 
     useEffect(() => {
         const checkToken = () => {
             if (document.visibilityState === "visible" && accessToken) {
                 if (isRefreshTokenExpired()) {
                     logout()
-                    navigate("/login", { replace: true })
+                    navigate("/login", {replace: true})
                 }
             }
         }
@@ -43,25 +43,25 @@ function TokenGuard() {
 export default function App() {
     return (
         <>
-            <TokenGuard />
+            <TokenGuard/>
             <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/login" element={<LoginPage/>}/>
+                <Route path="/register" element={<RegisterPage/>}/>
                 <Route
                     path="/*"
                     element={
                         <ProtectedRoute>
                             <Routes>
-                                <Route path="/dashboard"  element={<DashboardPage />} />
-                                <Route path="/tenants"    element={<TenantsPage />} />
-                                <Route path="/units"      element={<UnitsPage />} />
-                                <Route path="/agreements" element={<AgreementsPage />} />
-                                <Route path="/payments"   element={<PaymentsPage />} />
-                                <Route path="/reports"    element={<ReportsPage />} />
-                                <Route path="/settings"   element={<SettingsPage />} />
-                                <Route path="/settings/business-profile" element={<BusinessProfilePage />} />
-                                <Route path="/settings/receipt-settings" element={<ReceiptSettingsPage />} />
-                                <Route path="*"           element={<Navigate to="/dashboard" replace />} />
+                                <Route path="/dashboard" element={<DashboardPage/>}/>
+                                <Route path="/tenants" element={<TenantsPage/>}/>
+                                <Route path="/units" element={<UnitsPage/>}/>
+                                <Route path="/agreements" element={<AgreementsPage/>}/>
+                                <Route path="/payments" element={<PaymentsPage/>}/>
+                                <Route path="/reports" element={<ReportsPage/>}/>
+                                <Route path="/settings" element={<SettingsPage/>}/>
+                                <Route path="/settings/business-profile" element={<BusinessProfilePage/>}/>
+                                <Route path="/settings/receipt-settings" element={<ReceiptSettingsPage/>}/>
+                                <Route path="*" element={<Navigate to="/dashboard" replace/>}/>
                             </Routes>
                         </ProtectedRoute>
                     }

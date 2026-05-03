@@ -3,7 +3,7 @@ import useAuthStore from "@/store/authStore"
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "https://rental-api.askmoozo.com/api/v1",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type": "application/json"},
 })
 
 // Attach access token to every request
@@ -25,7 +25,7 @@ api.interceptors.response.use(
             originalRequest._retry = true
 
             try {
-                const { refreshToken, isRefreshTokenExpired, logout, setAccessToken } =
+                const {refreshToken, isRefreshTokenExpired, logout, setAccessToken} =
                     useAuthStore.getState()
 
                 // Don't try refresh if refresh token is already expired
@@ -37,10 +37,10 @@ api.interceptors.response.use(
 
                 const response = await axios.post(
                     `${import.meta.env.VITE_API_BASE_URL || "https://rental-api.askmoozo.com/api/v1"}/auth/refresh`,
-                    { refreshToken }
+                    {refreshToken}
                 )
 
-                const { accessToken } = response.data
+                const {accessToken} = response.data
                 setAccessToken(accessToken)
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`
                 return api(originalRequest)

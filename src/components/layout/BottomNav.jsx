@@ -1,11 +1,11 @@
-import { NavLink } from "react-router-dom"
-import { LayoutDashboard, Users, CreditCard, Settings } from "lucide-react"
+import {NavLink} from "react-router-dom"
+import {CreditCard, LayoutDashboard, Settings, Users} from "lucide-react"
 
 const navItems = [
-    { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { label: "Tenants",   path: "/tenants",   icon: Users },
-    { label: "Payments",  path: "/payments",  icon: CreditCard },
-    { label: "Settings",  path: "/settings",  icon: Settings },
+    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
+    {label: "Tenants", path: "/tenants", icon: Users},
+    {label: "Payments", path: "/payments", icon: CreditCard},
+    {label: "Settings", path: "/settings", icon: Settings},
 ]
 
 export default function BottomNav() {
@@ -17,11 +17,11 @@ export default function BottomNav() {
             display: "flex", zIndex: 100,
             paddingBottom: "env(safe-area-inset-bottom)",
         }}>
-            {navItems.map(({ label, path, icon: Icon }) => (
+            {navItems.map(({label, path, icon: Icon}) => (
                 <NavLink
                     key={path}
                     to={path}
-                    style={({ isActive }) => ({
+                    style={({isActive}) => ({
                         flex: 1, display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center",
                         padding: "10px 2px", textDecoration: "none",
@@ -30,7 +30,7 @@ export default function BottomNav() {
                         gap: "4px",
                     })}
                 >
-                    <Icon size={20} />
+                    <Icon size={20}/>
                     {label}
                 </NavLink>
             ))}

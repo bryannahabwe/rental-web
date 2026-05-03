@@ -1,16 +1,13 @@
-import { useNavigate } from "react-router-dom"
+import {useNavigate} from "react-router-dom"
 import PageWrapper from "@/components/layout/PageWrapper"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
-import {
-    Building2, FileText, BarChart3,
-    ChevronRight, LogOut, Briefcase, Receipt,
-} from "lucide-react"
+import {BarChart3, Briefcase, Building2, ChevronRight, FileText, LogOut, Receipt,} from "lucide-react"
 
 export default function SettingsPage() {
     const navigate = useNavigate()
-    const { landlord, logout } = useAuthStore()
-    const { settings, clearSettings } = useSettingsStore()
+    const {landlord, logout} = useAuthStore()
+    const {settings, clearSettings} = useSettingsStore()
 
     const initials = landlord?.name
         ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -104,18 +101,18 @@ export default function SettingsPage() {
                         {initials}
                     </div>
                 )}
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{flex: 1, minWidth: 0}}>
                     <div style={{
                         fontSize: "17px", fontWeight: "700", color: "#111827",
                         whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                     }}>
                         {settings?.companyName || landlord?.name || "Landlord"}
                     </div>
-                    <div style={{ fontSize: "13px", color: "#9ca3af", marginTop: "2px" }}>
+                    <div style={{fontSize: "13px", color: "#9ca3af", marginTop: "2px"}}>
                         {landlord?.phoneNumber || ""}
                     </div>
                     {landlord?.email && (
-                        <div style={{ fontSize: "13px", color: "#9ca3af" }}>
+                        <div style={{fontSize: "13px", color: "#9ca3af"}}>
                             {landlord.email}
                         </div>
                     )}
@@ -124,7 +121,7 @@ export default function SettingsPage() {
 
             {/* Menu sections */}
             {sections.map((section) => (
-                <div key={section.label} style={{ marginBottom: "20px" }}>
+                <div key={section.label} style={{marginBottom: "20px"}}>
                     <p style={{
                         fontSize: "11px", fontWeight: "500", color: "#9ca3af",
                         textTransform: "uppercase", letterSpacing: "0.08em",
@@ -157,17 +154,17 @@ export default function SettingsPage() {
                                     display: "flex", alignItems: "center", justifyContent: "center",
                                     flexShrink: 0,
                                 }}>
-                                    <item.icon size={18} color={item.color} />
+                                    <item.icon size={18} color={item.color}/>
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
+                                <div style={{flex: 1}}>
+                                    <div style={{fontSize: "14px", fontWeight: "600", color: "#111827"}}>
                                         {item.label}
                                     </div>
-                                    <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>
+                                    <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "2px"}}>
                                         {item.description}
                                     </div>
                                 </div>
-                                <ChevronRight size={16} color="#9ca3af" />
+                                <ChevronRight size={16} color="#9ca3af"/>
                             </button>
                         ))}
                     </div>
@@ -175,7 +172,7 @@ export default function SettingsPage() {
             ))}
 
             {/* Sign out */}
-            <div style={{ marginBottom: "20px" }}>
+            <div style={{marginBottom: "20px"}}>
                 <p style={{
                     fontSize: "11px", fontWeight: "500", color: "#9ca3af",
                     textTransform: "uppercase", letterSpacing: "0.08em",
@@ -204,17 +201,17 @@ export default function SettingsPage() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0,
                         }}>
-                            <LogOut size={18} color="#dc2626" />
+                            <LogOut size={18} color="#dc2626"/>
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: "14px", fontWeight: "600", color: "#dc2626" }}>
+                        <div style={{flex: 1}}>
+                            <div style={{fontSize: "14px", fontWeight: "600", color: "#dc2626"}}>
                                 Sign out
                             </div>
-                            <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>
+                            <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "2px"}}>
                                 Log out of your account
                             </div>
                         </div>
-                        <ChevronRight size={16} color="#9ca3af" />
+                        <ChevronRight size={16} color="#9ca3af"/>
                     </button>
                 </div>
             </div>

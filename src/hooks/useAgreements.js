@@ -43,9 +43,9 @@ export function useAgreement(id) {
 export function useUpdateAgreement() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: ({ id, data }) => agreementsService.update(id, data),
+        mutationFn: ({id, data}) => agreementsService.update(id, data),
         onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["agreements"] })
+            void queryClient.invalidateQueries({queryKey: ["agreements"]})
         },
     })
 }

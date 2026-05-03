@@ -1,11 +1,8 @@
-import { useState } from "react"
+import {useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import { useSummary, useOccupancy, usePaymentReport } from "@/hooks/useReports"
-import {
-    BarChart, Bar, XAxis, YAxis, Tooltip,
-    ResponsiveContainer, CartesianGrid,
-} from "recharts"
-import { Building2, Users, FileText, CreditCard } from "lucide-react"
+import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
+import {Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,} from "recharts"
+import {Building2, CreditCard, FileText, Users} from "lucide-react"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
@@ -15,7 +12,7 @@ const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
     .toISOString().split("T")[0]
 const todayStr = today.toISOString().split("T")[0]
 
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({active, payload, label}) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
@@ -23,8 +20,8 @@ const CustomTooltip = ({ active, payload, label }) => {
                 borderRadius: "8px", padding: "10px 14px",
                 fontSize: "13px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             }}>
-                <div style={{ color: "#6b7280", marginBottom: "4px" }}>{label}</div>
-                <div style={{ fontWeight: "600", color: "#111827" }}>
+                <div style={{color: "#6b7280", marginBottom: "4px"}}>{label}</div>
+                <div style={{fontWeight: "600", color: "#111827"}}>
                     {formatUGX(payload[0].value)}
                 </div>
             </div>
@@ -33,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null
 }
 
-function SummaryCard({ icon: Icon, label, value, color }) {
+function SummaryCard({icon: Icon, label, value, color}) {
     return (
         <div style={{
             backgroundColor: "#fff", borderRadius: "12px",
@@ -46,13 +43,13 @@ function SummaryCard({ icon: Icon, label, value, color }) {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
             }}>
-                <Icon size={20} color={color} />
+                <Icon size={20} color={color}/>
             </div>
             <div>
-                <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
+                <div style={{fontSize: "12px", color: "#9ca3af", marginBottom: "4px"}}>
                     {label}
                 </div>
-                <div style={{ fontSize: "22px", fontWeight: "600", color: "#111827", lineHeight: 1 }}>
+                <div style={{fontSize: "22px", fontWeight: "600", color: "#111827", lineHeight: 1}}>
                     {value}
                 </div>
             </div>
@@ -66,9 +63,9 @@ export default function ReportsPage() {
     const [appliedFrom, setAppliedFrom] = useState(firstOfMonth)
     const [appliedTo, setAppliedTo] = useState(todayStr)
 
-    const { data: summary, isLoading: summaryLoading } = useSummary()
-    const { data: occupancy, isLoading: occupancyLoading } = useOccupancy()
-    const { data: paymentReport, isLoading: reportLoading } = usePaymentReport({
+    const {data: summary, isLoading: summaryLoading} = useSummary()
+    const {data: occupancy, isLoading: occupancyLoading} = useOccupancy()
+    const {data: paymentReport, isLoading: reportLoading} = usePaymentReport({
         from: appliedFrom, to: appliedTo,
     })
 
@@ -78,14 +75,14 @@ export default function ReportsPage() {
     }
 
     const chartData = paymentReport ? [
-        { name: "Total Collected", amount: paymentReport.totalAmount || 0 },
+        {name: "Total Collected", amount: paymentReport.totalAmount || 0},
     ] : []
 
     return (
         <PageWrapper title="Reports" showBack>
 
             {/* ── Summary cards ── */}
-            <div style={{ marginBottom: "12px" }}>
+            <div style={{marginBottom: "12px"}}>
                 <p style={{
                     fontSize: "12px", fontWeight: "500", color: "#9ca3af",
                     textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px",
@@ -94,7 +91,7 @@ export default function ReportsPage() {
                 </p>
 
                 {summaryLoading ? (
-                    <div style={{ padding: "40px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
+                    <div style={{padding: "40px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
                         Loading...
                     </div>
                 ) : (
@@ -107,17 +104,17 @@ export default function ReportsPage() {
                                 gap: "16px", marginBottom: "20px",
                             }}>
                                 <SummaryCard icon={Building2} color="#0F6E56"
-                                             label="Total Units" value={summary?.totalUnits ?? "—"} />
+                                             label="Total Units" value={summary?.totalUnits ?? "—"}/>
                                 <SummaryCard icon={Building2} color="#1D9E75"
-                                             label="Available Units" value={summary?.availableUnits ?? "—"} />
+                                             label="Available Units" value={summary?.availableUnits ?? "—"}/>
                                 <SummaryCard icon={Users} color="#085041"
-                                             label="Total Tenants" value={summary?.totalTenants ?? "—"} />
+                                             label="Total Tenants" value={summary?.totalTenants ?? "—"}/>
                                 <SummaryCard icon={FileText} color="#0a4a38"
-                                             label="Active Agreements" value={summary?.activeAgreements ?? "—"} />
+                                             label="Active Agreements" value={summary?.activeAgreements ?? "—"}/>
                                 <SummaryCard icon={FileText} color="#6b7280"
-                                             label="Terminated" value={summary?.terminatedAgreements ?? "—"} />
+                                             label="Terminated" value={summary?.terminatedAgreements ?? "—"}/>
                                 <SummaryCard icon={CreditCard} color="#0F6E56"
-                                             label="All-time Revenue" value={formatUGX(summary?.totalRevenueAllTime)} />
+                                             label="All-time Revenue" value={formatUGX(summary?.totalRevenueAllTime)}/>
                             </div>
                         </div>
 
@@ -129,11 +126,36 @@ export default function ReportsPage() {
                                 gap: "10px", marginBottom: "16px", width: "100%",
                             }}>
                                 {[
-                                    { icon: Building2, color: "#0F6E56", label: "Total Units", value: summary?.totalUnits ?? "—" },
-                                    { icon: Building2, color: "#1D9E75", label: "Available", value: summary?.availableUnits ?? "—" },
-                                    { icon: Users, color: "#085041", label: "Tenants", value: summary?.totalTenants ?? "—" },
-                                    { icon: FileText, color: "#0a4a38", label: "Active", value: summary?.activeAgreements ?? "—" },
-                                    { icon: FileText, color: "#6b7280", label: "Terminated", value: summary?.terminatedAgreements ?? "—" },
+                                    {
+                                        icon: Building2,
+                                        color: "#0F6E56",
+                                        label: "Total Units",
+                                        value: summary?.totalUnits ?? "—"
+                                    },
+                                    {
+                                        icon: Building2,
+                                        color: "#1D9E75",
+                                        label: "Available",
+                                        value: summary?.availableUnits ?? "—"
+                                    },
+                                    {
+                                        icon: Users,
+                                        color: "#085041",
+                                        label: "Tenants",
+                                        value: summary?.totalTenants ?? "—"
+                                    },
+                                    {
+                                        icon: FileText,
+                                        color: "#0a4a38",
+                                        label: "Active",
+                                        value: summary?.activeAgreements ?? "—"
+                                    },
+                                    {
+                                        icon: FileText,
+                                        color: "#6b7280",
+                                        label: "Terminated",
+                                        value: summary?.terminatedAgreements ?? "—"
+                                    },
                                 ].map((card, i) => (
                                     <div key={i} style={{
                                         backgroundColor: "#fff", borderRadius: "12px",
@@ -145,12 +167,17 @@ export default function ReportsPage() {
                                             backgroundColor: card.color + "18",
                                             display: "flex", alignItems: "center", justifyContent: "center",
                                         }}>
-                                            <card.icon size={16} color={card.color} />
+                                            <card.icon size={16} color={card.color}/>
                                         </div>
-                                        <div style={{ fontSize: "22px", fontWeight: "700", color: "#111827", lineHeight: 1 }}>
+                                        <div style={{
+                                            fontSize: "22px",
+                                            fontWeight: "700",
+                                            color: "#111827",
+                                            lineHeight: 1
+                                        }}>
                                             {card.value}
                                         </div>
-                                        <div style={{ fontSize: "11px", color: "#9ca3af" }}>{card.label}</div>
+                                        <div style={{fontSize: "11px", color: "#9ca3af"}}>{card.label}</div>
                                     </div>
                                 ))}
 
@@ -161,17 +188,17 @@ export default function ReportsPage() {
                                     border: "1px solid #f0f0f0", padding: "14px",
                                     display: "flex", alignItems: "center", justifyContent: "space-between",
                                 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <div style={{display: "flex", alignItems: "center", gap: "10px"}}>
                                         <div style={{
                                             width: "32px", height: "32px", borderRadius: "8px",
                                             backgroundColor: "#0F6E5618",
                                             display: "flex", alignItems: "center", justifyContent: "center",
                                         }}>
-                                            <CreditCard size={16} color="#0F6E56" />
+                                            <CreditCard size={16} color="#0F6E56"/>
                                         </div>
-                                        <span style={{ fontSize: "13px", color: "#6b7280" }}>All-time Revenue</span>
+                                        <span style={{fontSize: "13px", color: "#6b7280"}}>All-time Revenue</span>
                                     </div>
-                                    <span style={{ fontSize: "18px", fontWeight: "700", color: "#0F6E56" }}>
+                                    <span style={{fontSize: "18px", fontWeight: "700", color: "#0F6E56"}}>
               {formatUGX(summary?.totalRevenueAllTime)}
             </span>
                                 </div>
@@ -191,10 +218,10 @@ export default function ReportsPage() {
                     display: "flex", alignItems: "center",
                     justifyContent: "space-between", marginBottom: "16px",
                 }}>
-                    <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
                         Occupancy
                     </p>
-                    <span style={{ fontSize: "28px", fontWeight: "700", color: "#0F6E56" }}>
+                    <span style={{fontSize: "28px", fontWeight: "700", color: "#0F6E56"}}>
             {occupancyLoading ? "—" : `${occupancy?.occupancyRate ?? 0}%`}
           </span>
                 </div>
@@ -207,7 +234,7 @@ export default function ReportsPage() {
                         height: "100%", borderRadius: "10px", backgroundColor: "#0F6E56",
                         width: `${occupancy?.occupancyRate ?? 0}%`,
                         transition: "width 0.5s ease",
-                    }} />
+                    }}/>
                 </div>
 
                 <div style={{
@@ -231,14 +258,14 @@ export default function ReportsPage() {
                     justifyContent: "space-between", flexWrap: "wrap",
                     gap: "12px", marginBottom: "20px",
                 }}>
-                    <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                    <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
                         Payment Report
                     </p>
 
                     {/* Desktop date filter */}
                     <div className="desktop-table">
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "13px", color: "#6b7280" }}>From</span>
+                        <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                            <span style={{fontSize: "13px", color: "#6b7280"}}>From</span>
                             <input type="date" value={from} onChange={e => setFrom(e.target.value)}
                                    style={{
                                        padding: "8px 12px", fontSize: "13px", borderRadius: "8px",
@@ -248,7 +275,7 @@ export default function ReportsPage() {
                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                    onBlur={e => e.target.style.borderColor = "#e5e7eb"}
                             />
-                            <span style={{ fontSize: "13px", color: "#6b7280" }}>To</span>
+                            <span style={{fontSize: "13px", color: "#6b7280"}}>To</span>
                             <input type="date" value={to} onChange={e => setTo(e.target.value)}
                                    style={{
                                        padding: "8px 12px", fontSize: "13px", borderRadius: "8px",
@@ -270,24 +297,36 @@ export default function ReportsPage() {
 
                     {/* Mobile date filter */}
                     <div className="mobile-cards">
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <span style={{ fontSize: "13px", color: "#6b7280", minWidth: "34px" }}>From</span>
+                        <div style={{display: "flex", flexDirection: "column", gap: "8px", width: "100%"}}>
+                            <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                                <span style={{fontSize: "13px", color: "#6b7280", minWidth: "34px"}}>From</span>
                                 <input type="date" value={from} onChange={e => setFrom(e.target.value)}
                                        style={{
-                                           flex: 1, padding: "9px 12px", fontSize: "13px", borderRadius: "8px",
-                                           border: "1px solid #e5e7eb", outline: "none",
-                                           fontFamily: "'DM Sans', sans-serif", color: "#111827", backgroundColor: "#fff",
+                                           flex: 1,
+                                           padding: "9px 12px",
+                                           fontSize: "13px",
+                                           borderRadius: "8px",
+                                           border: "1px solid #e5e7eb",
+                                           outline: "none",
+                                           fontFamily: "'DM Sans', sans-serif",
+                                           color: "#111827",
+                                           backgroundColor: "#fff",
                                        }}
                                 />
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <span style={{ fontSize: "13px", color: "#6b7280", minWidth: "34px" }}>To</span>
+                            <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                                <span style={{fontSize: "13px", color: "#6b7280", minWidth: "34px"}}>To</span>
                                 <input type="date" value={to} onChange={e => setTo(e.target.value)}
                                        style={{
-                                           flex: 1, padding: "9px 12px", fontSize: "13px", borderRadius: "8px",
-                                           border: "1px solid #e5e7eb", outline: "none",
-                                           fontFamily: "'DM Sans', sans-serif", color: "#111827", backgroundColor: "#fff",
+                                           flex: 1,
+                                           padding: "9px 12px",
+                                           fontSize: "13px",
+                                           borderRadius: "8px",
+                                           border: "1px solid #e5e7eb",
+                                           outline: "none",
+                                           fontFamily: "'DM Sans', sans-serif",
+                                           color: "#111827",
+                                           backgroundColor: "#fff",
                                        }}
                                 />
                             </div>
@@ -305,8 +344,8 @@ export default function ReportsPage() {
                     <div className="mobile-cards" style={{
                         display: "none", flexDirection: "column", gap: "8px", width: "100%",
                     }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "13px", color: "#6b7280", minWidth: "34px" }}>From</span>
+                        <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                            <span style={{fontSize: "13px", color: "#6b7280", minWidth: "34px"}}>From</span>
                             <input type="date" value={from} onChange={e => setFrom(e.target.value)}
                                    style={{
                                        flex: 1, padding: "9px 12px", fontSize: "13px", borderRadius: "8px",
@@ -315,8 +354,8 @@ export default function ReportsPage() {
                                    }}
                             />
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "13px", color: "#6b7280", minWidth: "34px" }}>To</span>
+                        <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                            <span style={{fontSize: "13px", color: "#6b7280", minWidth: "34px"}}>To</span>
                             <input type="date" value={to} onChange={e => setTo(e.target.value)}
                                    style={{
                                        flex: 1, padding: "9px 12px", fontSize: "13px", borderRadius: "8px",
@@ -345,10 +384,10 @@ export default function ReportsPage() {
                         backgroundColor: "#f9fafb", borderRadius: "10px",
                         padding: "16px", textAlign: "center",
                     }}>
-                        <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "6px" }}>
+                        <div style={{fontSize: "12px", color: "#9ca3af", marginBottom: "6px"}}>
                             Total Payments
                         </div>
-                        <div style={{ fontSize: "24px", fontWeight: "600", color: "#111827" }}>
+                        <div style={{fontSize: "24px", fontWeight: "600", color: "#111827"}}>
                             {reportLoading ? "—" : paymentReport?.totalPayments ?? "—"}
                         </div>
                     </div>
@@ -356,7 +395,7 @@ export default function ReportsPage() {
                         backgroundColor: "#f9fafb", borderRadius: "10px",
                         padding: "16px", textAlign: "center",
                     }}>
-                        <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "6px" }}>
+                        <div style={{fontSize: "12px", color: "#9ca3af", marginBottom: "6px"}}>
                             Total Collected
                         </div>
                         <div style={{
@@ -370,10 +409,10 @@ export default function ReportsPage() {
                         backgroundColor: "#f9fafb", borderRadius: "10px",
                         padding: "16px", textAlign: "center",
                     }}>
-                        <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "6px" }}>
+                        <div style={{fontSize: "12px", color: "#9ca3af", marginBottom: "6px"}}>
                             Period
                         </div>
-                        <div style={{ fontSize: "13px", fontWeight: "500", color: "#111827" }}>
+                        <div style={{fontSize: "13px", fontWeight: "500", color: "#111827"}}>
                             {appliedFrom} → {appliedTo}
                         </div>
                     </div>
@@ -383,14 +422,14 @@ export default function ReportsPage() {
                 {!reportLoading && paymentReport?.totalAmount > 0 ? (
                     <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={chartData} barSize={60}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                            <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9ca3af" }}
-                                   axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }}
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false}/>
+                            <XAxis dataKey="name" tick={{fontSize: 12, fill: "#9ca3af"}}
+                                   axisLine={false} tickLine={false}/>
+                            <YAxis tick={{fontSize: 12, fill: "#9ca3af"}}
                                    axisLine={false} tickLine={false} width={45}
-                                   tickFormatter={v => `${(v / 1000).toFixed(0)}K`} />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Bar dataKey="amount" fill="#0F6E56" radius={[6, 6, 0, 0]} />
+                                   tickFormatter={v => `${(v / 1000).toFixed(0)}K`}/>
+                            <Tooltip content={<CustomTooltip/>}/>
+                            <Bar dataKey="amount" fill="#0F6E56" radius={[6, 6, 0, 0]}/>
                         </BarChart>
                     </ResponsiveContainer>
                 ) : (

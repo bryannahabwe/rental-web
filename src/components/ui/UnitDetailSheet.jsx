@@ -1,11 +1,11 @@
 import BottomSheet from "./BottomSheet"
-import { useUnit } from "@/hooks/useUnits"
-import { Pencil, Trash2 } from "lucide-react"
+import {useUnit} from "@/hooks/useUnits"
+import {Pencil, Trash2} from "lucide-react"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
-function DetailRow({ label, value, valueColor }) {
+function DetailRow({label, value, valueColor}) {
     return (
         <div style={{
             display: "flex", justifyContent: "space-between",
@@ -13,7 +13,7 @@ function DetailRow({ label, value, valueColor }) {
             paddingBottom: "14px", marginBottom: "14px",
             borderBottom: "1px solid #f3f4f6",
         }}>
-      <span style={{ fontSize: "13px", color: "#9ca3af", flexShrink: 0 }}>
+      <span style={{fontSize: "13px", color: "#9ca3af", flexShrink: 0}}>
         {label}
       </span>
             <span style={{
@@ -26,13 +26,13 @@ function DetailRow({ label, value, valueColor }) {
     )
 }
 
-export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
-    const { data: unit, isLoading } = useUnit(unitId)
+export default function UnitDetailSheet({unitId, onClose, onEdit, onDelete}) {
+    const {data: unit, isLoading} = useUnit(unitId)
 
     return (
         <BottomSheet title="Unit Details" onClose={onClose}>
             {isLoading ? (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
                     Loading...
                 </div>
             ) : unit ? (
@@ -43,10 +43,10 @@ export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
                         justifyContent: "space-between", marginBottom: "24px",
                     }}>
                         <div>
-                            <div style={{ fontSize: "28px", fontWeight: "800", color: "#111827" }}>
+                            <div style={{fontSize: "28px", fontWeight: "800", color: "#111827"}}>
                                 {unit.roomNumber}
                             </div>
-                            <div style={{ fontSize: "14px", color: "#0F6E56", fontWeight: "500", marginTop: "2px" }}>
+                            <div style={{fontSize: "14px", color: "#0F6E56", fontWeight: "500", marginTop: "2px"}}>
                                 {formatUGX(unit.rentAmount)} / month
                             </div>
                         </div>
@@ -72,8 +72,8 @@ export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
                         }}>
                             Details
                         </p>
-                        <DetailRow label="Room Number" value={unit.roomNumber} />
-                        <DetailRow label="Monthly Rent" value={formatUGX(unit.rentAmount)} />
+                        <DetailRow label="Room Number" value={unit.roomNumber}/>
+                        <DetailRow label="Monthly Rent" value={formatUGX(unit.rentAmount)}/>
                         <DetailRow
                             label="Status"
                             value={unit.isAvailable ? "Available" : "Occupied"}
@@ -83,7 +83,7 @@ export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
                             display: "flex", justifyContent: "space-between",
                             alignItems: "flex-start", gap: "16px",
                         }}>
-                            <span style={{ fontSize: "13px", color: "#9ca3af" }}>Description</span>
+                            <span style={{fontSize: "13px", color: "#9ca3af"}}>Description</span>
                             <span style={{
                                 fontSize: "13px", fontWeight: "500", color: "#111827",
                                 textAlign: "right", maxWidth: "60%",
@@ -94,9 +94,12 @@ export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: "flex", gap: "10px" }}>
+                    <div style={{display: "flex", gap: "10px"}}>
                         <button
-                            onClick={() => { onEdit(unit); onClose() }}
+                            onClick={() => {
+                                onEdit(unit);
+                                onClose()
+                            }}
                             style={{
                                 flex: 1, padding: "12px", borderRadius: "10px",
                                 border: "1px solid #e5e7eb", backgroundColor: "#fff",
@@ -105,10 +108,13 @@ export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
                                 display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
                             }}
                         >
-                            <Pencil size={15} /> Edit
+                            <Pencil size={15}/> Edit
                         </button>
                         <button
-                            onClick={() => { onDelete(unit); onClose() }}
+                            onClick={() => {
+                                onDelete(unit);
+                                onClose()
+                            }}
                             style={{
                                 flex: 1, padding: "12px", borderRadius: "10px",
                                 border: "1px solid #fee2e2", backgroundColor: "#fff",
@@ -117,12 +123,12 @@ export default function UnitDetailSheet({ unitId, onClose, onEdit, onDelete }) {
                                 display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
                             }}
                         >
-                            <Trash2 size={15} /> Delete
+                            <Trash2 size={15}/> Delete
                         </button>
                     </div>
                 </>
             ) : (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "40px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "40px 0"}}>
                     Unit not found
                 </div>
             )}

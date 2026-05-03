@@ -1,14 +1,14 @@
-import { useState, useRef, useEffect } from "react"
+import {useEffect, useRef, useState} from "react"
 import Sidebar from "./Sidebar"
 import BottomNav from "./BottomNav"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
-import { useNavigate } from "react-router-dom"
-import { LogOut, ArrowLeft } from "lucide-react"
+import {useNavigate} from "react-router-dom"
+import {ArrowLeft, LogOut} from "lucide-react"
 
 function AvatarMenu() {
-    const { landlord, logout } = useAuthStore()
-    const { settings, clearSettings } = useSettingsStore()
+    const {landlord, logout} = useAuthStore()
+    const {settings, clearSettings} = useSettingsStore()
     const navigate = useNavigate()
     const [open, setOpen] = useState(false)
     const ref = useRef(null)
@@ -35,7 +35,7 @@ function AvatarMenu() {
     }
 
     return (
-        <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+        <div ref={ref} style={{position: "relative", flexShrink: 0}}>
             {/* Avatar circle */}
             <div
                 onClick={() => setOpen(v => !v)}
@@ -75,7 +75,7 @@ function AvatarMenu() {
                         }}>
                             {initials}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{flex: 1, minWidth: 0}}>
                             <div style={{
                                 fontSize: "14px", fontWeight: "600", color: "#111827",
                                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -128,7 +128,7 @@ function AvatarMenu() {
                             }}>
                                 {companyName}
                             </div>
-                            <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
+                            <div style={{fontSize: "11px", color: "#9ca3af", marginTop: "2px"}}>
                                 Property Management
                             </div>
                         </div>
@@ -147,7 +147,7 @@ function AvatarMenu() {
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = "#fef2f2"}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
                     >
-                        <LogOut size={16} color="#dc2626" />
+                        <LogOut size={16} color="#dc2626"/>
                         Sign out
                     </button>
                 </div>
@@ -156,15 +156,15 @@ function AvatarMenu() {
     )
 }
 
-export default function PageWrapper({ title, actions, mobileAction, showBack, children }) {
+export default function PageWrapper({title, actions, mobileAction, showBack, children}) {
     const navigate = useNavigate()
-    const { settings } = useSettingsStore()
+    const {settings} = useSettingsStore()
     const companyName = settings?.companyName || "RentFlow"
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9" }}>
+        <div style={{display: "flex", minHeight: "100vh", backgroundColor: "#f8faf9"}}>
 
-            <Sidebar />
+            <Sidebar/>
 
             <div
                 className="main-content"
@@ -194,7 +194,7 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                         {title}
                     </h1>
                     {actions && (
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
                             {actions}
                         </div>
                     )}
@@ -213,7 +213,7 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                     }}
                 >
                     {/* Left — back button + brand */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{display: "flex", alignItems: "center", gap: "10px"}}>
                         {showBack && (
                             <button
                                 onClick={() => navigate(-1)}
@@ -224,7 +224,7 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                                     color: "rgba(255,255,255,0.8)",
                                 }}
                             >
-                                <ArrowLeft size={20} />
+                                <ArrowLeft size={20}/>
                             </button>
                         )}
                         <div>
@@ -247,7 +247,7 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                         </div>
                     </div>
 
-                    <AvatarMenu />
+                    <AvatarMenu/>
                 </div>
 
                 {/* Page content */}
@@ -271,7 +271,7 @@ export default function PageWrapper({ title, actions, mobileAction, showBack, ch
                 </div>
             )}
 
-            <BottomNav />
+            <BottomNav/>
         </div>
     )
 }

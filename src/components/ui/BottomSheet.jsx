@@ -1,11 +1,13 @@
-import { useEffect } from "react"
-import { X } from "lucide-react"
+import {useEffect} from "react"
+import {X} from "lucide-react"
 
-export default function BottomSheet({ title, onClose, children }) {
+export default function BottomSheet({title, onClose, children}) {
     // Prevent body scroll when sheet is open
     useEffect(() => {
         document.body.style.overflow = "hidden"
-        return () => { document.body.style.overflow = "" }
+        return () => {
+            document.body.style.overflow = ""
+        }
     }, [])
 
     return (
@@ -35,7 +37,7 @@ export default function BottomSheet({ title, onClose, children }) {
                     width: "40px", height: "4px", borderRadius: "4px",
                     backgroundColor: "#e5e7eb", margin: "12px auto 0",
                     flexShrink: 0,
-                }} />
+                }}/>
 
                 {/* Header */}
                 <div style={{
@@ -59,12 +61,12 @@ export default function BottomSheet({ title, onClose, children }) {
                             cursor: "pointer", color: "#9ca3af", padding: "4px",
                         }}
                     >
-                        <X size={20} />
+                        <X size={20}/>
                     </button>
                 </div>
 
                 {/* Content — scrollable */}
-                <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
+                <div style={{overflowY: "auto", flex: 1, padding: "20px"}}>
                     {children}
                 </div>
             </div>

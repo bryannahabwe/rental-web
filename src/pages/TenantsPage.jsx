@@ -2,7 +2,7 @@ import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant} from "@/hooks/useTenants"
 import {useForm} from "react-hook-form"
-import {Plus, Pencil, Trash2, X, ChevronRight} from "lucide-react"
+import {ChevronRight, Pencil, Plus, Trash2, X} from "lucide-react"
 import TenantDetailSheet from "@/components/ui/TenantDetailSheet"
 
 const inputStyle = {
@@ -24,7 +24,7 @@ const formatUGX = (amount) =>
 const formatCycleDate = (dateStr) => {
     if (!dateStr) return "—"
     const d = new Date(dateStr)
-    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
+    return d.toLocaleDateString("en-UG", {day: "numeric", month: "short"})
 }
 
 const getMonthName = (month) =>

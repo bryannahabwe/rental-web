@@ -1,5 +1,5 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import {create} from "zustand"
+import {persist} from "zustand/middleware"
 
 // Decode JWT expiry without a library
 const getTokenExpiry = (token) => {
@@ -28,7 +28,7 @@ const useAuthStore = create(
                 },
             }),
 
-            setAccessToken: (accessToken) => set({ accessToken }),
+            setAccessToken: (accessToken) => set({accessToken}),
 
             logout: () => set({
                 accessToken: null,
@@ -55,7 +55,7 @@ const useAuthStore = create(
                 return Date.now() >= expiry - 10_000
             },
         }),
-        { name: "rentflow-auth" }
+        {name: "rentflow-auth"}
     )
 )
 

@@ -1,9 +1,8 @@
-import { useState, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import {useRef, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import { useSettings, useUpdateSettings, useUploadLogo } from "@/hooks/useSettings"
-import { useForm } from "react-hook-form"
-import { Camera, X } from "lucide-react"
+import {useSettings, useUpdateSettings, useUploadLogo} from "@/hooks/useSettings"
+import {useForm} from "react-hook-form"
+import {Camera, X} from "lucide-react"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -19,7 +18,7 @@ const labelStyle = {
 }
 
 export default function BusinessProfilePage() {
-    const { data: settings, isLoading } = useSettings()
+    const {data: settings, isLoading} = useSettings()
     const updateSettings = useUpdateSettings()
     const uploadLogo = useUploadLogo()
     const fileInputRef = useRef(null)
@@ -27,7 +26,7 @@ export default function BusinessProfilePage() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
 
-    const { register, handleSubmit } = useForm({
+    const {register, handleSubmit} = useForm({
         values: {
             companyName: settings?.companyName || "",
             address: settings?.address || "",
@@ -88,12 +87,12 @@ export default function BusinessProfilePage() {
     return (
         <PageWrapper title="Business Profile" showBack>
             {isLoading ? (
-                <div style={{ textAlign: "center", color: "#9ca3af", padding: "60px 0" }}>
+                <div style={{textAlign: "center", color: "#9ca3af", padding: "60px 0"}}>
                     Loading...
                 </div>
             ) : (
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    <div style={{display: "flex", flexDirection: "column", gap: "20px"}}>
 
                         {/* Logo upload */}
                         <div style={{
@@ -110,9 +109,9 @@ export default function BusinessProfilePage() {
                             </p>
 
                             {/* Logo preview */}
-                            <div style={{ position: "relative" }}>
+                            <div style={{position: "relative"}}>
                                 {currentLogo ? (
-                                    <div style={{ position: "relative" }}>
+                                    <div style={{position: "relative"}}>
                                         <img
                                             src={currentLogo}
                                             alt="Logo"
@@ -137,7 +136,7 @@ export default function BusinessProfilePage() {
                                                 alignItems: "center", justifyContent: "center",
                                             }}
                                         >
-                                            <X size={12} color="#fff" />
+                                            <X size={12} color="#fff"/>
                                         </button>
                                     </div>
                                 ) : (
@@ -147,8 +146,8 @@ export default function BusinessProfilePage() {
                                         display: "flex", flexDirection: "column",
                                         alignItems: "center", justifyContent: "center", gap: "8px",
                                     }}>
-                                        <Camera size={28} color="#9ca3af" />
-                                        <span style={{ fontSize: "11px", color: "#9ca3af" }}>
+                                        <Camera size={28} color="#9ca3af"/>
+                                        <span style={{fontSize: "11px", color: "#9ca3af"}}>
                       No logo
                     </span>
                                     </div>
@@ -161,7 +160,7 @@ export default function BusinessProfilePage() {
                                 type="file"
                                 accept="image/*"
                                 onChange={handleFileChange}
-                                style={{ display: "none" }}
+                                style={{display: "none"}}
                             />
                             <button
                                 type="button"
@@ -176,9 +175,9 @@ export default function BusinessProfilePage() {
                             >
                                 {uploadLogo.isPending ? "Uploading..." : currentLogo ? "Change Logo" : "Upload Logo"}
                             </button>
-                            <p style={{ fontSize: "12px", color: "#9ca3af", textAlign: "center" }}>
+                            <p style={{fontSize: "12px", color: "#9ca3af", textAlign: "center"}}>
                                 PNG, JPG or SVG · Max 5MB
-                                <br />
+                                <br/>
                                 Cloudinary will resize to fit automatically
                             </p>
                         </div>
@@ -189,7 +188,7 @@ export default function BusinessProfilePage() {
                             border: "1px solid #f0f0f0", padding: "24px",
                             display: "flex", flexDirection: "column", gap: "16px",
                         }}>
-                            <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                            <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
                                 Company Details
                             </p>
 
@@ -209,7 +208,7 @@ export default function BusinessProfilePage() {
                                 <textarea
                                     {...register("address")}
                                     rows={3}
-                                    style={{ ...inputStyle, resize: "vertical" }}
+                                    style={{...inputStyle, resize: "vertical"}}
                                     placeholder="e.g. Kamwokya, Kampala, Uganda"
                                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                     onBlur={e => e.target.style.borderColor = "#d1d5db"}
