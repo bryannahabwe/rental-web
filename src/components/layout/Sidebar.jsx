@@ -75,31 +75,41 @@ export default function Sidebar() {
             zIndex: 100, overflowY: "auto",
         }}>
             {/* Brand */}
-            <div style={{padding: "24px 20px 20px"}}>
+            <div style={{ padding: "24px 20px 20px" }}>
                 {logoUrl ? (
-                    <img
-                        src={logoUrl}
-                        alt={companyName}
-                        style={{
-                            height: "44px", maxWidth: "160px",
-                            objectFit: "contain", marginBottom: "4px",
-                        }}
-                    />
+                    <>
+                        <img
+                            src={logoUrl}
+                            alt={companyName}
+                            style={{
+                                height: "44px", maxWidth: "160px",
+                                objectFit: "contain", marginBottom: "4px",
+                            }}
+                        />
+                        <p style={{
+                            fontSize: "11px", color: "rgba(255,255,255,0.4)",
+                            margin: "4px 0 0",
+                        }}>
+                            {companyName}
+                        </p>
+                    </>
                 ) : (
-                    <h1 style={{
-                        fontFamily: "'DM Serif Display', serif",
-                        fontSize: "22px", color: "#fff",
-                        margin: 0, lineHeight: 1,
-                    }}>
-                        {companyName}
-                    </h1>
+                    <>
+                        <h1 style={{
+                            fontFamily: "'DM Serif Display', serif",
+                            fontSize: "22px", color: "#fff",
+                            margin: 0, lineHeight: 1,
+                        }}>
+                            {companyName}
+                        </h1>
+                        <p style={{
+                            fontSize: "11px", color: "rgba(255,255,255,0.4)",
+                            margin: "4px 0 0",
+                        }}>
+                            Property Management
+                        </p>
+                    </>
                 )}
-                <p style={{
-                    fontSize: "11px", color: "rgba(255,255,255,0.4)",
-                    margin: "4px 0 0",
-                }}>
-                    Property Management
-                </p>
             </div>
 
             <div style={{
