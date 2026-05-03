@@ -8,6 +8,7 @@ import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
 import { generateReceipt } from "@/utils/receiptGenerator"
 import { settingsService } from "@/services/settingsService"
 import useSettingsStore from "@/store/settingsStore"
+import { useAllTenants } from "@/hooks/useTenants"
 
 // ── Helpers ──────────────────────────────────────────────
 const formatCycleDate = (dateStr) => {
@@ -88,15 +89,27 @@ function RecordPaymentModal({ onClose }) {
     const { data: agreementsData, isLoading: agreementsLoading } = useAgreements({
         page: 0, size: 100, status: "ACTIVE",
     })
+    const { data: tenantsData, isLoading: tenantsLoading } = useAllTenants()
 
+    // ── Tab state ─────────────────────────────────────────
+    const [activeTab, setActiveTab] = useState("record") // "record" | "manual"
+
+    // ── Record Payment state ──────────────────────────────
     const [error, setError] = useState("")
     const [selectedCycle, setSelectedCycle] = useState(null)
     const [completedPayment, setCompletedPayment] = useState(null)
     const [receiptNumber, setReceiptNumber] = useState(null)
     const [receiptDownloading, setReceiptDownloading] = useState(false)
 
-    const activeAgreements = agreementsData?.content || []
+    // ── Manual Receipt state ──────────────────────────────
+    const [manualError, setManualError] = useState("")
+    const [manualGenerating, setManualGenerating] = useState(false)
+    const [manualStyle, setManualStyle] = useState(settings?.receiptStyle || "DIGITAL")
 
+    const activeAgreements = agreementsData?.content || []
+    const allTenants = tenantsData || []
+
+    // ── Record Payment form ───────────────────────────────
     const { register, handleSubmit, watch, formState: { errors } } = useForm({
         defaultValues: {
             paymentDate: new Date().toISOString().split("T")[0],
@@ -104,19 +117,35 @@ function RecordPaymentModal({ onClose }) {
         },
     })
 
+    // ── Manual Receipt form ───────────────────────────────
+    const {
+        register: registerManual,
+        handleSubmit: handleSubmitManual,
+        watch: watchManual,
+        formState: { errors: manualErrors },
+    } = useForm({
+        defaultValues: {
+            paymentDate: new Date().toISOString().split("T")[0],
+            method: "CASH",
+        },
+    })
+
     const selectedAgreementId = watch("agreementId")
     const enteredAmount = watch("amount")
+    const selectedTenantId = watchManual("tenantId")
 
     useEffect(() => {
         setSelectedCycle(null)
     }, [selectedAgreementId])
 
     const selectedAgreement = activeAgreements.find(ag => ag.id === selectedAgreementId)
+    const selectedTenant = allTenants.find(t => t.id === selectedTenantId)
     const cycles = generateCycles(selectedAgreement)
     const expectedAmount = selectedAgreement?.rentAmount || 0
     const overpayment = enteredAmount && parseFloat(enteredAmount) > expectedAmount
         ? parseFloat(enteredAmount) - expectedAmount : 0
 
+    // ── Record Payment submit ─────────────────────────────
     const onSubmit = async (data) => {
         setError("")
         if (!selectedCycle) {
@@ -134,14 +163,47 @@ function RecordPaymentModal({ onClose }) {
                 reference: nullIfEmpty(data.reference),
                 notes: nullIfEmpty(data.notes),
             })
-
-            // Get next receipt number then show success state
             const receiptRes = await settingsService.getNextReceiptNumber()
             setReceiptNumber(receiptRes.data)
             setCompletedPayment(result.data)
-
         } catch (err) {
             setError(err.response?.data?.message || "Something went wrong")
+        }
+    }
+
+    // ── Manual Receipt submit ─────────────────────────────
+    const onManualSubmit = async (data) => {
+        setManualError("")
+        setManualGenerating(true)
+        try {
+            const receiptRes = await settingsService.getNextReceiptNumber()
+            const rNumber = receiptRes.data
+
+            // Build a payment-like object for the receipt generator
+            const manualPayment = {
+                tenantName: selectedTenant?.name || data.tenantName || "—",
+                roomNumber: selectedTenant?.currentUnit || "—",
+                amount: parseFloat(data.amount),
+                expectedAmount: parseFloat(data.amount), // manual — no expected
+                paymentDate: data.paymentDate,
+                periodStartDate: null,
+                periodEndDate: null,
+                manualPeriod: data.period || "—",  // free text period
+                method: data.method || "CASH",
+                reference: data.reference || null,
+                notes: data.notes || null,
+                balance: data.balance ? parseFloat(data.balance) : 0,
+                isManual: true,
+            }
+
+            // Temporarily override style for this receipt
+            const settingsWithStyle = { ...settings, receiptStyle: manualStyle }
+            await generateReceipt(manualPayment, settingsWithStyle, rNumber)
+        } catch (err) {
+            console.error("Manual receipt generation failed", err)
+            setManualError("Failed to generate receipt. Please try again.")
+        } finally {
+            setManualGenerating(false)
         }
     }
 
@@ -155,6 +217,42 @@ function RecordPaymentModal({ onClose }) {
             setReceiptDownloading(false)
         }
     }
+
+    // ── Tab toggle ────────────────────────────────────────
+    const TabToggle = () => (
+        <div style={{
+            display: "flex", gap: "4px",
+            backgroundColor: "#f3f4f6", borderRadius: "10px",
+            padding: "4px", margin: "16px 24px 0",
+        }}>
+            {[
+                { id: "record", label: "Record Payment" },
+                { id: "manual", label: "Manual Receipt" },
+            ].map(tab => (
+                <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                        setActiveTab(tab.id)
+                        setError("")
+                        setManualError("")
+                    }}
+                    style={{
+                        flex: 1, padding: "8px 12px", borderRadius: "8px",
+                        fontSize: "13px", fontWeight: "500", border: "none",
+                        cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                        backgroundColor: activeTab === tab.id ? "#fff" : "transparent",
+                        color: activeTab === tab.id ? "#111827" : "#6b7280",
+                        boxShadow: activeTab === tab.id
+                            ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                        transition: "all 0.15s",
+                    }}
+                >
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+    )
 
     return (
         <div style={{
@@ -176,7 +274,6 @@ function RecordPaymentModal({ onClose }) {
                         display: "flex", flexDirection: "column",
                         alignItems: "center", gap: "16px", textAlign: "center",
                     }}>
-                        {/* Checkmark */}
                         <div style={{
                             width: "72px", height: "72px", borderRadius: "50%",
                             backgroundColor: "#E1F5EE",
@@ -185,7 +282,6 @@ function RecordPaymentModal({ onClose }) {
                         }}>
                             ✓
                         </div>
-
                         <div>
                             <h3 style={{
                                 fontSize: "20px", fontWeight: "700",
@@ -201,8 +297,6 @@ function RecordPaymentModal({ onClose }) {
                                 {formatCycle(completedPayment.periodStartDate, completedPayment.periodEndDate)}
                             </p>
                         </div>
-
-                        {/* Download receipt */}
                         <button
                             onClick={handleDownloadReceipt}
                             disabled={receiptDownloading}
@@ -221,7 +315,6 @@ function RecordPaymentModal({ onClose }) {
                                 ? "Generating..."
                                 : `↓ Download Receipt (${receiptNumber})`}
                         </button>
-
                         <button
                             onClick={onClose}
                             style={{
@@ -235,19 +328,19 @@ function RecordPaymentModal({ onClose }) {
                         </button>
                     </div>
                 ) : (
-                    /* ── Form state ── */
                     <>
-                        {/* Header */}
+                        {/* ── Header ── */}
                         <div style={{
-                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                            padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
-                            position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 1,
+                            display: "flex", alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "20px 24px 0",
+                            flexShrink: 0,
                         }}>
                             <h2 style={{
                                 fontSize: "16px", fontWeight: "600",
                                 color: "#111827", margin: 0,
                             }}>
-                                Record Payment
+                                {activeTab === "record" ? "Record Payment" : "Manual Receipt"}
                             </h2>
                             <button onClick={onClose} style={{
                                 background: "none", border: "none",
@@ -257,233 +350,480 @@ function RecordPaymentModal({ onClose }) {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit(onSubmit)}>
-                            <div style={{
-                                padding: "24px",
-                                display: "flex", flexDirection: "column", gap: "16px",
-                            }}>
+                        {/* ── Tab toggle ── */}
+                        <TabToggle />
 
-                                {/* Tenant / Agreement */}
-                                <div>
-                                    <label style={labelStyle}>Tenant / Agreement</label>
-                                    <select
-                                        {...register("agreementId", { required: "Please select an agreement" })}
-                                        style={inputStyle}
-                                        onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                        onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                    >
-                                        <option value="">
-                                            {agreementsLoading ? "Loading..." : "Select tenant"}
-                                        </option>
-                                        {activeAgreements.map(ag => (
-                                            <option key={ag.id} value={ag.id}>
-                                                {ag.tenantName} — Unit {ag.roomNumber} ({formatUGX(ag.rentAmount)}/mo)
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.agreementId && (
-                                        <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
-                                            {errors.agreementId.message}
-                                        </p>
-                                    )}
-                                </div>
+                        <div style={{
+                            height: "1px", backgroundColor: "#f3f4f6",
+                            margin: "16px 0 0",
+                        }} />
 
-                                {/* Billing cycle selector */}
-                                {selectedAgreementId && selectedAgreement && (
+                        {/* ══ RECORD PAYMENT TAB ══ */}
+                        {activeTab === "record" && (
+                            <form onSubmit={handleSubmit(onSubmit)}>
+                                <div style={{
+                                    padding: "20px 24px",
+                                    display: "flex", flexDirection: "column", gap: "16px",
+                                }}>
+                                    {/* Tenant / Agreement */}
                                     <div>
-                                        <label style={labelStyle}>Payment period</label>
-                                        {cycles.length === 0 ? (
-                                            <div style={{
-                                                padding: "12px 14px", backgroundColor: "#FAEEDA",
-                                                borderRadius: "8px", fontSize: "13px", color: "#854F0B",
-                                            }}>
-                                                No billing cycles available — check the agreement start date.
-                                            </div>
-                                        ) : (
-                                            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                                {cycles.map((cycle, i) => (
-                                                    <button
-                                                        key={i}
-                                                        type="button"
-                                                        onClick={() => setSelectedCycle(cycle)}
-                                                        style={{
-                                                            padding: "10px 14px", borderRadius: "8px",
-                                                            border: "1px solid",
-                                                            borderColor: selectedCycle?.start === cycle.start
-                                                                ? "#0F6E56" : "#e5e7eb",
-                                                            backgroundColor: selectedCycle?.start === cycle.start
-                                                                ? "#E1F5EE" : "#fff",
-                                                            cursor: "pointer", textAlign: "left",
-                                                            fontFamily: "'DM Sans', sans-serif",
-                                                            display: "flex", alignItems: "center",
-                                                            justifyContent: "space-between",
-                                                        }}
-                                                    >
-                                                        <span style={{
-                                                            fontSize: "14px", fontWeight: "500",
-                                                            color: selectedCycle?.start === cycle.start
-                                                                ? "#0F6E56" : "#111827",
-                                                        }}>
-                                                            {formatCycleDate(cycle.start)} – {formatCycleDate(cycle.end)}
-                                                        </span>
-                                                        {cycle.isCurrent && (
-                                                            <span style={{
-                                                                fontSize: "11px", padding: "2px 8px",
-                                                                borderRadius: "10px", backgroundColor: "#0F6E56",
-                                                                color: "#fff", fontWeight: "500",
-                                                            }}>
-                                                                Current
-                                                            </span>
-                                                        )}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {!selectedCycle && (
-                                            <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
-                                                Select the period this payment covers
+                                        <label style={labelStyle}>Tenant / Agreement</label>
+                                        <select
+                                            {...register("agreementId", { required: "Please select an agreement" })}
+                                            style={inputStyle}
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        >
+                                            <option value="">
+                                                {agreementsLoading ? "Loading..." : "Select tenant"}
+                                            </option>
+                                            {activeAgreements.map(ag => (
+                                                <option key={ag.id} value={ag.id}>
+                                                    {ag.tenantName} — Unit {ag.roomNumber} ({formatUGX(ag.rentAmount)}/mo)
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.agreementId && (
+                                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                                {errors.agreementId.message}
                                             </p>
                                         )}
                                     </div>
-                                )}
 
-                                {/* Amount */}
-                                <div>
-                                    <label style={labelStyle}>
-                                        Amount (UGX)
-                                        {selectedAgreement && (
-                                            <span style={{ color: "#9ca3af", fontWeight: "400", marginLeft: "6px" }}>
-                                                — expected {formatUGX(selectedAgreement.rentAmount)}
-                                            </span>
-                                        )}
-                                    </label>
-                                    <input
-                                        {...register("amount", {
-                                            required: "Amount is required",
-                                            min: { value: 1, message: "Must be greater than 0" },
-                                        })}
-                                        type="number" style={inputStyle} placeholder="180000"
-                                        onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                        onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                    />
-                                    {errors.amount && (
-                                        <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
-                                            {errors.amount.message}
-                                        </p>
-                                    )}
-                                    {overpayment > 0 && (
-                                        <div style={{
-                                            marginTop: "8px", padding: "10px 14px",
-                                            backgroundColor: "#FAEEDA", borderRadius: "8px",
-                                            borderLeft: "3px solid #EF9F27",
-                                            fontSize: "13px", color: "#854F0B",
-                                        }}>
-                                            Overpayment of {formatUGX(overpayment)} — will roll over to next cycle
+                                    {/* Billing cycle selector */}
+                                    {selectedAgreementId && selectedAgreement && (
+                                        <div>
+                                            <label style={labelStyle}>Payment period</label>
+                                            {cycles.length === 0 ? (
+                                                <div style={{
+                                                    padding: "12px 14px", backgroundColor: "#FAEEDA",
+                                                    borderRadius: "8px", fontSize: "13px", color: "#854F0B",
+                                                }}>
+                                                    No billing cycles available — check the agreement start date.
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                                    {cycles.map((cycle, i) => (
+                                                        <button
+                                                            key={i}
+                                                            type="button"
+                                                            onClick={() => setSelectedCycle(cycle)}
+                                                            style={{
+                                                                padding: "10px 14px", borderRadius: "8px",
+                                                                border: "1px solid",
+                                                                borderColor: selectedCycle?.start === cycle.start
+                                                                    ? "#0F6E56" : "#e5e7eb",
+                                                                backgroundColor: selectedCycle?.start === cycle.start
+                                                                    ? "#E1F5EE" : "#fff",
+                                                                cursor: "pointer", textAlign: "left",
+                                                                fontFamily: "'DM Sans', sans-serif",
+                                                                display: "flex", alignItems: "center",
+                                                                justifyContent: "space-between",
+                                                            }}
+                                                        >
+                                                            <span style={{
+                                                                fontSize: "14px", fontWeight: "500",
+                                                                color: selectedCycle?.start === cycle.start
+                                                                    ? "#0F6E56" : "#111827",
+                                                            }}>
+                                                                {formatCycleDate(cycle.start)} – {formatCycleDate(cycle.end)}
+                                                            </span>
+                                                            {cycle.isCurrent && (
+                                                                <span style={{
+                                                                    fontSize: "11px", padding: "2px 8px",
+                                                                    borderRadius: "10px", backgroundColor: "#0F6E56",
+                                                                    color: "#fff", fontWeight: "500",
+                                                                }}>
+                                                                    Current
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {!selectedCycle && (
+                                                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                                    Select the period this payment covers
+                                                </p>
+                                            )}
                                         </div>
                                     )}
-                                    {enteredAmount && parseFloat(enteredAmount) > 0 &&
-                                        parseFloat(enteredAmount) < expectedAmount && selectedAgreement && (
+
+                                    {/* Amount */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Amount (UGX)
+                                            {selectedAgreement && (
+                                                <span style={{ color: "#9ca3af", fontWeight: "400", marginLeft: "6px" }}>
+                                                    — expected {formatUGX(selectedAgreement.rentAmount)}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <input
+                                            {...register("amount", {
+                                                required: "Amount is required",
+                                                min: { value: 1, message: "Must be greater than 0" },
+                                            })}
+                                            type="number" style={inputStyle} placeholder="180000"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                        {errors.amount && (
+                                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                                {errors.amount.message}
+                                            </p>
+                                        )}
+                                        {overpayment > 0 && (
                                             <div style={{
                                                 marginTop: "8px", padding: "10px 14px",
-                                                backgroundColor: "#fef2f2", borderRadius: "8px",
-                                                borderLeft: "3px solid #ef4444",
-                                                fontSize: "13px", color: "#dc2626",
+                                                backgroundColor: "#FAEEDA", borderRadius: "8px",
+                                                borderLeft: "3px solid #EF9F27",
+                                                fontSize: "13px", color: "#854F0B",
                                             }}>
-                                                Partial — {formatUGX(expectedAmount - parseFloat(enteredAmount))} still outstanding
+                                                Overpayment of {formatUGX(overpayment)} — will roll over to next cycle
                                             </div>
                                         )}
-                                </div>
-
-                                {/* Payment date */}
-                                <div>
-                                    <label style={labelStyle}>Payment date</label>
-                                    <input
-                                        {...register("paymentDate", { required: "Payment date is required" })}
-                                        type="date" style={inputStyle}
-                                        onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                        onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                    />
-                                </div>
-
-                                {/* Method */}
-                                <div>
-                                    <label style={labelStyle}>Payment method</label>
-                                    <div style={{
-                                        ...inputStyle, backgroundColor: "#f9fafb", color: "#6b7280",
-                                        display: "flex", alignItems: "center", gap: "8px",
-                                    }}>
-                                        <span style={{
-                                            display: "inline-block", padding: "2px 10px",
-                                            borderRadius: "20px", fontSize: "12px", fontWeight: "500",
-                                            backgroundColor: "#E1F5EE", color: "#0F6E56",
-                                        }}>CASH</span>
-                                        <span style={{ fontSize: "13px" }}>Cash payment</span>
+                                        {enteredAmount && parseFloat(enteredAmount) > 0 &&
+                                            parseFloat(enteredAmount) < expectedAmount && selectedAgreement && (
+                                                <div style={{
+                                                    marginTop: "8px", padding: "10px 14px",
+                                                    backgroundColor: "#fef2f2", borderRadius: "8px",
+                                                    borderLeft: "3px solid #ef4444",
+                                                    fontSize: "13px", color: "#dc2626",
+                                                }}>
+                                                    Partial — {formatUGX(expectedAmount - parseFloat(enteredAmount))} still outstanding
+                                                </div>
+                                            )}
                                     </div>
-                                </div>
 
-                                {/* Reference */}
-                                <div>
-                                    <label style={labelStyle}>
-                                        Reference{" "}
-                                        <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
-                                    </label>
-                                    <input
-                                        {...register("reference")} type="text"
-                                        style={inputStyle} placeholder="RCP-001"
-                                        onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                        onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                    />
-                                </div>
-
-                                {/* Notes */}
-                                <div>
-                                    <label style={labelStyle}>
-                                        Notes{" "}
-                                        <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
-                                    </label>
-                                    <textarea
-                                        {...register("notes")} rows={2}
-                                        style={{ ...inputStyle, resize: "vertical" }}
-                                        placeholder="April rent payment..."
-                                        onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                        onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                    />
-                                </div>
-
-                                {error && (
-                                    <div style={{
-                                        backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
-                                        padding: "10px 14px", borderRadius: "8px",
-                                        borderLeft: "3px solid #ef4444",
-                                    }}>
-                                        {error}
+                                    {/* Payment date */}
+                                    <div>
+                                        <label style={labelStyle}>Payment date</label>
+                                        <input
+                                            {...register("paymentDate", { required: "Payment date is required" })}
+                                            type="date" style={inputStyle}
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
                                     </div>
-                                )}
-                            </div>
 
-                            {/* Footer */}
-                            <div style={{
-                                display: "flex", gap: "10px", justifyContent: "flex-end",
-                                padding: "16px 24px", borderTop: "1px solid #f3f4f6",
-                            }}>
-                                <button type="button" onClick={onClose} style={{
-                                    padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
-                                    border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                    color: "#374151", cursor: "pointer",
-                                    fontFamily: "'DM Sans', sans-serif",
+                                    {/* Method */}
+                                    <div>
+                                        <label style={labelStyle}>Payment method</label>
+                                        <div style={{
+                                            ...inputStyle, backgroundColor: "#f9fafb",
+                                            color: "#6b7280", display: "flex",
+                                            alignItems: "center", gap: "8px",
+                                        }}>
+                                            <span style={{
+                                                display: "inline-block", padding: "2px 10px",
+                                                borderRadius: "20px", fontSize: "12px", fontWeight: "500",
+                                                backgroundColor: "#E1F5EE", color: "#0F6E56",
+                                            }}>CASH</span>
+                                            <span style={{ fontSize: "13px" }}>Cash payment</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Reference */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Reference{" "}
+                                            <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                        </label>
+                                        <input
+                                            {...register("reference")} type="text"
+                                            style={inputStyle} placeholder="RCP-001"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                    </div>
+
+                                    {/* Notes */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Notes{" "}
+                                            <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                        </label>
+                                        <textarea
+                                            {...register("notes")} rows={2}
+                                            style={{ ...inputStyle, resize: "vertical" }}
+                                            placeholder="April rent payment..."
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                    </div>
+
+                                    {error && (
+                                        <div style={{
+                                            backgroundColor: "#fef2f2", color: "#dc2626",
+                                            fontSize: "13px", padding: "10px 14px",
+                                            borderRadius: "8px", borderLeft: "3px solid #ef4444",
+                                        }}>
+                                            {error}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: "flex", gap: "10px", justifyContent: "flex-end",
+                                    padding: "16px 24px", borderTop: "1px solid #f3f4f6",
                                 }}>
-                                    Cancel
-                                </button>
-                                <button type="submit" disabled={createPayment.isPending} style={{
-                                    padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
-                                    backgroundColor: createPayment.isPending ? "#6b9e8f" : "#0F6E56",
-                                    color: "#fff", border: "none", cursor: "pointer",
-                                    fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                                    <button type="button" onClick={onClose} style={{
+                                        padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
+                                        border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                        color: "#374151", cursor: "pointer",
+                                        fontFamily: "'DM Sans', sans-serif",
+                                    }}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" disabled={createPayment.isPending} style={{
+                                        padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
+                                        backgroundColor: createPayment.isPending ? "#6b9e8f" : "#0F6E56",
+                                        color: "#fff", border: "none", cursor: "pointer",
+                                        fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                                    }}>
+                                        {createPayment.isPending ? "Recording..." : "Record payment"}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* ══ MANUAL RECEIPT TAB ══ */}
+                        {activeTab === "manual" && (
+                            <form onSubmit={handleSubmitManual(onManualSubmit)}>
+                                <div style={{
+                                    padding: "20px 24px",
+                                    display: "flex", flexDirection: "column", gap: "16px",
                                 }}>
-                                    {createPayment.isPending ? "Recording..." : "Record payment"}
-                                </button>
-                            </div>
-                        </form>
+
+                                    {/* Tenant picker */}
+                                    <div>
+                                        <label style={labelStyle}>Tenant</label>
+                                        <select
+                                            {...registerManual("tenantId", { required: "Please select a tenant" })}
+                                            style={inputStyle}
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        >
+                                            <option value="">
+                                                {tenantsLoading ? "Loading..." : "Select tenant"}
+                                            </option>
+                                            {allTenants.map(t => (
+                                                <option key={t.id} value={t.id}>
+                                                    {t.name} — Unit {t.currentUnit || "—"}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {manualErrors.tenantId && (
+                                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                                {manualErrors.tenantId.message}
+                                            </p>
+                                        )}
+
+                                        {/* Auto-filled tenant info */}
+                                        {selectedTenant && (
+                                            <div style={{
+                                                marginTop: "8px", padding: "10px 14px",
+                                                backgroundColor: "#E1F5EE", borderRadius: "8px",
+                                                fontSize: "12px", color: "#0F6E56",
+                                                display: "flex", gap: "16px",
+                                            }}>
+                                                <span>
+                                                    <strong>Name:</strong> {selectedTenant.name}
+                                                </span>
+                                                <span>
+                                                    <strong>Unit:</strong> {selectedTenant.currentUnit || "—"}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Amount */}
+                                    <div>
+                                        <label style={labelStyle}>Amount (UGX)</label>
+                                        <input
+                                            {...registerManual("amount", {
+                                                required: "Amount is required",
+                                                min: { value: 1, message: "Must be greater than 0" },
+                                            })}
+                                            type="number" style={inputStyle}
+                                            placeholder="180000"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                        {manualErrors.amount && (
+                                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                                {manualErrors.amount.message}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Period — free text */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Period{" "}
+                                            <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                        </label>
+                                        <input
+                                            {...registerManual("period")}
+                                            type="text" style={inputStyle}
+                                            placeholder="e.g. 1 Apr – 30 Apr or January 2026"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                    </div>
+
+                                    {/* Payment date */}
+                                    <div>
+                                        <label style={labelStyle}>Payment date</label>
+                                        <input
+                                            {...registerManual("paymentDate", { required: "Payment date is required" })}
+                                            type="date" style={inputStyle}
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                        {manualErrors.paymentDate && (
+                                            <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                                {manualErrors.paymentDate.message}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Payment by */}
+                                    <div>
+                                        <label style={labelStyle}>Payment by</label>
+                                        <select
+                                            {...registerManual("method")}
+                                            style={inputStyle}
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        >
+                                            <option value="CASH">Cash</option>
+                                            <option value="MOBILE MONEY">Mobile Money</option>
+                                            <option value="BANK TRANSFER">Bank Transfer</option>
+                                            <option value="CHEQUE">Cheque</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Balance */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Balance remaining (UGX){" "}
+                                            <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                        </label>
+                                        <input
+                                            {...registerManual("balance")}
+                                            type="number" min="0" style={inputStyle}
+                                            placeholder="0"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                        <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                                            Amount still owed after this payment
+                                        </p>
+                                    </div>
+
+                                    {/* Reference */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Reference{" "}
+                                            <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                        </label>
+                                        <input
+                                            {...registerManual("reference")}
+                                            type="text" style={inputStyle}
+                                            placeholder="RCP-001"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                    </div>
+
+                                    {/* Notes */}
+                                    <div>
+                                        <label style={labelStyle}>
+                                            Notes{" "}
+                                            <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
+                                        </label>
+                                        <textarea
+                                            {...registerManual("notes")} rows={2}
+                                            style={{ ...inputStyle, resize: "vertical" }}
+                                            placeholder="e.g. January rent payment"
+                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                            onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                        />
+                                    </div>
+
+                                    {/* Style toggle */}
+                                    <div>
+                                        <label style={labelStyle}>Receipt style</label>
+                                        <div style={{ display: "flex", gap: "8px" }}>
+                                            {[
+                                                { value: "DIGITAL", label: "Digital", desc: "Clean branded" },
+                                                { value: "FORMAL", label: "Formal", desc: "Like receipt book" },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => setManualStyle(opt.value)}
+                                                    style={{
+                                                        flex: 1, padding: "10px 8px", borderRadius: "8px",
+                                                        fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+                                                        cursor: "pointer", fontWeight: "500",
+                                                        border: "1px solid",
+                                                        borderColor: manualStyle === opt.value ? "#0F6E56" : "#e5e7eb",
+                                                        backgroundColor: manualStyle === opt.value ? "#0F6E56" : "#fff",
+                                                        color: manualStyle === opt.value ? "#fff" : "#6b7280",
+                                                        textAlign: "center",
+                                                    }}
+                                                >
+                                                    <div>{opt.label}</div>
+                                                    <div style={{ fontSize: "10px", marginTop: "2px", opacity: 0.8 }}>
+                                                        {opt.desc}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {manualError && (
+                                        <div style={{
+                                            backgroundColor: "#fef2f2", color: "#dc2626",
+                                            fontSize: "13px", padding: "10px 14px",
+                                            borderRadius: "8px", borderLeft: "3px solid #ef4444",
+                                        }}>
+                                            {manualError}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: "flex", gap: "10px", justifyContent: "flex-end",
+                                    padding: "16px 24px", borderTop: "1px solid #f3f4f6",
+                                }}>
+                                    <button type="button" onClick={onClose} style={{
+                                        padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
+                                        border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                        color: "#374151", cursor: "pointer",
+                                        fontFamily: "'DM Sans', sans-serif",
+                                    }}>
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={manualGenerating}
+                                        style={{
+                                            padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
+                                            backgroundColor: manualGenerating ? "#6b9e8f" : "#0F6E56",
+                                            color: "#fff", border: "none", cursor: "pointer",
+                                            fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                                            display: "flex", alignItems: "center", gap: "6px",
+                                        }}
+                                    >
+                                        {manualGenerating ? "Generating..." : "↓ Generate Receipt"}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </>
                 )}
             </div>

@@ -67,6 +67,10 @@ const loadImageAsBase64 = (url) => {
 
 // ── DIGITAL receipt ──────────────────────────────────────
 const generateDigital = async (doc, payment, settings, receiptNumber) => {
+    const periodDisplay = payment.isManual
+        ? (payment.manualPeriod || "—")
+        : formatCycle(payment.periodStartDate, payment.periodEndDate)
+
     const W = 210  // A5 width in mm
     const primary = "#0F6E56"
     const dark = "#111827"
@@ -181,7 +185,7 @@ const generateDigital = async (doc, payment, settings, receiptNumber) => {
 
     // ── Details grid ─────────────────────────────────────
     const details = [
-        { label: "FOR PERIOD",    value: formatCycle(payment.periodStartDate, payment.periodEndDate) },
+        { label: "FOR PERIOD", value: periodDisplay },
         { label: "PAYMENT BY",    value: payment.method || "CASH" },
         { label: "EXPECTED RENT", value: formatUGX(payment.expectedAmount) },
         { label: "BALANCE",       value: formatUGX(Math.max(0, Number(payment.expectedAmount || 0) - Number(payment.amount || 0))) },
@@ -238,6 +242,9 @@ const generateDigital = async (doc, payment, settings, receiptNumber) => {
 
 // ── FORMAL receipt (like physical book) ─────────────────
 const generateFormal = async (doc, payment, settings, receiptNumber) => {
+    const periodDisplay = payment.isManual
+        ? (payment.manualPeriod || "—")
+        : formatCycle(payment.periodStartDate, payment.periodEndDate)
     const W = 210
     let y = 14
 
@@ -339,7 +346,7 @@ const generateFormal = async (doc, payment, settings, receiptNumber) => {
     // Being payment of
     dottedLine(
         "Being payment of:",
-        `Rent — ${formatCycle(payment.periodStartDate, payment.periodEndDate)}`,
+        `Rent — ${periodDisplay}`,
         y
     )
     y += 12
@@ -360,7 +367,9 @@ const generateFormal = async (doc, payment, settings, receiptNumber) => {
     y += 10
 
     // Balance
-    const balance = Math.max(0, Number(payment.expectedAmount || 0) - Number(payment.amount || 0))
+    const balance = payment.isManual
+        ? Number(payment.balance || 0)
+        : Math.max(0, Number(payment.expectedAmount || 0) - Number(payment.amount || 0))
     dottedLine("Balance:", formatUGX(balance), y)
     y += 16
 
