@@ -23,12 +23,15 @@ export default function BottomSheet({ title, onClose, children }) {
 
             {/* ── Mobile — bottom sheet ── */}
             <div className="mobile-cards" style={{
-                position: "fixed", bottom: 0, left: 0, right: 0,
+                position: "fixed",
+                bottom: "64px", // ← sits above bottom nav (64px tall)
+                left: 0, right: 0,
                 backgroundColor: "#fff",
                 borderRadius: "20px 20px 0 0",
                 zIndex: 201,
-                maxHeight: "85vh",
-                display: "flex", flexDirection: "column",
+                maxHeight: "calc(85vh - 64px)", // ← leaves room for bottom nav
+                display: "flex",
+                flexDirection: "column",
                 boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
             }}>
                 {/* Handle */}
@@ -61,8 +64,13 @@ export default function BottomSheet({ title, onClose, children }) {
                     </button>
                 </div>
 
-                {/* Content */}
-                <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
+                {/* Content — scrollable */}
+                <div style={{
+                    overflowY: "auto",
+                    flex: 1,
+                    padding: "20px",
+                    paddingBottom: "24px", // extra bottom padding inside scroll
+                }}>
                     {children}
                 </div>
             </div>
@@ -75,18 +83,21 @@ export default function BottomSheet({ title, onClose, children }) {
                 backgroundColor: "#fff",
                 borderRadius: "16px",
                 zIndex: 201,
-                width: "100%", maxWidth: "520px",
-                maxHeight: "85vh",
-                display: "flex", flexDirection: "column",
+                width: "100%",
+                maxWidth: "520px",
+                maxHeight: "80vh", // ← reduced from 85vh
+                display: "flex",
+                flexDirection: "column",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.16)",
+                overflow: "hidden", // ← clips rounded corners properly
             }}>
-                {/* Header */}
+                {/* Header — sticky */}
                 <div style={{
                     display: "flex", alignItems: "center",
                     justifyContent: "space-between",
                     padding: "20px 24px",
                     borderBottom: "1px solid #f3f4f6",
-                    flexShrink: 0,
+                    flexShrink: 0, // ← never shrinks
                 }}>
                     <h2 style={{
                         fontSize: "16px", fontWeight: "600",
@@ -103,8 +114,12 @@ export default function BottomSheet({ title, onClose, children }) {
                     </button>
                 </div>
 
-                {/* Content */}
-                <div style={{ overflowY: "auto", flex: 1, padding: "24px" }}>
+                {/* Content — scrollable within modal */}
+                <div style={{
+                    overflowY: "auto",
+                    flex: 1,
+                    padding: "24px",
+                }}>
                     {children}
                 </div>
             </div>
