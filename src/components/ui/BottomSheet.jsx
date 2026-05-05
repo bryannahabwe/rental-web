@@ -21,19 +21,58 @@ export default function BottomSheet({ title, onClose, children }) {
                 }}
             />
 
-            {/* ── Mobile — bottom sheet ── */}
-            <div className="mobile-cards" style={{
-                position: "fixed",
-                bottom: "64px", // ← sits above bottom nav (64px tall)
-                left: 0, right: 0,
-                backgroundColor: "#fff",
-                borderRadius: "20px 20px 0 0",
-                zIndex: 201,
-                maxHeight: "calc(85vh - 64px)", // ← leaves room for bottom nav
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
+            {/* ── Mobile bottom sheet (< 768px) ── */}
+            <div style={{
+                display: "none",  // overridden by the style tag below
             }}>
+            </div>
+
+            {/* ── Single responsive sheet — changes shape at 768px ── */}
+            <style>{`
+                .bottom-sheet-mobile {
+                    position: fixed;
+                    bottom: 64px;
+                    left: 0;
+                    right: 0;
+                    background-color: #fff;
+                    border-radius: 20px 20px 0 0;
+                    z-index: 201;
+                    max-height: calc(85vh - 64px);
+                    display: flex;
+                    flex-direction: column;
+                    box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+                }
+
+                .bottom-sheet-desktop {
+                    display: none;
+                }
+
+                @media (min-width: 768px) {
+                    .bottom-sheet-mobile {
+                        display: none;
+                    }
+
+                    .bottom-sheet-desktop {
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background-color: #fff;
+                        border-radius: 16px;
+                        z-index: 201;
+                        width: 100%;
+                        max-width: 520px;
+                        max-height: 90vh;
+                        display: flex;
+                        flex-direction: column;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+                        overflow: hidden;
+                    }
+                }
+            `}</style>
+
+            {/* Mobile sheet */}
+            <div className="bottom-sheet-mobile">
                 {/* Handle */}
                 <div style={{
                     width: "40px", height: "4px", borderRadius: "4px",
@@ -64,34 +103,21 @@ export default function BottomSheet({ title, onClose, children }) {
                     </button>
                 </div>
 
-                {/* Content — scrollable */}
+                {/* Content */}
                 <div style={{
-                    overflowY: "auto",
                     flex: 1,
+                    minHeight: 0,
+                    overflowY: "auto",
                     padding: "20px",
-                    paddingBottom: "24px", // extra bottom padding inside scroll
+                    paddingBottom: "24px",
                 }}>
                     {children}
                 </div>
             </div>
 
-            {/* ── Desktop — centered modal ── */}
-            <div className="desktop-table" style={{
-                position: "fixed",
-                top: "50%", left: "50%",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: "#fff",
-                borderRadius: "16px",
-                zIndex: 201,
-                width: "100%",
-                maxWidth: "520px",
-                height: "80vh",        // ← fixed height, not maxHeight
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.16)",
-                overflow: "hidden",
-            }}>
-                {/* Header — never scrolls */}
+            {/* Desktop modal */}
+            <div className="bottom-sheet-desktop">
+                {/* Header */}
                 <div style={{
                     display: "flex", alignItems: "center",
                     justifyContent: "space-between",
@@ -117,7 +143,7 @@ export default function BottomSheet({ title, onClose, children }) {
                 {/* Content — scrollable */}
                 <div style={{
                     flex: 1,
-                    minHeight: 0,        // ← this is the key fix
+                    minHeight: 0,
                     overflowY: "auto",
                     padding: "24px",
                 }}>
