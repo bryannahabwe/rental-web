@@ -85,19 +85,19 @@ export default function BottomSheet({ title, onClose, children }) {
                 zIndex: 201,
                 width: "100%",
                 maxWidth: "520px",
-                maxHeight: "80vh", // ← reduced from 85vh
+                height: "80vh",        // ← fixed height, not maxHeight
                 display: "flex",
                 flexDirection: "column",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.16)",
-                overflow: "hidden", // ← clips rounded corners properly
+                overflow: "hidden",
             }}>
-                {/* Header — sticky */}
+                {/* Header — never scrolls */}
                 <div style={{
                     display: "flex", alignItems: "center",
                     justifyContent: "space-between",
                     padding: "20px 24px",
                     borderBottom: "1px solid #f3f4f6",
-                    flexShrink: 0, // ← never shrinks
+                    flexShrink: 0,
                 }}>
                     <h2 style={{
                         fontSize: "16px", fontWeight: "600",
@@ -114,10 +114,11 @@ export default function BottomSheet({ title, onClose, children }) {
                     </button>
                 </div>
 
-                {/* Content — scrollable within modal */}
+                {/* Content — scrollable */}
                 <div style={{
-                    overflowY: "auto",
                     flex: 1,
+                    minHeight: 0,        // ← this is the key fix
+                    overflowY: "auto",
                     padding: "24px",
                 }}>
                     {children}
