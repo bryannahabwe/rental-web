@@ -393,6 +393,14 @@ function RecordPaymentModal({ onClose }) {
                                     {/* Billing cycle selector */}
                                     {selectedAgreementId && selectedAgreement && (
                                         <div>
+                                            <div style={{
+                                                padding: "10px 14px", backgroundColor: "#E1F5EE",
+                                                borderRadius: "8px", fontSize: "12px", color: "#0F6E56",
+                                                marginBottom: "8px",
+                                            }}>
+                                                💡 Select the <strong>earliest unpaid period</strong> first.
+                                                Overpayments automatically roll forward to the next cycle.
+                                            </div>
                                             <label style={labelStyle}>Payment period</label>
                                             {cycles.length === 0 ? (
                                                 <div style={{
