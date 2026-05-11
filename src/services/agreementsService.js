@@ -6,4 +6,5 @@ export const agreementsService = {
     create: (data) => api.post("/agreements", data),
     update: (id, data) => api.put(`/agreements/${id}`, data),
     moveOut: (id, data) => api.patch(`/agreements/${id}/moveout`, data),
+    getCycles: (id) => api.get(`/agreements/${id}/cycles`),
 }

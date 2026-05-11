@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import { useCreatePayment, usePayments } from "@/hooks/usePayments"
-import { useAgreements } from "@/hooks/useAgreements"
+import { useAgreements, useAgreementCycles } from "@/hooks/useAgreements"
 import { useForm } from "react-hook-form"
 import { ChevronRight, Plus, X } from "lucide-react"
 import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
@@ -20,40 +20,6 @@ const formatCycleDate = (dateStr) => {
 const formatCycle = (start, end) => {
     if (!start || !end) return "—"
     return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
-}
-
-const generateCycles = (agreement) => {
-    if (!agreement?.startDate && !agreement?.billingDay) return []
-    const billingDay = agreement.billingDay || 1
-    const today = new Date()
-    const cycles = []
-
-    let cycleStart = new Date(today)
-    cycleStart.setDate(Math.min(billingDay, 28))
-
-    if (cycleStart > today) {
-        cycleStart.setMonth(cycleStart.getMonth() - 1)
-        cycleStart.setDate(Math.min(billingDay, 28))
-    }
-
-    for (let i = 0; i < 6; i++) {
-        const start = new Date(cycleStart)
-        start.setMonth(start.getMonth() - i)
-        start.setDate(Math.min(billingDay, 28))
-
-        const end = new Date(start)
-        end.setMonth(end.getMonth() + 1)
-        end.setDate(Math.min(billingDay, 28))
-        end.setDate(end.getDate() - 1)
-
-        cycles.push({
-            start: start.toISOString().split("T")[0],
-            end: end.toISOString().split("T")[0],
-            isCurrent: i === 0,
-        })
-    }
-
-    return cycles
 }
 
 const inputStyle = {
@@ -81,6 +47,154 @@ const formatDate = (dateStr) => {
 
 const nullIfEmpty = (val) =>
     (val === "" || val === undefined) ? null : val
+// ── Cycle Picker ─────────────────────────────────────────
+function CyclePicker({ agreementId, selectedCycle, onSelectCycle, openingArrears }) {
+    const { data: cycles = [], isLoading } = useAgreementCycles(agreementId)
+
+    useEffect(() => {
+        if (cycles.length === 0) return
+        const firstUnpaid = cycles.find(c => c.status !== "PAID")
+        if (firstUnpaid && !selectedCycle) {
+            onSelectCycle({
+                start: firstUnpaid.periodStartDate,
+                end: firstUnpaid.periodEndDate,
+            })
+        }
+    }, [cycles])
+
+    if (isLoading) return (
+        <div style={{ fontSize: "13px", color: "#9ca3af", padding: "8px 0" }}>
+            Loading cycles...
+        </div>
+    )
+
+    if (cycles.length === 0) return (
+        <div style={{
+            padding: "12px 14px", backgroundColor: "#FAEEDA",
+            borderRadius: "8px", fontSize: "13px", color: "#854F0B",
+        }}>
+            No billing cycles available — check the agreement start date.
+        </div>
+    )
+
+    const unpaidCycles = cycles.filter(c => c.status !== "PAID")
+    const totalUnpaid = unpaidCycles.reduce(
+        (sum, c) => sum + Number(c.expectedAmount) - Number(c.paidAmount), 0
+    )
+
+    return (
+        <div>
+            {/* Opening arrears banner */}
+            {openingArrears > 0 && (
+                <div style={{
+                    padding: "10px 14px", marginBottom: "8px",
+                    backgroundColor: "#fef2f2", borderRadius: "8px",
+                    fontSize: "12px", color: "#dc2626",
+                    borderLeft: "3px solid #ef4444",
+                }}>
+                    <div style={{
+                        display: "flex", justifyContent: "space-between",
+                        alignItems: "center", marginBottom: "2px",
+                    }}>
+                        <strong>Historical arrears</strong>
+                        <strong>{formatUGX(openingArrears)}</strong>
+                    </div>
+                    <div style={{ color: "#9ca3af", fontSize: "11px" }}>
+                        Debt before system start date — go to{" "}
+                        <strong style={{ color: "#dc2626" }}>
+                            Edit Agreement → Opening Balance
+                        </strong>{" "}
+                        to clear
+                    </div>
+                </div>
+            )}
+
+            {/* Unpaid summary banner */}
+            {unpaidCycles.length > 0 && (
+                <div style={{
+                    padding: "10px 14px", marginBottom: "10px",
+                    backgroundColor: unpaidCycles.length > 1 ? "#fef2f2" : "#FAEEDA",
+                    borderRadius: "8px", fontSize: "12px",
+                    color: unpaidCycles.length > 1 ? "#dc2626" : "#854F0B",
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "center",
+                }}>
+                    <span>
+                        <strong>
+                            {unpaidCycles.length} month{unpaidCycles.length > 1 ? "s" : ""} unpaid
+                        </strong>
+                        {" — earliest is auto-selected"}
+                    </span>
+                    <span style={{ fontWeight: "700" }}>
+                        {formatUGX(totalUnpaid)} total
+                    </span>
+                </div>
+            )}
+
+            <label style={labelStyle}>Payment period</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {cycles.map((cycle, i) => {
+                    const isSelected = selectedCycle?.start === cycle.periodStartDate
+                    const statusColor = {
+                        PAID:    { bg: "#E1F5EE", color: "#0F6E56" },
+                        PARTIAL: { bg: "#FAEEDA", color: "#854F0B" },
+                        UNPAID:  { bg: "#FCEBEB", color: "#A32D2D" },
+                    }[cycle.status] || { bg: "#f3f4f6", color: "#6b7280" }
+
+                    return (
+                        <button
+                            key={i}
+                            type="button"
+                            onClick={() => onSelectCycle({
+                                start: cycle.periodStartDate,
+                                end: cycle.periodEndDate,
+                            })}
+                            style={{
+                                padding: "10px 14px", borderRadius: "8px",
+                                border: "1px solid",
+                                borderColor: isSelected ? "#0F6E56" : "#e5e7eb",
+                                backgroundColor: isSelected ? "#E1F5EE" : "#fff",
+                                cursor: "pointer", textAlign: "left",
+                                fontFamily: "'DM Sans', sans-serif",
+                                display: "flex", alignItems: "center",
+                                justifyContent: "space-between",
+                            }}
+                        >
+                            <div>
+                                <div style={{
+                                    fontSize: "14px", fontWeight: "500",
+                                    color: isSelected ? "#0F6E56" : "#111827",
+                                }}>
+                                    {formatCycleDate(cycle.periodStartDate)} – {formatCycleDate(cycle.periodEndDate)}
+                                </div>
+                                {cycle.status === "PARTIAL" && (
+                                    <div style={{ fontSize: "11px", color: "#854F0B", marginTop: "2px" }}>
+                                        {formatUGX(cycle.paidAmount)} paid of {formatUGX(cycle.expectedAmount)}
+                                    </div>
+                                )}
+                            </div>
+                            <span style={{
+                                padding: "2px 8px", borderRadius: "10px",
+                                fontSize: "11px", fontWeight: "500",
+                                backgroundColor: statusColor.bg,
+                                color: statusColor.color,
+                                flexShrink: 0,
+                            }}>
+                                {cycle.status}
+                            </span>
+                        </button>
+                    )
+                })}
+            </div>
+
+            {!selectedCycle && (
+                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
+                    Select the period this payment covers
+                </p>
+            )}
+        </div>
+    )
+}
 
 // ── Record Payment Modal ─────────────────────────────────
 function RecordPaymentModal({ onClose }) {
@@ -91,17 +205,12 @@ function RecordPaymentModal({ onClose }) {
     })
     const { data: tenantsData, isLoading: tenantsLoading } = useAllTenants()
 
-    // ── Tab state ─────────────────────────────────────────
-    const [activeTab, setActiveTab] = useState("record") // "record" | "manual"
-
-    // ── Record Payment state ──────────────────────────────
+    const [activeTab, setActiveTab] = useState("record")
     const [error, setError] = useState("")
     const [selectedCycle, setSelectedCycle] = useState(null)
     const [completedPayment, setCompletedPayment] = useState(null)
     const [receiptNumber, setReceiptNumber] = useState(null)
     const [receiptDownloading, setReceiptDownloading] = useState(false)
-
-    // ── Manual Receipt state ──────────────────────────────
     const [manualError, setManualError] = useState("")
     const [manualGenerating, setManualGenerating] = useState(false)
     const [manualStyle, setManualStyle] = useState(settings?.receiptStyle || "DIGITAL")
@@ -109,7 +218,6 @@ function RecordPaymentModal({ onClose }) {
     const activeAgreements = agreementsData?.content || []
     const allTenants = tenantsData || []
 
-    // ── Record Payment form ───────────────────────────────
     const { register, handleSubmit, watch, formState: { errors } } = useForm({
         defaultValues: {
             paymentDate: new Date().toISOString().split("T")[0],
@@ -117,7 +225,6 @@ function RecordPaymentModal({ onClose }) {
         },
     })
 
-    // ── Manual Receipt form ───────────────────────────────
     const {
         register: registerManual,
         handleSubmit: handleSubmitManual,
@@ -140,12 +247,13 @@ function RecordPaymentModal({ onClose }) {
 
     const selectedAgreement = activeAgreements.find(ag => ag.id === selectedAgreementId)
     const selectedTenant = allTenants.find(t => t.id === selectedTenantId)
-    const cycles = generateCycles(selectedAgreement)
     const expectedAmount = selectedAgreement?.rentAmount || 0
     const overpayment = enteredAmount && parseFloat(enteredAmount) > expectedAmount
         ? parseFloat(enteredAmount) - expectedAmount : 0
+    const openingArrears = selectedAgreement
+        ? Math.max(0, -(Number(selectedAgreement.openingBalance || 0)))
+        : 0
 
-    // ── Record Payment submit ─────────────────────────────
     const onSubmit = async (data) => {
         setError("")
         if (!selectedCycle) {
@@ -171,32 +279,27 @@ function RecordPaymentModal({ onClose }) {
         }
     }
 
-    // ── Manual Receipt submit ─────────────────────────────
     const onManualSubmit = async (data) => {
         setManualError("")
         setManualGenerating(true)
         try {
             const receiptRes = await settingsService.getNextReceiptNumber()
             const rNumber = receiptRes.data
-
-            // Build a payment-like object for the receipt generator
             const manualPayment = {
-                tenantName: selectedTenant?.name || data.tenantName || "—",
+                tenantName: selectedTenant?.name || "—",
                 roomNumber: selectedTenant?.currentUnit || "—",
                 amount: parseFloat(data.amount),
-                expectedAmount: parseFloat(data.amount), // manual — no expected
+                expectedAmount: parseFloat(data.amount),
                 paymentDate: data.paymentDate,
                 periodStartDate: null,
                 periodEndDate: null,
-                manualPeriod: data.period || "—",  // free text period
+                manualPeriod: data.period || "—",
                 method: data.method || "CASH",
                 reference: data.reference || null,
                 notes: data.notes || null,
                 balance: data.balance ? parseFloat(data.balance) : 0,
                 isManual: true,
             }
-
-            // Temporarily override style for this receipt
             const settingsWithStyle = { ...settings, receiptStyle: manualStyle }
             await generateReceipt(manualPayment, settingsWithStyle, rNumber)
         } catch (err) {
@@ -218,7 +321,6 @@ function RecordPaymentModal({ onClose }) {
         }
     }
 
-    // ── Tab toggle ────────────────────────────────────────
     const TabToggle = () => (
         <div style={{
             display: "flex", gap: "4px",
@@ -243,8 +345,7 @@ function RecordPaymentModal({ onClose }) {
                         cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                         backgroundColor: activeTab === tab.id ? "#fff" : "transparent",
                         color: activeTab === tab.id ? "#111827" : "#6b7280",
-                        boxShadow: activeTab === tab.id
-                            ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                        boxShadow: activeTab === tab.id ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
                         transition: "all 0.15s",
                     }}
                 >
@@ -329,17 +430,13 @@ function RecordPaymentModal({ onClose }) {
                     </div>
                 ) : (
                     <>
-                        {/* ── Header ── */}
+                        {/* Header */}
                         <div style={{
                             display: "flex", alignItems: "center",
                             justifyContent: "space-between",
-                            padding: "20px 24px 0",
-                            flexShrink: 0,
+                            padding: "20px 24px 0", flexShrink: 0,
                         }}>
-                            <h2 style={{
-                                fontSize: "16px", fontWeight: "600",
-                                color: "#111827", margin: 0,
-                            }}>
+                            <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
                                 {activeTab === "record" ? "Record Payment" : "Manual Receipt"}
                             </h2>
                             <button onClick={onClose} style={{
@@ -350,13 +447,9 @@ function RecordPaymentModal({ onClose }) {
                             </button>
                         </div>
 
-                        {/* ── Tab toggle ── */}
                         <TabToggle />
 
-                        <div style={{
-                            height: "1px", backgroundColor: "#f3f4f6",
-                            margin: "16px 0 0",
-                        }} />
+                        <div style={{ height: "1px", backgroundColor: "#f3f4f6", margin: "16px 0 0" }} />
 
                         {/* ══ RECORD PAYMENT TAB ══ */}
                         {activeTab === "record" && (
@@ -365,6 +458,7 @@ function RecordPaymentModal({ onClose }) {
                                     padding: "20px 24px",
                                     display: "flex", flexDirection: "column", gap: "16px",
                                 }}>
+
                                     {/* Tenant / Agreement */}
                                     <div>
                                         <label style={labelStyle}>Tenant / Agreement</label>
@@ -390,71 +484,14 @@ function RecordPaymentModal({ onClose }) {
                                         )}
                                     </div>
 
-                                    {/* Billing cycle selector */}
+                                    {/* Cycle picker — backend-aware */}
                                     {selectedAgreementId && selectedAgreement && (
-                                        <div>
-                                            <div style={{
-                                                padding: "10px 14px", backgroundColor: "#E1F5EE",
-                                                borderRadius: "8px", fontSize: "12px", color: "#0F6E56",
-                                                marginBottom: "8px",
-                                            }}>
-                                                💡 Select the <strong>earliest unpaid period</strong> first.
-                                                Overpayments automatically roll forward to the next cycle.
-                                            </div>
-                                            <label style={labelStyle}>Payment period</label>
-                                            {cycles.length === 0 ? (
-                                                <div style={{
-                                                    padding: "12px 14px", backgroundColor: "#FAEEDA",
-                                                    borderRadius: "8px", fontSize: "13px", color: "#854F0B",
-                                                }}>
-                                                    No billing cycles available — check the agreement start date.
-                                                </div>
-                                            ) : (
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                                    {cycles.map((cycle, i) => (
-                                                        <button
-                                                            key={i}
-                                                            type="button"
-                                                            onClick={() => setSelectedCycle(cycle)}
-                                                            style={{
-                                                                padding: "10px 14px", borderRadius: "8px",
-                                                                border: "1px solid",
-                                                                borderColor: selectedCycle?.start === cycle.start
-                                                                    ? "#0F6E56" : "#e5e7eb",
-                                                                backgroundColor: selectedCycle?.start === cycle.start
-                                                                    ? "#E1F5EE" : "#fff",
-                                                                cursor: "pointer", textAlign: "left",
-                                                                fontFamily: "'DM Sans', sans-serif",
-                                                                display: "flex", alignItems: "center",
-                                                                justifyContent: "space-between",
-                                                            }}
-                                                        >
-                                                            <span style={{
-                                                                fontSize: "14px", fontWeight: "500",
-                                                                color: selectedCycle?.start === cycle.start
-                                                                    ? "#0F6E56" : "#111827",
-                                                            }}>
-                                                                {formatCycleDate(cycle.start)} – {formatCycleDate(cycle.end)}
-                                                            </span>
-                                                            {cycle.isCurrent && (
-                                                                <span style={{
-                                                                    fontSize: "11px", padding: "2px 8px",
-                                                                    borderRadius: "10px", backgroundColor: "#0F6E56",
-                                                                    color: "#fff", fontWeight: "500",
-                                                                }}>
-                                                                    Current
-                                                                </span>
-                                                            )}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {!selectedCycle && (
-                                                <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>
-                                                    Select the period this payment covers
-                                                </p>
-                                            )}
-                                        </div>
+                                        <CyclePicker
+                                            agreementId={selectedAgreementId}
+                                            selectedCycle={selectedCycle}
+                                            onSelectCycle={setSelectedCycle}
+                                            openingArrears={openingArrears}
+                                        />
                                     )}
 
                                     {/* Amount */}
@@ -627,8 +664,6 @@ function RecordPaymentModal({ onClose }) {
                                                 {manualErrors.tenantId.message}
                                             </p>
                                         )}
-
-                                        {/* Auto-filled tenant info */}
                                         {selectedTenant && (
                                             <div style={{
                                                 marginTop: "8px", padding: "10px 14px",
@@ -636,12 +671,8 @@ function RecordPaymentModal({ onClose }) {
                                                 fontSize: "12px", color: "#0F6E56",
                                                 display: "flex", gap: "16px",
                                             }}>
-                                                <span>
-                                                    <strong>Name:</strong> {selectedTenant.name}
-                                                </span>
-                                                <span>
-                                                    <strong>Unit:</strong> {selectedTenant.currentUnit || "—"}
-                                                </span>
+                                                <span><strong>Name:</strong> {selectedTenant.name}</span>
+                                                <span><strong>Unit:</strong> {selectedTenant.currentUnit || "—"}</span>
                                             </div>
                                         )}
                                     </div>
@@ -654,8 +685,7 @@ function RecordPaymentModal({ onClose }) {
                                                 required: "Amount is required",
                                                 min: { value: 1, message: "Must be greater than 0" },
                                             })}
-                                            type="number" style={inputStyle}
-                                            placeholder="180000"
+                                            type="number" style={inputStyle} placeholder="180000"
                                             onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                             onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                         />
@@ -666,7 +696,7 @@ function RecordPaymentModal({ onClose }) {
                                         )}
                                     </div>
 
-                                    {/* Period — free text */}
+                                    {/* Period */}
                                     <div>
                                         <label style={labelStyle}>
                                             Period{" "}
@@ -721,8 +751,7 @@ function RecordPaymentModal({ onClose }) {
                                         </label>
                                         <input
                                             {...registerManual("balance")}
-                                            type="number" min="0" style={inputStyle}
-                                            placeholder="0"
+                                            type="number" min="0" style={inputStyle} placeholder="0"
                                             onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                             onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                         />
@@ -739,8 +768,7 @@ function RecordPaymentModal({ onClose }) {
                                         </label>
                                         <input
                                             {...registerManual("reference")}
-                                            type="text" style={inputStyle}
-                                            placeholder="RCP-001"
+                                            type="text" style={inputStyle} placeholder="RCP-001"
                                             onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                             onBlur={e => e.target.style.borderColor = "#d1d5db"}
                                         />
@@ -767,7 +795,7 @@ function RecordPaymentModal({ onClose }) {
                                         <div style={{ display: "flex", gap: "8px" }}>
                                             {[
                                                 { value: "DIGITAL", label: "Digital", desc: "Clean branded" },
-                                                { value: "FORMAL", label: "Formal", desc: "Like receipt book" },
+                                                { value: "FORMAL",  label: "Formal",  desc: "Like receipt book" },
                                             ].map(opt => (
                                                 <button
                                                     key={opt.value}
@@ -776,8 +804,7 @@ function RecordPaymentModal({ onClose }) {
                                                     style={{
                                                         flex: 1, padding: "10px 8px", borderRadius: "8px",
                                                         fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
-                                                        cursor: "pointer", fontWeight: "500",
-                                                        border: "1px solid",
+                                                        cursor: "pointer", fontWeight: "500", border: "1px solid",
                                                         borderColor: manualStyle === opt.value ? "#0F6E56" : "#e5e7eb",
                                                         backgroundColor: manualStyle === opt.value ? "#0F6E56" : "#fff",
                                                         color: manualStyle === opt.value ? "#fff" : "#6b7280",
@@ -1067,7 +1094,6 @@ export default function PaymentsPage() {
                                         cursor: "pointer",
                                     }}
                                 >
-                                    {/* Row 1 — tenant + status */}
                                     <div style={{
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
@@ -1094,12 +1120,10 @@ export default function PaymentsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Row 2 — unit · period */}
                                     <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>
                                         Unit {p.roomNumber} · {formatCycle(p.periodStartDate, p.periodEndDate)}
                                     </div>
 
-                                    {/* Row 3 — amount bar */}
                                     <div style={{
                                         backgroundColor: "#f9fafb", borderRadius: "8px",
                                         padding: "10px 12px", marginBottom: "8px",
@@ -1131,7 +1155,6 @@ export default function PaymentsPage() {
                                         )}
                                     </div>
 
-                                    {/* Row 4 — date + reference */}
                                     <div style={{ fontSize: "12px", color: "#9ca3af" }}>
                                         {new Date(p.paymentDate).toLocaleDateString("en-UG", {
                                             day: "numeric", month: "short", year: "numeric",

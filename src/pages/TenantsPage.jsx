@@ -1,8 +1,8 @@
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import {useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant} from "@/hooks/useTenants"
-import {useForm} from "react-hook-form"
-import {ChevronRight, Pencil, Plus, Trash2, X} from "lucide-react"
+import { useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant } from "@/hooks/useTenants"
+import { useForm } from "react-hook-form"
+import { ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react"
 import TenantDetailSheet from "@/components/ui/TenantDetailSheet"
 
 const inputStyle = {
@@ -24,47 +24,152 @@ const formatUGX = (amount) =>
 const formatCycleDate = (dateStr) => {
     if (!dateStr) return "—"
     const d = new Date(dateStr)
-    return d.toLocaleDateString("en-UG", {day: "numeric", month: "short"})
+    return d.toLocaleDateString("en-UG", { day: "numeric", month: "short" })
 }
-
-const getMonthName = (month) =>
-    ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
 
 const nullIfEmpty = (val) => (val === "" || val === undefined) ? null : val
 
-
-function StatusPill({status}) {
+function StatusPill({ status }) {
     if (!status) return (
-        <span style={{color: "#9ca3af", fontSize: "13px"}}>No agreement</span>
+        <span style={{ color: "#9ca3af", fontSize: "13px" }}>No agreement</span>
     )
-
     const styles = {
-        PAID: {bg: "#E1F5EE", color: "#0F6E56"},
-        PARTIAL: {bg: "#FAEEDA", color: "#854F0B"},
-        UNPAID: {bg: "#FCEBEB", color: "#A32D2D"},
+        PAID:    { bg: "#E1F5EE", color: "#0F6E56" },
+        PARTIAL: { bg: "#FAEEDA", color: "#854F0B" },
+        UNPAID:  { bg: "#FCEBEB", color: "#A32D2D" },
     }
-
-    const s = styles[status] || {bg: "#f3f4f6", color: "#6b7280"}
-
+    const s = styles[status] || { bg: "#f3f4f6", color: "#6b7280" }
     return (
         <span style={{
             display: "inline-block", padding: "3px 10px",
             borderRadius: "20px", fontSize: "12px", fontWeight: "500",
             backgroundColor: s.bg, color: s.color,
         }}>
-      {status}
-    </span>
+            {status}
+        </span>
     )
 }
 
-function TenantModal({tenant, onClose}) {
+// ── Balance card — shared between desktop and mobile ─────
+function BalanceCard({ tenant }) {
+    const balance = Number(tenant.currentBalance || 0)
+    const rent = Number(tenant.monthlyRent || 0)
+    const openingArrears = Number(tenant.openingArrears || 0)
+    const remainingHistorical = Math.min(balance, openingArrears)
+    const cycleArrears = Math.max(0, balance - openingArrears)
+
+    if (tenant.currentBalance == null) return null
+
+    if (balance <= 0) {
+        return (
+            <div style={{
+                backgroundColor: "#E1F5EE", borderRadius: "8px",
+                padding: "10px 12px",
+            }}>
+                <span style={{ fontSize: "13px", fontWeight: "500", color: "#0F6E56" }}>
+                    ✓ Fully paid up
+                </span>
+            </div>
+        )
+    }
+
+    // Compute progress — how much paid vs total ever owed
+    const monthsOwed = rent > 0 ? Math.ceil(balance / rent) : 1
+    const totalEverOwed = monthsOwed * rent
+    const totalPaid = Math.max(0, totalEverOwed - balance)
+    const pct = totalEverOwed > 0
+        ? Math.round((totalPaid / totalEverOwed) * 100)
+        : 0
+
+    return (
+        <div style={{
+            backgroundColor: "#fef2f2", borderRadius: "8px",
+            padding: "10px 12px",
+        }}>
+            {/* Outstanding label + total */}
+            <div style={{
+                display: "flex", alignItems: "center",
+                justifyContent: "space-between", marginBottom: "6px",
+            }}>
+                <span style={{ fontSize: "13px", fontWeight: "600", color: "#dc2626" }}>
+                    Outstanding
+                </span>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>
+                    {formatUGX(balance)}
+                </span>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{
+                height: "4px", borderRadius: "4px",
+                backgroundColor: "#fca5a5", overflow: "hidden",
+                marginBottom: "6px",
+            }}>
+                <div style={{
+                    height: "100%", borderRadius: "4px",
+                    backgroundColor: "#dc2626",
+                    width: `${Math.max(0, 100 - pct)}%`,
+                }} />
+            </div>
+
+            {/* Paid vs total */}
+            <div style={{
+                display: "flex", justifyContent: "space-between",
+                fontSize: "11px", color: "#9ca3af",
+                marginBottom: openingArrears > 0 ? "8px" : "0",
+            }}>
+                <span>Paid: {formatUGX(totalPaid)}</span>
+                <span>of {formatUGX(totalEverOwed)}</span>
+            </div>
+
+            {/* Opening arrears breakdown */}
+            {openingArrears > 0 && (
+                <div style={{
+                    borderTop: "1px solid #fca5a5",
+                    paddingTop: "8px",
+                    display: "flex", flexDirection: "column", gap: "3px",
+                }}>
+                    <div style={{
+                        display: "flex", justifyContent: "space-between",
+                        fontSize: "11px",
+                    }}>
+                        <span style={{ color: "#9ca3af" }}>
+                            ├ Historical arrears
+                        </span>
+                        <span style={{ color: "#dc2626", fontWeight: "600" }}>
+                           {formatUGX(remainingHistorical)}
+                        </span>
+                    </div>
+                    <div style={{
+                        display: "flex", justifyContent: "space-between",
+                        fontSize: "11px",
+                    }}>
+                        <span style={{ color: "#9ca3af" }}>
+                            └ Current cycles
+                        </span>
+                        <span style={{ color: "#dc2626", fontWeight: "600" }}>
+                            {formatUGX(cycleArrears)}
+                        </span>
+                    </div>
+                    <div style={{
+                        fontSize: "10px", color: "#9ca3af",
+                        marginTop: "4px", fontStyle: "italic",
+                    }}>
+                        To clear historical: Edit Agreement → Opening Balance
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function TenantModal({ tenant, onClose }) {
     const isEdit = !!tenant
     const createTenant = useCreateTenant()
     const updateTenant = useUpdateTenant()
     const [error, setError] = useState("")
 
-    const {register, handleSubmit, formState: {errors}} = useForm({
+    const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: tenant || {},
     })
 
@@ -111,30 +216,30 @@ function TenantModal({tenant, onClose}) {
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "20px 24px", borderBottom: "1px solid #f3f4f6",
                 }}>
-                    <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0}}>
+                    <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>
                         {isEdit ? "Edit Tenant" : "Add New Tenant"}
                     </h2>
                     <button onClick={onClose} style={{
                         background: "none", border: "none", cursor: "pointer",
                         color: "#9ca3af", padding: "4px",
                     }}>
-                        <X size={20}/>
+                        <X size={20} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
+                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
                         <div>
                             <label style={labelStyle}>Full name</label>
                             <input
-                                {...register("name", {required: "Name is required"})}
+                                {...register("name", { required: "Name is required" })}
                                 style={inputStyle} placeholder="Jane Namukasa"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.name && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.name.message}
                                 </p>
                             )}
@@ -143,13 +248,13 @@ function TenantModal({tenant, onClose}) {
                         <div>
                             <label style={labelStyle}>Phone number</label>
                             <input
-                                {...register("phone", {required: "Phone is required"})}
+                                {...register("phone", { required: "Phone is required" })}
                                 style={inputStyle} placeholder="0771234567"
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.phone && (
-                                <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
                                     {errors.phone.message}
                                 </p>
                             )}
@@ -158,7 +263,7 @@ function TenantModal({tenant, onClose}) {
                         <div>
                             <label style={labelStyle}>
                                 Email{" "}
-                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <input
                                 {...register("email")} type="email"
@@ -171,11 +276,11 @@ function TenantModal({tenant, onClose}) {
                         <div>
                             <label style={labelStyle}>
                                 Address{" "}
-                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
+                                <span style={{ color: "#9ca3af", fontWeight: "400" }}>(optional)</span>
                             </label>
                             <textarea
                                 {...register("address")} rows={2}
-                                style={{...inputStyle, resize: "vertical"}}
+                                style={{ ...inputStyle, resize: "vertical" }}
                                 placeholder="Previous address..."
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
@@ -218,7 +323,7 @@ function TenantModal({tenant, onClose}) {
     )
 }
 
-function DeleteConfirm({tenant, onClose}) {
+function DeleteConfirm({ tenant, onClose }) {
     const deleteTenant = useDeleteTenant()
     const [error, setError] = useState("")
 
@@ -242,10 +347,10 @@ function DeleteConfirm({tenant, onClose}) {
                 width: "100%", maxWidth: "400px",
                 padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}>
-                <h2 style={{fontSize: "16px", fontWeight: "600", color: "#111827", margin: "0 0 8px"}}>
+                <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "0 0 8px" }}>
                     Delete tenant?
                 </h2>
-                <p style={{fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5"}}>
+                <p style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5" }}>
                     Are you sure you want to delete <strong>{tenant.name}</strong>? This cannot be undone.
                 </p>
                 {error && (
@@ -257,7 +362,7 @@ function DeleteConfirm({tenant, onClose}) {
                         {error}
                     </div>
                 )}
-                <div style={{display: "flex", gap: "10px", justifyContent: "flex-end"}}>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                     <button onClick={onClose} style={{
                         padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
                         border: "1px solid #e5e7eb", backgroundColor: "#fff",
@@ -296,12 +401,11 @@ export default function TenantsPage() {
         return () => clearTimeout(timer)
     }, [search])
 
-    const {data, isLoading} = useTenants({
+    const { data, isLoading } = useTenants({
         page, size: 10, sortBy: "createdAt", sortDir: "desc",
         search: debouncedSearch || undefined,
     })
 
-    // Client-side filter by payment status
     const allTenants = data?.content || []
     const tenants = statusFilter === "ALL"
         ? allTenants
@@ -310,7 +414,6 @@ export default function TenantsPage() {
 
     const totalPages = data?.totalPages || 0
 
-// TenantsPage.jsx — inside the component
     const actions = (
         <button
             onClick={() => setShowModal(true)}
@@ -321,7 +424,7 @@ export default function TenantsPage() {
                 cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
             }}
         >
-            <Plus size={16}/> Add Tenant
+            <Plus size={16} /> Add Tenant
         </button>
     )
 
@@ -358,14 +461,13 @@ export default function TenantsPage() {
                         padding: "10px 14px", fontSize: "14px",
                         borderRadius: "8px", border: "1px solid #e5e7eb",
                         outline: "none", boxSizing: "border-box",
-                        fontFamily: "'DM Sans', sans-serif", color: "#111827",
-                        backgroundColor: "#fff",
+                        fontFamily: "'DM Sans', sans-serif",
+                        color: "#111827", backgroundColor: "#fff",
                     }}
                     onFocus={e => e.target.style.borderColor = "#0F6E56"}
                     onBlur={e => e.target.style.borderColor = "#e5e7eb"}
                 />
 
-                {/* Payment status filter */}
                 {["ALL", "PAID", "PARTIAL", "UNPAID"].map(s => (
                     <button
                         key={s}
@@ -404,12 +506,12 @@ export default function TenantsPage() {
                 border: "1px solid #f0f0f0", overflow: "hidden",
             }}>
                 {isLoading ? (
-                    <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
+                    <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
                         Loading tenants...
                     </div>
                 ) : tenants.length === 0 ? (
-                    <div style={{padding: "60px", textAlign: "center"}}>
-                        <p style={{color: "#9ca3af", fontSize: "14px", marginBottom: "16px"}}>
+                    <div style={{ padding: "60px", textAlign: "center" }}>
+                        <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "16px" }}>
                             {search
                                 ? `No tenants found for "${search}"`
                                 : "No tenants yet. Add your first tenant to get started."}
@@ -424,17 +526,17 @@ export default function TenantsPage() {
                                     cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                                 }}
                             >
-                                <Plus size={16}/> Add Tenant
+                                <Plus size={16} /> Add Tenant
                             </button>
                         )}
                     </div>
                 ) : (
                     <>
-                        {/* Desktop table */}
-                        <div className="desktop-table" style={{overflow: "hidden"}}>
-                            <table style={{width: "100%", borderCollapse: "collapse"}}>
+                        {/* ── Desktop table ── */}
+                        <div className="desktop-table" style={{ overflow: "hidden" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                 <thead>
-                                <tr style={{backgroundColor: "#f9fafb"}}>
+                                <tr style={{ backgroundColor: "#f9fafb" }}>
                                     {["Name", "Phone", "Unit", "Period", "Expected", "Balance", "Status", ""].map((h, i) => (
                                         <th key={i} style={{
                                             padding: "11px 20px", textAlign: "left",
@@ -446,119 +548,32 @@ export default function TenantsPage() {
                                 </thead>
                                 <tbody>
                                 {tenants.map((tenant) => (
-                                    <tr key={tenant.id} style={{borderTop: "1px solid #f9f9f9"}}>
-                                        <td style={{
-                                            padding: "14px 20px",
-                                            fontSize: "14px",
-                                            color: "#111827",
-                                            fontWeight: "500"
-                                        }}>
+                                    <tr key={tenant.id} style={{ borderTop: "1px solid #f9f9f9" }}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
                                             {tenant.name}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {tenant.phone}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {tenant.currentUnit || "—"}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {tenant.currentCycleStart
                                                 ? `${formatCycleDate(tenant.currentCycleStart)} – ${formatCycleDate(tenant.currentCycleEnd)}`
-                                                : ""}
+                                                : "—"}
                                         </td>
-                                        <td style={{padding: "14px 20px", fontSize: "14px", color: "#6b7280"}}>
+                                        <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {formatUGX(tenant.monthlyRent)}
                                         </td>
-                                        <td style={{
-                                            padding: "14px 20px", fontSize: "14px", fontWeight: "500",
-                                            color: tenant.currentBalance > 0 ? "#dc2626" : "#0F6E56",
-                                        }}>
-                                            {tenant.currentBalance != null && (
-                                                <div style={{
-                                                    backgroundColor: tenant.currentBalance > 0 ? "#fef2f2" : "#E1F5EE",
-                                                    borderRadius: "8px", padding: "10px 12px",
-                                                }}>
-                                                    {tenant.currentBalance > 0 ? (
-                                                        <>
-                                                            {/* Top row — outstanding label + amount */}
-                                                            <div style={{
-                                                                display: "flex", alignItems: "center",
-                                                                justifyContent: "space-between", marginBottom: "6px",
-                                                            }}>
-          <span style={{fontSize: "13px", fontWeight: "600", color: "#dc2626"}}>
-            Outstanding
-          </span>
-                                                                <span style={{
-                                                                    fontSize: "13px",
-                                                                    fontWeight: "700",
-                                                                    color: "#dc2626"
-                                                                }}>
-            {formatUGX(tenant.currentBalance)}
-          </span>
-                                                            </div>
-
-                                                            {/* Progress bar — how much has been paid */}
-                                                            {(() => {
-                                                                const totalOwed = Number(tenant.currentBalance) +
-                                                                    (Number(tenant.monthlyRent) - Number(tenant.currentBalance) > 0
-                                                                        ? Number(tenant.monthlyRent) - Number(tenant.currentBalance)
-                                                                        : 0)
-
-                                                                // Calculate total ever owed from months
-                                                                const monthsOwed = Math.ceil(
-                                                                    Number(tenant.currentBalance) / Number(tenant.monthlyRent)
-                                                                )
-                                                                const totalEverOwed = monthsOwed * Number(tenant.monthlyRent)
-                                                                const totalPaid = totalEverOwed - Number(tenant.currentBalance)
-                                                                const pct = Math.round((totalPaid / totalEverOwed) * 100)
-
-                                                                return (
-                                                                    <>
-                                                                        <div style={{
-                                                                            height: "4px",
-                                                                            borderRadius: "4px",
-                                                                            backgroundColor: "#fca5a5",
-                                                                            overflow: "hidden",
-                                                                            marginBottom: "6px",
-                                                                        }}>
-                                                                            <div style={{
-                                                                                height: "100%", borderRadius: "4px",
-                                                                                backgroundColor: "#dc2626",
-                                                                                width: `${Math.max(0, 100 - pct)}%`,
-                                                                            }}/>
-                                                                        </div>
-
-                                                                        {/* Bottom row — paid vs total */}
-                                                                        <div style={{
-                                                                            display: "flex",
-                                                                            justifyContent: "space-between",
-                                                                            fontSize: "11px",
-                                                                            color: "#9ca3af",
-                                                                        }}>
-                                                                            <span>Paid: {formatUGX(Math.max(0, totalPaid))}</span>
-                                                                            <span>of {formatUGX(totalEverOwed)}</span>
-                                                                        </div>
-                                                                    </>
-                                                                )
-                                                            })()}
-                                                        </>
-                                                    ) : (
-                                                        <span style={{
-                                                            fontSize: "13px",
-                                                            fontWeight: "500",
-                                                            color: "#0F6E56"
-                                                        }}>
-        ✓ Fully paid up
-      </span>
-                                                    )}
-                                                </div>
-                                            )}
+                                        <td style={{ padding: "14px 20px" }}>
+                                            <BalanceCard tenant={tenant} />
                                         </td>
-                                        <td style={{padding: "14px 20px"}}>
-                                            <StatusPill status={tenant.periodStatus}/>
+                                        <td style={{ padding: "14px 20px" }}>
+                                            <StatusPill status={tenant.periodStatus} />
                                         </td>
-                                        <td style={{padding: "14px 20px"}}>
-                                            <div style={{display: "flex", gap: "8px", justifyContent: "flex-end"}}>
+                                        <td style={{ padding: "14px 20px" }}>
+                                            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                                                 <button
                                                     onClick={() => setEditTenant(tenant)}
                                                     style={{
@@ -568,7 +583,7 @@ export default function TenantsPage() {
                                                         display: "flex", alignItems: "center", gap: "4px",
                                                     }}
                                                 >
-                                                    <Pencil size={13}/> Edit
+                                                    <Pencil size={13} /> Edit
                                                 </button>
                                                 <button
                                                     onClick={() => setDeleteTenant(tenant)}
@@ -579,7 +594,7 @@ export default function TenantsPage() {
                                                         display: "flex", alignItems: "center", gap: "4px",
                                                     }}
                                                 >
-                                                    <Trash2 size={13}/> Delete
+                                                    <Trash2 size={13} /> Delete
                                                 </button>
                                             </div>
                                         </td>
@@ -589,8 +604,8 @@ export default function TenantsPage() {
                             </table>
                         </div>
 
-                        {/* Mobile cards */}
-                        <div className="mobile-cards" style={{display: "none", flexDirection: "column"}}>
+                        {/* ── Mobile cards ── */}
+                        <div className="mobile-cards" style={{ display: "none", flexDirection: "column" }}>
                             {tenants.map((tenant, i) => (
                                 <div
                                     key={tenant.id}
@@ -606,103 +621,40 @@ export default function TenantsPage() {
                                         display: "flex", alignItems: "center",
                                         justifyContent: "space-between", marginBottom: "4px",
                                     }}>
-        <span style={{fontSize: "15px", fontWeight: "600", color: "#111827"}}>
-          {tenant.name}
-        </span>
-                                        <div style={{display: "flex", alignItems: "center", gap: "6px"}}>
-                                            <StatusPill status={tenant.periodStatus}/>
-                                            <ChevronRight size={16} color="#9ca3af"/>
+                                        <span style={{ fontSize: "15px", fontWeight: "600", color: "#111827" }}>
+                                            {tenant.name}
+                                        </span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <StatusPill status={tenant.periodStatus} />
+                                            <ChevronRight size={16} color="#9ca3af" />
                                         </div>
                                     </div>
 
                                     {/* Row 2 — unit + period */}
-                                    <div style={{fontSize: "13px", color: "#6b7280", marginBottom: "8px"}}>
+                                    <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "8px" }}>
                                         {tenant.currentUnit
-                                            ? `Unit ${tenant.currentUnit} · ${tenant.currentPeriodMonth
-                                                ? `${getMonthName(tenant.currentPeriodMonth)} ${tenant.currentPeriodYear}`
+                                            ? `Unit ${tenant.currentUnit} · ${tenant.currentCycleStart
+                                                ? `${formatCycleDate(tenant.currentCycleStart)} – ${formatCycleDate(tenant.currentCycleEnd)}`
                                                 : ""}`
                                             : "No active agreement"}
                                     </div>
 
-                                    {/* Row 3 — balance */}
-                                    {/* Row 3 — balance */}
-                                    {tenant.currentBalance != null && (
-                                        <div style={{
-                                            backgroundColor: tenant.currentBalance > 0 ? "#fef2f2" : "#E1F5EE",
-                                            borderRadius: "8px", padding: "10px 12px",
-                                        }}>
-                                            {tenant.currentBalance > 0 ? (
-                                                <>
-                                                    {/* Outstanding label + amount */}
-                                                    <div style={{
-                                                        display: "flex", alignItems: "center",
-                                                        justifyContent: "space-between", marginBottom: "6px",
-                                                    }}>
-          <span style={{fontSize: "13px", fontWeight: "600", color: "#dc2626"}}>
-            Outstanding
-          </span>
-                                                        <span style={{
-                                                            fontSize: "13px",
-                                                            fontWeight: "700",
-                                                            color: "#dc2626"
-                                                        }}>
-            {formatUGX(tenant.currentBalance)}
-          </span>
-                                                    </div>
-
-                                                    {/* Progress bar */}
-                                                    {(() => {
-                                                        const monthsOwed = Math.ceil(
-                                                            Number(tenant.currentBalance) / Number(tenant.monthlyRent)
-                                                        )
-                                                        const totalEverOwed = monthsOwed * Number(tenant.monthlyRent)
-                                                        const totalPaid = totalEverOwed - Number(tenant.currentBalance)
-                                                        const pct = Math.round((totalPaid / totalEverOwed) * 100)
-
-                                                        return (
-                                                            <>
-                                                                <div style={{
-                                                                    height: "4px", borderRadius: "4px",
-                                                                    backgroundColor: "#fca5a5", overflow: "hidden",
-                                                                    marginBottom: "6px",
-                                                                }}>
-                                                                    <div style={{
-                                                                        height: "100%", borderRadius: "4px",
-                                                                        backgroundColor: "#dc2626",
-                                                                        width: `${Math.max(0, 100 - pct)}%`,
-                                                                    }}/>
-                                                                </div>
-                                                                <div style={{
-                                                                    display: "flex", justifyContent: "space-between",
-                                                                    fontSize: "11px", color: "#9ca3af",
-                                                                }}>
-                                                                    <span>Paid: {formatUGX(Math.max(0, totalPaid))}</span>
-                                                                    <span>of {formatUGX(totalEverOwed)}</span>
-                                                                </div>
-                                                            </>
-                                                        )
-                                                    })()}
-                                                </>
-                                            ) : (
-                                                <span style={{fontSize: "13px", fontWeight: "500", color: "#0F6E56"}}>
-        ✓ Fully paid up
-      </span>
-                                            )}
-                                        </div>
-                                    )}
-                                    {/* No Edit/Delete buttons here — they are in the detail sheet */}
+                                    {/* Row 3 — balance card */}
+                                    <BalanceCard tenant={tenant} />
                                 </div>
                             ))}
                         </div>
+
+                        {/* Pagination */}
                         {totalPages > 1 && (
                             <div style={{
                                 display: "flex", alignItems: "center", justifyContent: "space-between",
                                 padding: "14px 20px", borderTop: "1px solid #f3f4f6",
                             }}>
-                <span style={{fontSize: "13px", color: "#9ca3af"}}>
-                  Page {page + 1} of {totalPages}
-                </span>
-                                <div style={{display: "flex", gap: "8px"}}>
+                                <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+                                    Page {page + 1} of {totalPages}
+                                </span>
+                                <div style={{ display: "flex", gap: "8px" }}>
                                     <button
                                         onClick={() => setPage(p => Math.max(0, p - 1))}
                                         disabled={page === 0}
@@ -734,9 +686,9 @@ export default function TenantsPage() {
                 )}
             </div>
 
-            {showModal && <TenantModal onClose={() => setShowModal(false)}/>}
-            {editTenant && <TenantModal tenant={editTenant} onClose={() => setEditTenant(null)}/>}
-            {deleteTenant && <DeleteConfirm tenant={deleteTenant} onClose={() => setDeleteTenant(null)}/>}
+            {showModal && <TenantModal onClose={() => setShowModal(false)} />}
+            {editTenant && <TenantModal tenant={editTenant} onClose={() => setEditTenant(null)} />}
+            {deleteTenant && <DeleteConfirm tenant={deleteTenant} onClose={() => setDeleteTenant(null)} />}
             {selectedTenantId && (
                 <TenantDetailSheet
                     tenantId={selectedTenantId}

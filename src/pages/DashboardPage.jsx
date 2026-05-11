@@ -136,8 +136,16 @@ export default function DashboardPage() {
         .reduce((sum, t) => sum + Number(t.currentBalance || 0), 0)
 
     // Progress bar — count tenants whose current cycle is PAID
+    const now = new Date()
+    const currentMonth = now.getMonth()   // 0-11
+    const currentYear = now.getFullYear()
     const paidThisMonth = tenantsWithAgreements
-        .filter(t => t.currentCyclePaid === true)
+        .filter(t => {
+            if (!t.currentCyclePaid || !t.currentCycleStart) return false
+            const cycleStart = new Date(t.currentCycleStart)
+            return cycleStart.getMonth() === currentMonth
+                && cycleStart.getFullYear() === currentYear
+        })
         .reduce((sum, t) => sum + Number(t.monthlyRent), 0)
 
     const collectionPct = totalMonthlyRent > 0
@@ -219,13 +227,13 @@ export default function DashboardPage() {
                         justifyContent: "space-between", marginBottom: "12px",
                     }}>
                         <span style={{fontSize: "13px", fontWeight: "600", color: "#111827"}}>
-                            Outstanding Summary
+                             This Month's Collection
                         </span>
                         <span style={{
                             fontSize: "12px", fontWeight: "600",
                             color: collectionPct >= 100 ? "#0F6E56" : "#854F0B",
                         }}>
-                            {collectionPct}% paid this month
+                            {collectionPct}% collected paid this month
                         </span>
                     </div>
 
@@ -253,12 +261,12 @@ export default function DashboardPage() {
                                     color: "#111827",
                                 },
                                 {
-                                    label: "PAID THIS MONTH",
+                                    label: "COLLECTED",
                                     value: formatUGX(paidThisMonth),
                                     color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
                                 },
                                 {
-                                    label: "TOTAL OUTSTANDING",
+                                    label: "OUTSTANDING",
                                     value: formatUGX(totalOutstanding),
                                     color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56",
                                 },
@@ -288,7 +296,7 @@ export default function DashboardPage() {
                                     color: "#111827",
                                 },
                                 {
-                                    label: "Paid",
+                                    label: "Collected",
                                     value: formatUGXShort(paidThisMonth),
                                     color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
                                 },

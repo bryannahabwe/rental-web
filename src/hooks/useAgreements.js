@@ -49,3 +49,15 @@ export function useUpdateAgreement() {
         },
     })
 }
+
+export function useAgreementCycles(agreementId) {
+    return useQuery({
+        queryKey: ["agreement-cycles", agreementId],
+        queryFn: async () => {
+            if (!agreementId) return []
+            const res = await agreementsService.getCycles(agreementId)
+            return res.data
+        },
+        enabled: !!agreementId,
+    })
+}
