@@ -128,7 +128,7 @@ export default function DashboardPage() {
     // and ADVANCE/ARREARS model), so they can't be used to answer "how much
     // came in this month" — that mismatch was why this widget used to be
     // wrong.
-    const {data: monthReport} = usePaymentReport({
+    const {data: monthReport, isLoading: monthReportLoading} = usePaymentReport({
         from: firstOfMonthStr(), to: todayStr(),
     })
 
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                             fontSize: "12px", fontWeight: "600",
                             color: collectionPct >= 100 ? "#0F6E56" : "#854F0B",
                         }}>
-                            {collectionPct}% collected paid this month
+                            {monthReportLoading ? "—" : `${collectionPct}% collected paid this month`}
                         </span>
                     </div>
 
@@ -266,7 +266,7 @@ export default function DashboardPage() {
                                 },
                                 {
                                     label: "COLLECTED",
-                                    value: formatUGX(paidThisMonth),
+                                    value: monthReportLoading ? "—" : formatUGX(paidThisMonth),
                                     color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
                                 },
                                 {
@@ -301,7 +301,7 @@ export default function DashboardPage() {
                                 },
                                 {
                                     label: "Collected",
-                                    value: formatUGXShort(paidThisMonth),
+                                    value: monthReportLoading ? "—" : formatUGXShort(paidThisMonth),
                                     color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
                                 },
                                 {
