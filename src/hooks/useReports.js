@@ -22,3 +22,11 @@ export function usePaymentReport(params) {
         enabled: !!params.from && !!params.to,
     })
 }
+
+export function useMonthlyCollection(params) {
+    return useQuery({
+        queryKey: ["reports", "payments", "monthly", params],
+        queryFn: () => reportsService.getMonthlyCollection(params).then(r => r.data),
+        enabled: !!params.from && !!params.to,
+    })
+}

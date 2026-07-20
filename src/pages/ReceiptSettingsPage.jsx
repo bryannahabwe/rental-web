@@ -2,6 +2,7 @@ import {useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useSettings, useUpdateSettings} from "@/hooks/useSettings"
 import {useForm} from "react-hook-form"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -49,7 +50,7 @@ export default function ReceiptSettingsPage() {
             setSuccess("Receipt settings saved")
             setTimeout(() => setSuccess(""), 3000)
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 

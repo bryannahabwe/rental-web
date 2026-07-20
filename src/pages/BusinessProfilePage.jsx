@@ -3,6 +3,7 @@ import PageWrapper from "@/components/layout/PageWrapper"
 import {useSettings, useUpdateSettings, useUploadLogo} from "@/hooks/useSettings"
 import {useForm} from "react-hook-form"
 import {Camera, X} from "lucide-react"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -63,7 +64,7 @@ export default function BusinessProfilePage() {
             setSuccess("Logo uploaded successfully")
             setTimeout(() => setSuccess(""), 3000)
         } catch (err) {
-            setError(err.response?.data?.message || "Logo upload failed")
+            setError(getErrorMessage(err, "Logo upload failed"))
             setPreview(null)
         }
     }
@@ -78,7 +79,7 @@ export default function BusinessProfilePage() {
             setSuccess("Profile updated successfully")
             setTimeout(() => setSuccess(""), 3000)
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 

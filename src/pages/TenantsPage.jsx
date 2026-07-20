@@ -2,8 +2,10 @@ import { useEffect, useState } from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import { useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant } from "@/hooks/useTenants"
 import { useForm } from "react-hook-form"
-import { ChevronRight, Pencil, Plus, Trash2, X } from "lucide-react"
+import { ChevronRight, ListTree, Pencil, Plus, Trash2, X } from "lucide-react"
 import TenantDetailSheet from "@/components/ui/TenantDetailSheet"
+import TenantLedgerModal from "@/components/ui/TenantLedgerModal"
+import { getErrorMessage } from "@/utils/errorMessage"
 
 const inputStyle = {
     width: "100%", padding: "10px 14px", fontSize: "14px",
@@ -53,7 +55,6 @@ function StatusPill({ status }) {
 // ── Balance card — shared between desktop and mobile ─────
 function BalanceCard({ tenant }) {
     const balance = Number(tenant.currentBalance || 0)
-    const rent = Number(tenant.monthlyRent || 0)
     const openingArrears = Number(tenant.openingArrears || 0)
     const remainingHistorical = Math.min(balance, openingArrears)
     const cycleArrears = Math.max(0, balance - openingArrears)
@@ -73,10 +74,10 @@ function BalanceCard({ tenant }) {
         )
     }
 
-    // Compute progress — how much paid vs total ever owed
-    const monthsOwed = rent > 0 ? Math.ceil(balance / rent) : 1
-    const totalEverOwed = monthsOwed * rent
-    const totalPaid = Math.max(0, totalEverOwed - balance)
+    // Real paid/owed totals from the backend (same figures the Ledger view
+    // shows) — not a client-side approximation, so the two can't disagree.
+    const totalEverOwed = Number(tenant.totalEverOwed || 0)
+    const totalPaid = Number(tenant.totalEverPaid || 0)
     const pct = totalEverOwed > 0
         ? Math.round((totalPaid / totalEverOwed) * 100)
         : 0
@@ -195,7 +196,7 @@ function TenantModal({ tenant, onClose }) {
             }
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 
@@ -332,7 +333,7 @@ function DeleteConfirm({ tenant, onClose }) {
             await deleteTenant.mutateAsync(tenant.id)
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Could not delete tenant")
+            setError(getErrorMessage(err, "Could not delete tenant"))
         }
     }
 
@@ -392,6 +393,7 @@ export default function TenantsPage() {
     const [editTenant, setEditTenant] = useState(null)
     const [deleteTenant, setDeleteTenant] = useState(null)
     const [selectedTenantId, setSelectedTenantId] = useState(null)
+    const [ledgerTenantId, setLedgerTenantId] = useState(null)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -574,6 +576,20 @@ export default function TenantsPage() {
                                         </td>
                                         <td style={{ padding: "14px 20px" }}>
                                             <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                                {tenant.currentUnit && (
+                                                    <button
+                                                        onClick={() => setLedgerTenantId(tenant.id)}
+                                                        title="View transactions & arrears"
+                                                        style={{
+                                                            padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
+                                                            border: "1px solid #e5e7eb", backgroundColor: "#fff",
+                                                            color: "#374151", cursor: "pointer",
+                                                            display: "flex", alignItems: "center", gap: "4px",
+                                                        }}
+                                                    >
+                                                        <ListTree size={13} /> Ledger
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => setEditTenant(tenant)}
                                                     style={{
@@ -641,6 +657,23 @@ export default function TenantsPage() {
 
                                     {/* Row 3 — balance card */}
                                     <BalanceCard tenant={tenant} />
+
+                                    {tenant.currentUnit && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setLedgerTenantId(tenant.id)
+                                            }}
+                                            style={{
+                                                marginTop: "8px", padding: "6px 0", border: "none",
+                                                background: "none", color: "#0F6E56", cursor: "pointer",
+                                                fontSize: "12px", fontWeight: "500",
+                                                display: "flex", alignItems: "center", gap: "4px",
+                                            }}
+                                        >
+                                            <ListTree size={13} /> View transactions & arrears
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -695,6 +728,12 @@ export default function TenantsPage() {
                     onClose={() => setSelectedTenantId(null)}
                     onEdit={(tenant) => setEditTenant(tenant)}
                     onDelete={(tenant) => setDeleteTenant(tenant)}
+                />
+            )}
+            {ledgerTenantId && (
+                <TenantLedgerModal
+                    tenantId={ledgerTenantId}
+                    onClose={() => setLedgerTenantId(null)}
                 />
             )}
         </PageWrapper>

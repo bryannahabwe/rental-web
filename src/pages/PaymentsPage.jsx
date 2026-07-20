@@ -8,6 +8,7 @@ import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
 import { generateReceipt } from "@/utils/receiptGenerator"
 import { settingsService } from "@/services/settingsService"
 import useSettingsStore from "@/store/settingsStore"
+import { getErrorMessage } from "@/utils/errorMessage"
 import { useAllTenants } from "@/hooks/useTenants"
 
 // ── Helpers ──────────────────────────────────────────────
@@ -275,7 +276,7 @@ function RecordPaymentModal({ onClose }) {
             setReceiptNumber(receiptRes.data)
             setCompletedPayment(result.data)
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 

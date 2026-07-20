@@ -1,6 +1,6 @@
 import {useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
+import {useMonthlyCollection, useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
 import {Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,} from "recharts"
 import {Building2, CreditCard, FileText, Users} from "lucide-react"
 
@@ -8,7 +8,9 @@ const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
 const today = new Date()
-const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+// Default to a 6-month window so the trend chart is useful out of the box —
+// a single month range only ever produces one bar, which isn't a trend.
+const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1)
     .toISOString().split("T")[0]
 const todayStr = today.toISOString().split("T")[0]
 
@@ -58,14 +60,17 @@ function SummaryCard({icon: Icon, label, value, color}) {
 }
 
 export default function ReportsPage() {
-    const [from, setFrom] = useState(firstOfMonth)
+    const [from, setFrom] = useState(sixMonthsAgo)
     const [to, setTo] = useState(todayStr)
-    const [appliedFrom, setAppliedFrom] = useState(firstOfMonth)
+    const [appliedFrom, setAppliedFrom] = useState(sixMonthsAgo)
     const [appliedTo, setAppliedTo] = useState(todayStr)
 
     const {data: summary, isLoading: summaryLoading} = useSummary()
     const {data: occupancy, isLoading: occupancyLoading} = useOccupancy()
     const {data: paymentReport, isLoading: reportLoading} = usePaymentReport({
+        from: appliedFrom, to: appliedTo,
+    })
+    const {data: monthlyCollection, isLoading: monthlyLoading} = useMonthlyCollection({
         from: appliedFrom, to: appliedTo,
     })
 
@@ -74,9 +79,9 @@ export default function ReportsPage() {
         setAppliedTo(to)
     }
 
-    const chartData = paymentReport ? [
-        {name: "Total Collected", amount: paymentReport.totalAmount || 0},
-    ] : []
+    const chartData = (monthlyCollection || []).map(m => ({
+        name: m.label, amount: m.totalAmount || 0,
+    }))
 
     return (
         <PageWrapper title="Reports" showBack>
@@ -418,10 +423,10 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                {/* Chart */}
-                {!reportLoading && paymentReport?.totalAmount > 0 ? (
+                {/* Chart — one bar per month in the selected range */}
+                {!monthlyLoading && chartData.some(m => m.amount > 0) ? (
                     <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={chartData} barSize={60}>
+                        <BarChart data={chartData} barSize={40}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false}/>
                             <XAxis dataKey="name" tick={{fontSize: 12, fill: "#9ca3af"}}
                                    axisLine={false} tickLine={false}/>
@@ -438,7 +443,7 @@ export default function ReportsPage() {
                         justifyContent: "center", color: "#9ca3af", fontSize: "14px",
                         backgroundColor: "#f9fafb", borderRadius: "10px",
                     }}>
-                        {reportLoading ? "Loading..." : "No payments in this period"}
+                        {monthlyLoading ? "Loading..." : "No payments in this period"}
                     </div>
                 )}
             </div>

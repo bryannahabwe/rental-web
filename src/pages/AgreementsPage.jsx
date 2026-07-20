@@ -6,6 +6,7 @@ import {useAllUnits} from "@/hooks/useUnits"
 import {useForm} from "react-hook-form"
 import {ChevronRight, LogOut, Pencil, Plus, X} from "lucide-react"
 import AgreementDetailSheet from "@/components/ui/AgreementDetailSheet"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 // ── Shared styles ────────────────────────────────────────
 const inputStyle = {
@@ -179,7 +180,7 @@ function CreateAgreementModal({onClose}) {
             })
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 
@@ -456,7 +457,7 @@ function EditAgreementModal({agreement, onClose}) {
             })
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 
@@ -598,7 +599,7 @@ function MoveOutModal({agreement, onClose}) {
             await moveOut.mutateAsync({id: agreement.id, data: {moveOutDate: data.moveOutDate}})
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 

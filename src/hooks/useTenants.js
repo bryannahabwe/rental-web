@@ -52,3 +52,11 @@ export function useTenant(id) {
         enabled: !!id,
     })
 }
+
+export function useTenantLedger(id) {
+    return useQuery({
+        queryKey: ["tenants", id, "ledger"],
+        queryFn: () => tenantsService.getLedger(id).then(r => r.data),
+        enabled: !!id,
+    })
+}

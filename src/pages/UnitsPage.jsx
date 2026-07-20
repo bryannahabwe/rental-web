@@ -4,6 +4,7 @@ import {useCreateUnit, useDeleteUnit, useUnits, useUpdateUnit} from "@/hooks/use
 import {useForm} from "react-hook-form"
 import {ChevronRight, Pencil, Plus, Trash2, X} from "lucide-react"
 import UnitDetailSheet from "@/components/ui/UnitDetailSheet"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 
 const inputStyle = {
@@ -55,7 +56,7 @@ function UnitModal({unit, onClose}) {
             }
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Something went wrong")
+            setError(getErrorMessage(err))
         }
     }
 
@@ -214,7 +215,7 @@ function DeleteConfirm({unit, onClose}) {
             await deleteUnit.mutateAsync(unit.id)
             onClose()
         } catch (err) {
-            setError(err.response?.data?.message || "Could not delete unit")
+            setError(getErrorMessage(err, "Could not delete unit"))
         }
     }
 

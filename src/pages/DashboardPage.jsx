@@ -1,5 +1,5 @@
 import PageWrapper from "@/components/layout/PageWrapper"
-import {useOccupancy, useSummary} from "@/hooks/useReports"
+import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
 import {usePayments} from "@/hooks/usePayments"
 import {useTenants} from "@/hooks/useTenants"
 import {Building2, CreditCard, TrendingUp, Users} from "lucide-react"
@@ -107,6 +107,12 @@ function PeriodStatusPill({status}) {
     )
 }
 
+const todayStr = () => new Date().toISOString().split("T")[0]
+const firstOfMonthStr = () => {
+    const d = new Date()
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split("T")[0]
+}
+
 export default function DashboardPage() {
     const {data: summary, isLoading: summaryLoading} = useSummary()
     const {data: occupancy, isLoading: occupancyLoading} = useOccupancy()
@@ -115,6 +121,15 @@ export default function DashboardPage() {
     })
     const {data: tenantsData, isLoading: tenantsLoading} = useTenants({
         page: 0, size: 100, sortBy: "createdAt", sortDir: "desc",
+    })
+    // Cash actually received this calendar month — the same computation
+    // the Reports page uses. Billing-cycle dates (currentCycleStart) don't
+    // align with calendar months (they depend on each tenant's billingDay
+    // and ADVANCE/ARREARS model), so they can't be used to answer "how much
+    // came in this month" — that mismatch was why this widget used to be
+    // wrong.
+    const {data: monthReport} = usePaymentReport({
+        from: firstOfMonthStr(), to: todayStr(),
     })
 
     const payments = paymentsData?.content || []
@@ -135,18 +150,7 @@ export default function DashboardPage() {
     const totalOutstanding = outstandingTenants
         .reduce((sum, t) => sum + Number(t.currentBalance || 0), 0)
 
-    // Progress bar — count tenants whose current cycle is PAID
-    const now = new Date()
-    const currentMonth = now.getMonth()   // 0-11
-    const currentYear = now.getFullYear()
-    const paidThisMonth = tenantsWithAgreements
-        .filter(t => {
-            if (!t.currentCyclePaid || !t.currentCycleStart) return false
-            const cycleStart = new Date(t.currentCycleStart)
-            return cycleStart.getMonth() === currentMonth
-                && cycleStart.getFullYear() === currentYear
-        })
-        .reduce((sum, t) => sum + Number(t.monthlyRent), 0)
+    const paidThisMonth = Number(monthReport?.totalAmount || 0)
 
     const collectionPct = totalMonthlyRent > 0
         ? Math.round((paidThisMonth / totalMonthlyRent) * 100)

@@ -5,9 +5,15 @@ import {Pencil, Trash2} from "lucide-react"
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
 
-const getMonthName = (month) =>
-    ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
+const formatCycleDate = (dateStr) => {
+    if (!dateStr) return "—"
+    return new Date(dateStr).toLocaleDateString("en-UG", {day: "numeric", month: "short"})
+}
+
+const formatCycle = (start, end) => {
+    if (!start || !end) return "—"
+    return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
+}
 
 function DetailRow({label, value, valueColor}) {
     return (
@@ -124,9 +130,7 @@ export default function TenantDetailSheet({tenantId, onClose, onEdit, onDelete})
                             />
                             <DetailRow
                                 label="Period"
-                                value={tenant.currentPeriodMonth
-                                    ? `${getMonthName(tenant.currentPeriodMonth)} ${tenant.currentPeriodYear}`
-                                    : "—"}
+                                value={formatCycle(tenant.currentCycleStart, tenant.currentCycleEnd)}
                             />
                             <DetailRow
                                 label="Outstanding"

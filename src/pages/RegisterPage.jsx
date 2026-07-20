@@ -2,6 +2,7 @@ import {useForm} from "react-hook-form"
 import {Link, useNavigate} from "react-router-dom"
 import {authService} from "@/services/authService"
 import {useState} from "react"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 export default function RegisterPage() {
     const navigate = useNavigate()
@@ -26,7 +27,7 @@ export default function RegisterPage() {
             })
             navigate("/login")
         } catch (err) {
-            setError(err.response?.data?.message || "Registration failed")
+            setError(getErrorMessage(err, "Registration failed"))
         } finally {
             setLoading(false)
         }

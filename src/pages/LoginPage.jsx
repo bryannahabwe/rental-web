@@ -5,6 +5,7 @@ import {settingsService} from "@/services/settingsService"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
 import {useState} from "react"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -40,7 +41,7 @@ export default function LoginPage() {
 
             navigate("/dashboard", {replace: true})
         } catch (err) {
-            setError(err.response?.data?.message || "Invalid credentials")
+            setError(getErrorMessage(err, "Invalid credentials"))
         } finally {
             setLoading(false)
         }
