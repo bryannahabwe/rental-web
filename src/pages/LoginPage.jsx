@@ -1,5 +1,6 @@
 import {useForm} from "react-hook-form"
 import {Link, useNavigate} from "react-router-dom"
+import {useQueryClient} from "@tanstack/react-query"
 import {authService} from "@/services/authService"
 import {settingsService} from "@/services/settingsService"
 import useAuthStore from "@/store/authStore"
@@ -9,6 +10,7 @@ import {getErrorMessage} from "@/utils/errorMessage"
 
 export default function LoginPage() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const {setAuth} = useAuthStore()
     const {setSettings} = useSettingsStore()
     const [error, setError] = useState("")
@@ -28,6 +30,9 @@ export default function LoginPage() {
                 username: data.username,
                 password: data.password,
             })
+            // Drop any cached data from a previous session so a different
+            // user/account never sees the prior one's cached lists.
+            queryClient.clear()
             setAuth(res.data)
 
             // Fetch and store landlord settings immediately after login

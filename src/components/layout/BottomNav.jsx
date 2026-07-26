@@ -1,14 +1,25 @@
 import {NavLink} from "react-router-dom"
-import {CreditCard, LayoutDashboard, Settings, Users} from "lucide-react"
+import {Building2, CreditCard, FileText, LayoutDashboard, Settings, Users} from "lucide-react"
+import useAuthStore from "@/store/authStore"
 
-const navItems = [
+const adminItems = [
     {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
     {label: "Tenants", path: "/tenants", icon: Users},
     {label: "Payments", path: "/payments", icon: CreditCard},
     {label: "Settings", path: "/settings", icon: Settings},
 ]
 
+const managerItems = [
+    {label: "Tenants", path: "/tenants", icon: Users},
+    {label: "Units", path: "/units", icon: Building2},
+    {label: "Payments", path: "/payments", icon: CreditCard},
+    {label: "Agreements", path: "/agreements", icon: FileText},
+]
+
 export default function BottomNav() {
+    const role = useAuthStore(s => s.role)
+    const navItems = role === "PROPERTY_MANAGER" ? managerItems : adminItems
+
     return (
         <nav className="bottom-nav" style={{
             position: "fixed", bottom: 0, left: 0, right: 0,

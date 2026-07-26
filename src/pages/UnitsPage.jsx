@@ -1,6 +1,8 @@
 import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreateUnit, useDeleteUnit, useUnits, useUpdateUnit} from "@/hooks/useUnits"
+import {useProperties} from "@/hooks/useProperties"
+import usePropertyStore from "@/store/propertyStore"
 import {useForm} from "react-hook-form"
 import {ChevronRight, Pencil, Plus, Trash2, X} from "lucide-react"
 import UnitDetailSheet from "@/components/ui/UnitDetailSheet"
@@ -29,8 +31,15 @@ function UnitModal({unit, onClose}) {
     const isEdit = !!unit
     const createUnit = useCreateUnit()
     const updateUnit = useUpdateUnit()
+    const selectedPropertyId = usePropertyStore(s => s.selectedPropertyId)
+    const {data: properties = []} = useProperties()
     const [error, setError] = useState("")
     const [isAvailable, setIsAvailable] = useState(unit ? unit.isAvailable : true)
+
+    // Which property this unit belongs to. On edit it's fixed. On create it's
+    // the active property, unless "All properties" is selected — then the
+    // landlord must pick one here.
+    const needsPropertyChoice = !isEdit && !selectedPropertyId
 
     const {register, handleSubmit, formState: {errors}} = useForm({
         defaultValues: unit ? {
@@ -43,7 +52,11 @@ function UnitModal({unit, onClose}) {
     const onSubmit = async (data) => {
         setError("")
         try {
+            const propertyId = isEdit
+                ? unit.propertyId
+                : (selectedPropertyId || data.propertyId)
             const payload = {
+                propertyId,
                 roomNumber: data.roomNumber,
                 description: nullIfEmpty(data.description),
                 rentAmount: parseFloat(data.rentAmount),
@@ -92,6 +105,29 @@ function UnitModal({unit, onClose}) {
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div style={{padding: "24px", display: "flex", flexDirection: "column", gap: "16px"}}>
+                        {needsPropertyChoice && (
+                            <div>
+                                <label style={labelStyle}>Property</label>
+                                <select
+                                    {...register("propertyId", {required: "Please choose a property"})}
+                                    defaultValue=""
+                                    style={inputStyle}
+                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                >
+                                    <option value="" disabled>Select a property…</option>
+                                    {properties.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                                {errors.propertyId && (
+                                    <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>
+                                        {errors.propertyId.message}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
                         <div>
                             <label style={labelStyle}>Room number</label>
                             <input

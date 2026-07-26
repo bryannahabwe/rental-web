@@ -1,22 +1,27 @@
 import {NavLink, useNavigate} from "react-router-dom"
-import {BarChart3, Building2, CreditCard, FileText, LayoutDashboard, LogOut, Settings, Users,} from "lucide-react"
+import {Activity, BarChart3, Building2, CreditCard, FileText, Home, LayoutDashboard, LogOut, Settings, UserCog, Users,} from "lucide-react"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
+import PropertySwitcher from "./PropertySwitcher"
 
+// managerOk = visible to PROPERTY_MANAGERs; everything else is admin/owner-only.
 const mainLinks = [
-    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
-    {label: "Tenants", path: "/tenants", icon: Users},
+    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, managerOk: false},
+    {label: "Tenants", path: "/tenants", icon: Users, managerOk: true},
 ]
 
 const financialLinks = [
-    {label: "Payments", path: "/payments", icon: CreditCard},
-    {label: "Reports", path: "/reports", icon: BarChart3},
+    {label: "Payments", path: "/payments", icon: CreditCard, managerOk: true},
+    {label: "Reports", path: "/reports", icon: BarChart3, managerOk: false},
 ]
 
 const manageLinks = [
-    {label: "Units", path: "/units", icon: Building2},
-    {label: "Agreements", path: "/agreements", icon: FileText},
-    {label: "Settings", path: "/settings", icon: Settings},
+    {label: "Properties", path: "/properties", icon: Home, managerOk: false},
+    {label: "Units", path: "/units", icon: Building2, managerOk: true},
+    {label: "Agreements", path: "/agreements", icon: FileText, managerOk: true},
+    {label: "Users", path: "/users", icon: UserCog, managerOk: false},
+    {label: "Activity", path: "/activity", icon: Activity, managerOk: false},
+    {label: "Settings", path: "/settings", icon: Settings, managerOk: false},
 ]
 
 const linkStyle = (isActive) => ({
@@ -30,6 +35,7 @@ const linkStyle = (isActive) => ({
 })
 
 function SidebarSection({label, links}) {
+    if (links.length === 0) return null
     return (
         <div style={{marginBottom: "8px"}}>
             <p style={{
@@ -50,9 +56,13 @@ function SidebarSection({label, links}) {
 }
 
 export default function Sidebar() {
-    const {landlord, logout} = useAuthStore()
+    const {landlord, logout, role} = useAuthStore()
     const {settings, clearSettings} = useSettingsStore()
     const navigate = useNavigate()
+
+    // Managers only see the sections they're allowed to act on.
+    const isManager = role === "PROPERTY_MANAGER"
+    const visible = (links) => links.filter(l => !isManager || l.managerOk)
 
     const initials = landlord?.name
         ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -112,6 +122,11 @@ export default function Sidebar() {
                 )}
             </div>
 
+            {/* Property switcher */}
+            <div style={{padding: "0 16px 12px"}}>
+                <PropertySwitcher/>
+            </div>
+
             <div style={{
                 height: "1px",
                 backgroundColor: "rgba(255,255,255,0.08)",
@@ -120,9 +135,9 @@ export default function Sidebar() {
 
             {/* Nav links */}
             <nav style={{flex: 1, padding: "16px 8px"}}>
-                <SidebarSection label="Main" links={mainLinks}/>
-                <SidebarSection label="Financials" links={financialLinks}/>
-                <SidebarSection label="Manage" links={manageLinks}/>
+                <SidebarSection label="Main" links={visible(mainLinks)}/>
+                <SidebarSection label="Financials" links={visible(financialLinks)}/>
+                <SidebarSection label="Manage" links={visible(manageLinks)}/>
             </nav>
 
             <div style={{

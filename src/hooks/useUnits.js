@@ -1,16 +1,19 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import {unitsService} from "@/services/unitsService"
+import usePropertyStore from "@/store/propertyStore"
 
 export function useUnits(params) {
+    const propertyId = usePropertyStore(s => s.selectedPropertyId)
     return useQuery({
-        queryKey: ["units", params],
+        queryKey: ["units", propertyId, params],
         queryFn: () => unitsService.getAll(params).then(r => r.data),
     })
 }
 
 export function useAllUnits() {
+    const propertyId = usePropertyStore(s => s.selectedPropertyId)
     return useQuery({
-        queryKey: ["units", "all"],
+        queryKey: ["units", propertyId, "all"],
         queryFn: () => unitsService.getAll({page: 0, size: 100}).then(r => r.data.content),
     })
 }

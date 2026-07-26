@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react"
 import Sidebar from "./Sidebar"
 import BottomNav from "./BottomNav"
+import PropertySwitcher from "./PropertySwitcher"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
 import {useNavigate} from "react-router-dom"
@@ -248,6 +249,18 @@ export default function PageWrapper({title, actions, mobileAction, showBack, chi
                     </div>
 
                     <AvatarMenu/>
+                </div>
+
+                {/* Mobile property switcher bar */}
+                <div
+                    className="mobile-topbar"
+                    style={{
+                        backgroundColor: "#0a4a38",
+                        padding: "0 16px 12px", flexShrink: 0,
+                        position: "sticky", top: "60px", zIndex: 49,
+                    }}
+                >
+                    <PropertySwitcher/>
                 </div>
 
                 {/* Page content */}

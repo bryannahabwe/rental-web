@@ -1,16 +1,23 @@
 import axios from "axios"
 import useAuthStore from "@/store/authStore"
+import usePropertyStore from "@/store/propertyStore"
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "https://rental-api.askmoozo.com/api/v1",
     headers: {"Content-Type": "application/json"},
 })
 
-// Attach access token to every request
+// Attach access token + active property to every request
 api.interceptors.request.use((config) => {
     const token = useAuthStore.getState().accessToken
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
+    }
+    // Scope reads to the selected property. Omitted when "All properties"
+    // (null) is active, which the API treats as the landlord-wide view.
+    const propertyId = usePropertyStore.getState().selectedPropertyId
+    if (propertyId) {
+        config.headers["X-Property-Id"] = propertyId
     }
     return config
 })

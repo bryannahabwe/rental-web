@@ -24,6 +24,7 @@ export default function RegisterPage() {
                 phoneNumber: data.phoneNumber,
                 email: data.email || null,
                 password: data.password,
+                propertyName: data.propertyName?.trim() || null,
             })
             navigate("/login")
         } catch (err) {
@@ -114,6 +115,25 @@ export default function RegisterPage() {
                                 onBlur={e => e.target.style.borderColor = "#d1d5db"}
                             />
                             {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
+                        </div>
+
+                        {/* Property name */}
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Property Name{" "}
+                                <span style={{color: "#9ca3af", fontWeight: "400"}}>(optional)</span>
+                            </label>
+                            <input
+                                {...register("propertyName")}
+                                type="text"
+                                placeholder="e.g. Nansana Apartments"
+                                style={inputStyle}
+                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                            />
+                            <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "5px"}}>
+                                Your first property. You can rename it or add more later.
+                            </p>
                         </div>
 
                         {/* Phone number */}

@@ -1,16 +1,19 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import {tenantsService} from "@/services/tenantsService"
+import usePropertyStore from "@/store/propertyStore"
 
 export function useTenants(params) {
+    const propertyId = usePropertyStore(s => s.selectedPropertyId)
     return useQuery({
-        queryKey: ["tenants", params],
+        queryKey: ["tenants", propertyId, params],
         queryFn: () => tenantsService.getAll(params).then(r => r.data),
     })
 }
 
 export function useAllTenants() {
+    const propertyId = usePropertyStore(s => s.selectedPropertyId)
     return useQuery({
-        queryKey: ["tenants", "all"],
+        queryKey: ["tenants", propertyId, "all"],
         queryFn: () => tenantsService.getAll({page: 0, size: 100}).then(r => r.data.content),
     })
 }

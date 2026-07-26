@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import { useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant } from "@/hooks/useTenants"
+import { useProperties } from "@/hooks/useProperties"
+import usePropertyStore from "@/store/propertyStore"
 import { useForm } from "react-hook-form"
 import { ChevronRight, ListTree, Pencil, Plus, Trash2, X } from "lucide-react"
 import TenantDetailSheet from "@/components/ui/TenantDetailSheet"
@@ -168,7 +170,13 @@ function TenantModal({ tenant, onClose }) {
     const isEdit = !!tenant
     const createTenant = useCreateTenant()
     const updateTenant = useUpdateTenant()
+    const selectedPropertyId = usePropertyStore(s => s.selectedPropertyId)
+    const { data: properties = [] } = useProperties()
     const [error, setError] = useState("")
+
+    // Property the tenant belongs to — fixed on edit; the active property on
+    // create, or a required choice when "All properties" is selected.
+    const needsPropertyChoice = !isEdit && !selectedPropertyId
 
     const { register, handleSubmit, formState: { errors } } = useForm({
         defaultValues: tenant || {},
@@ -180,6 +188,7 @@ function TenantModal({ tenant, onClose }) {
             if (isEdit) {
                 await updateTenant.mutateAsync({
                     id: tenant.id, data: {
+                        propertyId: tenant.propertyId,
                         name: data.name,
                         phone: data.phone,
                         email: nullIfEmpty(data.email),
@@ -188,6 +197,7 @@ function TenantModal({ tenant, onClose }) {
                 })
             } else {
                 await createTenant.mutateAsync({
+                    propertyId: selectedPropertyId || data.propertyId,
                     name: data.name,
                     phone: data.phone,
                     email: nullIfEmpty(data.email),
@@ -230,6 +240,29 @@ function TenantModal({ tenant, onClose }) {
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                        {needsPropertyChoice && (
+                            <div>
+                                <label style={labelStyle}>Property</label>
+                                <select
+                                    {...register("propertyId", { required: "Please choose a property" })}
+                                    defaultValue=""
+                                    style={inputStyle}
+                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                >
+                                    <option value="" disabled>Select a property…</option>
+                                    {properties.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                                {errors.propertyId && (
+                                    <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px" }}>
+                                        {errors.propertyId.message}
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
                         <div>
                             <label style={labelStyle}>Full name</label>
