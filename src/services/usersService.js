@@ -6,4 +6,5 @@ export const usersService = {
     invite: (data) => api.post("/users/invite", data),
     update: (id, data) => api.put(`/users/${id}`, data),
     deactivate: (id) => api.post(`/users/${id}/deactivate`),
+    resendInvite: (id) => api.post(`/users/${id}/resend-invite`),
 }

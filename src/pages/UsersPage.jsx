@@ -1,10 +1,10 @@
 import {useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
-import {useDeactivateUser, useInviteUser, useUsers} from "@/hooks/useUsers"
+import {useDeactivateUser, useInviteUser, useResendInvite, useUsers} from "@/hooks/useUsers"
 import {useProperties} from "@/hooks/useProperties"
 import useAuthStore from "@/store/authStore"
 import {useForm} from "react-hook-form"
-import {Plus, ShieldOff, UserCog, X} from "lucide-react"
+import {Plus, Send, ShieldOff, UserCog, X} from "lucide-react"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const inputStyle = {
@@ -191,10 +191,22 @@ export default function UsersPage() {
     const {data: users = [], isLoading} = useUsers()
     const {data: properties = []} = useProperties()
     const deactivateUser = useDeactivateUser()
+    const resendInvite = useResendInvite()
     const currentUserId = useAuthStore(s => s.userId)
     const [showInvite, setShowInvite] = useState(false)
+    const [resendMsg, setResendMsg] = useState({})
 
     const propertyName = (id) => properties.find(p => p.id === id)?.name || "—"
+
+    const handleResend = async (id) => {
+        setResendMsg(m => ({...m, [id]: undefined}))
+        try {
+            await resendInvite.mutateAsync(id)
+            setResendMsg(m => ({...m, [id]: {type: "success", text: "Invitation resent"}}))
+        } catch (err) {
+            setResendMsg(m => ({...m, [id]: {type: "error", text: getErrorMessage(err)}}))
+        }
+    }
 
     const actions = (
         <button onClick={() => setShowInvite(true)} style={{
@@ -258,17 +270,47 @@ export default function UsersPage() {
                                     </div>
                                 )}
 
-                                {canDeactivate && (
-                                    <div style={{borderTop: "1px solid #f3f4f6", paddingTop: "12px"}}>
-                                        <button onClick={() => deactivateUser.mutate(u.id)} style={{
-                                            display: "flex", alignItems: "center", gap: "6px",
-                                            padding: "8px 14px", borderRadius: "8px", fontSize: "13px",
-                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                            color: "#dc2626", cursor: "pointer",
-                                            fontFamily: "'DM Sans', sans-serif",
-                                        }}>
-                                            <ShieldOff size={13}/> Deactivate
-                                        </button>
+                                {(canDeactivate || u.status === "INVITED") && (
+                                    <div style={{
+                                        borderTop: "1px solid #f3f4f6", paddingTop: "12px",
+                                        display: "flex", flexDirection: "column", gap: "8px",
+                                    }}>
+                                        <div style={{display: "flex", gap: "8px", flexWrap: "wrap"}}>
+                                            {u.status === "INVITED" && (() => {
+                                                const sending = resendInvite.isPending && resendInvite.variables === u.id
+                                                return (
+                                                    <button onClick={() => handleResend(u.id)} disabled={sending} style={{
+                                                        display: "flex", alignItems: "center", gap: "6px",
+                                                        padding: "8px 14px", borderRadius: "8px", fontSize: "13px",
+                                                        border: "1px solid #d1e9e1", backgroundColor: "#fff",
+                                                        color: "#0F6E56", cursor: sending ? "default" : "pointer",
+                                                        opacity: sending ? 0.6 : 1,
+                                                        fontFamily: "'DM Sans', sans-serif",
+                                                    }}>
+                                                        <Send size={13}/> {sending ? "Sending…" : "Resend invite"}
+                                                    </button>
+                                                )
+                                            })()}
+                                            {canDeactivate && (
+                                                <button onClick={() => deactivateUser.mutate(u.id)} style={{
+                                                    display: "flex", alignItems: "center", gap: "6px",
+                                                    padding: "8px 14px", borderRadius: "8px", fontSize: "13px",
+                                                    border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                                    color: "#dc2626", cursor: "pointer",
+                                                    fontFamily: "'DM Sans', sans-serif",
+                                                }}>
+                                                    <ShieldOff size={13}/> Deactivate
+                                                </button>
+                                            )}
+                                        </div>
+                                        {resendMsg[u.id] && (
+                                            <div style={{
+                                                fontSize: "12px",
+                                                color: resendMsg[u.id].type === "success" ? "#0F6E56" : "#dc2626",
+                                            }}>
+                                                {resendMsg[u.id].text}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

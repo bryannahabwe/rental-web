@@ -38,3 +38,11 @@ export function useDeactivateUser() {
         onSuccess: () => queryClient.invalidateQueries({queryKey: ["users"]}),
     })
 }
+
+export function useResendInvite() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: usersService.resendInvite,
+        onSuccess: () => queryClient.invalidateQueries({queryKey: ["users"]}),
+    })
+}
