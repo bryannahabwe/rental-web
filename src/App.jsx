@@ -6,6 +6,7 @@ import RegisterPage from "@/pages/RegisterPage"
 import AcceptInvitePage from "@/pages/AcceptInvitePage"
 import DashboardPage from "@/pages/DashboardPage"
 import TenantsPage from "@/pages/TenantsPage"
+import TenantDetailPage from "@/pages/TenantDetailPage"
 import UnitsPage from "@/pages/UnitsPage"
 import PropertiesPage from "@/pages/PropertiesPage"
 import UsersPage from "@/pages/UsersPage"
@@ -73,6 +74,7 @@ export default function App() {
                             <Routes>
                                 <Route path="/dashboard" element={<AdminOnly><DashboardPage/></AdminOnly>}/>
                                 <Route path="/tenants" element={<TenantsPage/>}/>
+                                <Route path="/tenants/:id" element={<TenantDetailPage/>}/>
                                 <Route path="/units" element={<UnitsPage/>}/>
                                 <Route path="/properties" element={<AdminOnly><PropertiesPage/></AdminOnly>}/>
                                 <Route path="/users" element={<AdminOnly><UsersPage/></AdminOnly>}/>
