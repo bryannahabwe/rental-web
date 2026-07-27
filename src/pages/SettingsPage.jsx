@@ -2,7 +2,7 @@ import {useNavigate} from "react-router-dom"
 import PageWrapper from "@/components/layout/PageWrapper"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
-import {BarChart3, Briefcase, Building2, ChevronRight, FileText, LogOut, Receipt,} from "lucide-react"
+import {Activity, BarChart3, Briefcase, Building, Building2, ChevronRight, FileText, LogOut, Receipt, Users,} from "lucide-react"
 
 export default function SettingsPage() {
     const navigate = useNavigate()
@@ -43,6 +43,13 @@ export default function SettingsPage() {
             label: "MANAGE",
             items: [
                 {
+                    icon: Building,
+                    label: "Properties",
+                    description: "Add and manage properties",
+                    path: "/properties",
+                    color: "#7C3AED",
+                },
+                {
                     icon: Building2,
                     label: "Units",
                     description: "Manage your rental units",
@@ -55,6 +62,25 @@ export default function SettingsPage() {
                     description: "Tenant agreements & billing",
                     path: "/agreements",
                     color: "#0a4a38",
+                },
+            ],
+        },
+        {
+            label: "ADMINISTRATION",
+            items: [
+                {
+                    icon: Users,
+                    label: "User Management",
+                    description: "Invite and manage team members",
+                    path: "/users",
+                    color: "#0F6E56",
+                },
+                {
+                    icon: Activity,
+                    label: "Activity Log",
+                    description: "Audit trail of account actions",
+                    path: "/activity",
+                    color: "#854F0B",
                 },
             ],
         },

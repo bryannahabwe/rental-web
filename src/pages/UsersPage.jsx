@@ -219,8 +219,20 @@ export default function UsersPage() {
         </button>
     )
 
+    const mobileAction = (
+        <button onClick={() => setShowInvite(true)} style={{
+            width: "54px", height: "54px", borderRadius: "50%",
+            backgroundColor: "#0F6E56", color: "#fff", border: "none",
+            cursor: "pointer", fontSize: "28px", fontWeight: "300",
+            boxShadow: "0 4px 16px rgba(15,110,86,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+            +
+        </button>
+    )
+
     return (
-        <PageWrapper title="Users" actions={actions} showBack>
+        <PageWrapper title="Users" actions={actions} mobileAction={mobileAction} showBack>
             {isLoading ? (
                 <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
                     Loading users…
