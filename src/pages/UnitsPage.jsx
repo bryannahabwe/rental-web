@@ -3,6 +3,7 @@ import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreateUnit, useDeleteUnit, useUnits, useUpdateUnit} from "@/hooks/useUnits"
 import {useProperties} from "@/hooks/useProperties"
 import usePropertyStore from "@/store/propertyStore"
+import useAuthStore from "@/store/authStore"
 import {useForm} from "react-hook-form"
 import {ChevronRight, Pencil, Plus, Trash2, X} from "lucide-react"
 import UnitDetailSheet from "@/components/ui/UnitDetailSheet"
@@ -311,6 +312,7 @@ export default function UnitsPage() {
     const [editUnit, setEditUnit] = useState(null)
     const [deleteUnit, setDeleteUnit] = useState(null)
     const [selectedUnitId, setSelectedUnitId] = useState(null)
+    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -487,14 +489,16 @@ export default function UnitsPage() {
                                                 }}>
                                                     <Pencil size={13}/> Edit
                                                 </button>
-                                                <button onClick={() => setDeleteUnit(unit)} style={{
-                                                    padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
-                                                    border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                                    color: "#dc2626", cursor: "pointer",
-                                                    display: "flex", alignItems: "center", gap: "4px",
-                                                }}>
-                                                    <Trash2 size={13}/> Delete
-                                                </button>
+                                                {canDelete && (
+                                                    <button onClick={() => setDeleteUnit(unit)} style={{
+                                                        padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
+                                                        border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                                        color: "#dc2626", cursor: "pointer",
+                                                        display: "flex", alignItems: "center", gap: "4px",
+                                                    }}>
+                                                        <Trash2 size={13}/> Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -620,6 +624,7 @@ export default function UnitsPage() {
             {selectedUnitId && (
                 <UnitDetailSheet
                     unitId={selectedUnitId}
+                    canDelete={canDelete}
                     onClose={() => setSelectedUnitId(null)}
                     onEdit={(unit) => setEditUnit(unit)}
                     onDelete={(unit) => setDeleteUnit(unit)}

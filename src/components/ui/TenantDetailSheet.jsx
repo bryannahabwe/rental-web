@@ -1,6 +1,6 @@
 import BottomSheet from "./BottomSheet"
 import {useTenant} from "@/hooks/useTenants"
-import {Pencil, Trash2} from "lucide-react"
+import {ListTree, Pencil, Trash2} from "lucide-react"
 
 const formatUGX = (amount) =>
     amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
@@ -56,7 +56,7 @@ function StatusPill({status}) {
     )
 }
 
-export default function TenantDetailSheet({tenantId, onClose, onEdit, onDelete}) {
+export default function TenantDetailSheet({tenantId, canDelete = true, onClose, onEdit, onDelete, onViewLedger}) {
     const {data: tenant, isLoading} = useTenant(tenantId)
 
     return (
@@ -148,6 +148,23 @@ export default function TenantDetailSheet({tenantId, onClose, onEdit, onDelete})
                         </div>
                     )}
 
+                    {/* View ledger & arrears */}
+                    {tenant.currentUnit && onViewLedger && (
+                        <button
+                            onClick={() => onViewLedger(tenant)}
+                            style={{
+                                width: "100%", padding: "12px", borderRadius: "10px",
+                                border: "1px solid #d1e9e1", backgroundColor: "#E1F5EE",
+                                color: "#0F6E56", cursor: "pointer", fontSize: "14px",
+                                fontFamily: "'DM Sans', sans-serif", fontWeight: "600",
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                                marginBottom: "10px",
+                            }}
+                        >
+                            <ListTree size={15}/> View ledger & arrears
+                        </button>
+                    )}
+
                     {/* Actions */}
                     <div style={{display: "flex", gap: "10px", marginTop: "8px"}}>
                         <button
@@ -165,21 +182,23 @@ export default function TenantDetailSheet({tenantId, onClose, onEdit, onDelete})
                         >
                             <Pencil size={15}/> Edit
                         </button>
-                        <button
-                            onClick={() => {
-                                onDelete(tenant);
-                                onClose()
-                            }}
-                            style={{
-                                flex: 1, padding: "12px", borderRadius: "10px",
-                                border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                color: "#dc2626", cursor: "pointer", fontSize: "14px",
-                                fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                            }}
-                        >
-                            <Trash2 size={15}/> Delete
-                        </button>
+                        {canDelete && (
+                            <button
+                                onClick={() => {
+                                    onDelete(tenant);
+                                    onClose()
+                                }}
+                                style={{
+                                    flex: 1, padding: "12px", borderRadius: "10px",
+                                    border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                    color: "#dc2626", cursor: "pointer", fontSize: "14px",
+                                    fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                                }}
+                            >
+                                <Trash2 size={15}/> Delete
+                            </button>
+                        )}
                     </div>
                 </>
             ) : (

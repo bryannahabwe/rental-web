@@ -26,7 +26,7 @@ function DetailRow({label, value, valueColor}) {
     )
 }
 
-export default function UnitDetailSheet({unitId, onClose, onEdit, onDelete}) {
+export default function UnitDetailSheet({unitId, canDelete = true, onClose, onEdit, onDelete}) {
     const {data: unit, isLoading} = useUnit(unitId)
 
     return (
@@ -110,21 +110,23 @@ export default function UnitDetailSheet({unitId, onClose, onEdit, onDelete}) {
                         >
                             <Pencil size={15}/> Edit
                         </button>
-                        <button
-                            onClick={() => {
-                                onDelete(unit);
-                                onClose()
-                            }}
-                            style={{
-                                flex: 1, padding: "12px", borderRadius: "10px",
-                                border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                color: "#dc2626", cursor: "pointer", fontSize: "14px",
-                                fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                                display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                            }}
-                        >
-                            <Trash2 size={15}/> Delete
-                        </button>
+                        {canDelete && (
+                            <button
+                                onClick={() => {
+                                    onDelete(unit);
+                                    onClose()
+                                }}
+                                style={{
+                                    flex: 1, padding: "12px", borderRadius: "10px",
+                                    border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                    color: "#dc2626", cursor: "pointer", fontSize: "14px",
+                                    fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
+                                    display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                                }}
+                            >
+                                <Trash2 size={15}/> Delete
+                            </button>
+                        )}
                     </div>
                 </>
             ) : (

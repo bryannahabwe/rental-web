@@ -37,6 +37,7 @@ const useAuthStore = create(
 
             isManager: () => get().role === "PROPERTY_MANAGER",
             isAdmin: () => get().role === "ADMIN" || get().role === "SUPER_ADMIN",
+            isSuperAdmin: () => get().role === "SUPER_ADMIN",
 
             logout: () => {
                 // Clear the active-property selection too, so the next account

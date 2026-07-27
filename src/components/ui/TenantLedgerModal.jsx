@@ -33,6 +33,12 @@ function Pill({ label }) {
     )
 }
 
+const arrearsChip = {
+    display: "inline-block", padding: "5px 12px", borderRadius: "20px",
+    fontSize: "12px", fontWeight: "600", backgroundColor: "#fff",
+    border: "1px solid #fecaca", color: "#A32D2D", whiteSpace: "nowrap",
+}
+
 function SummaryStat({ label, value, color }) {
     return (
         <div>
@@ -64,6 +70,9 @@ export default function TenantLedgerModal({ tenantId, onClose }) {
 
     const transactions = ledger ? [...ledger.transactions, ...extraTransactions] : []
     const hasMore = ledger && transactions.length < ledger.transactionsTotal
+
+    const overdueCycles = ledger ? ledger.cycles.filter(c => c.due && c.balance > 0) : []
+    const inArrears = ledger && ledger.outstanding > 0
 
     const loadMore = async () => {
         setLoadingMore(true)
@@ -122,6 +131,48 @@ export default function TenantLedgerModal({ tenantId, onClose }) {
                         </div>
                     ) : (
                         <>
+                            {/* Arrears banner — the headline "how much is owed" at a glance */}
+                            {inArrears ? (
+                                <div style={{
+                                    backgroundColor: "#fef2f2", border: "1px solid #fee2e2",
+                                    borderRadius: "12px", padding: "16px 18px", marginBottom: "20px",
+                                    display: "flex", flexWrap: "wrap", alignItems: "center",
+                                    justifyContent: "space-between", gap: "12px",
+                                }}>
+                                    <div>
+                                        <div style={{
+                                            fontSize: "11px", fontWeight: "600", color: "#A32D2D",
+                                            textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px",
+                                        }}>
+                                            In Arrears
+                                        </div>
+                                        <div style={{ fontSize: "24px", fontWeight: "700", color: "#dc2626", lineHeight: 1.1 }}>
+                                            {formatUGX(ledger.outstanding)}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                                        {overdueCycles.length > 0 && (
+                                            <span style={arrearsChip}>
+                                                {overdueCycles.length} cycle{overdueCycles.length > 1 ? "s" : ""} overdue
+                                            </span>
+                                        )}
+                                        {ledger.openingArrears > 0 && (
+                                            <span style={arrearsChip}>
+                                                {formatUGX(ledger.openingArrears)} opening arrears
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{
+                                    backgroundColor: "#E1F5EE", border: "1px solid #d1e9e1",
+                                    borderRadius: "12px", padding: "14px 18px", marginBottom: "20px",
+                                    fontSize: "14px", fontWeight: "600", color: "#0F6E56",
+                                }}>
+                                    ✓ Fully paid up{ledger.openingCredit > 0 ? ` · ${formatUGX(ledger.openingCredit)} credit on file` : ""}
+                                </div>
+                            )}
+
                             {/* Summary */}
                             <div style={{
                                 display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
@@ -161,8 +212,14 @@ export default function TenantLedgerModal({ tenantId, onClose }) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {ledger.cycles.map((c, i) => (
-                                            <tr key={i} style={{ borderTop: "1px solid #f9f9f9", opacity: c.due ? 1 : 0.55 }}>
+                                        {ledger.cycles.map((c, i) => {
+                                            const isOverdue = c.due && c.balance > 0
+                                            return (
+                                            <tr key={i} style={{
+                                                borderTop: "1px solid #f9f9f9",
+                                                opacity: c.due ? 1 : 0.55,
+                                                backgroundColor: isOverdue ? "#fef2f2" : "transparent",
+                                            }}>
                                                 <td style={{ padding: "10px 14px", fontSize: "13px", color: "#111827" }}>
                                                     {formatDate(c.periodStartDate)} – {formatDate(c.periodEndDate)}
                                                 </td>
@@ -182,10 +239,15 @@ export default function TenantLedgerModal({ tenantId, onClose }) {
                                                     <Pill label={c.status} />
                                                 </td>
                                                 <td style={{ padding: "10px 14px", fontSize: "11px", color: "#9ca3af" }}>
-                                                    {!c.due && "not yet due"}
+                                                    {!c.due ? (
+                                                        "not yet due"
+                                                    ) : isOverdue ? (
+                                                        <span style={{ color: "#dc2626", fontWeight: "600" }}>overdue</span>
+                                                    ) : ""}
                                                 </td>
                                             </tr>
-                                        ))}
+                                            )
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

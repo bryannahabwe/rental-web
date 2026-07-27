@@ -3,6 +3,7 @@ import PageWrapper from "@/components/layout/PageWrapper"
 import { useCreateTenant, useDeleteTenant, useTenants, useUpdateTenant } from "@/hooks/useTenants"
 import { useProperties } from "@/hooks/useProperties"
 import usePropertyStore from "@/store/propertyStore"
+import useAuthStore from "@/store/authStore"
 import { useForm } from "react-hook-form"
 import { ChevronRight, ListTree, Pencil, Plus, Trash2, X } from "lucide-react"
 import TenantDetailSheet from "@/components/ui/TenantDetailSheet"
@@ -427,6 +428,7 @@ export default function TenantsPage() {
     const [deleteTenant, setDeleteTenant] = useState(null)
     const [selectedTenantId, setSelectedTenantId] = useState(null)
     const [ledgerTenantId, setLedgerTenantId] = useState(null)
+    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -583,7 +585,11 @@ export default function TenantsPage() {
                                 </thead>
                                 <tbody>
                                 {tenants.map((tenant) => (
-                                    <tr key={tenant.id} style={{ borderTop: "1px solid #f9f9f9" }}>
+                                    <tr
+                                        key={tenant.id}
+                                        onClick={() => setSelectedTenantId(tenant.id)}
+                                        style={{ borderTop: "1px solid #f9f9f9", cursor: "pointer" }}
+                                    >
                                         <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
                                             {tenant.name}
                                         </td>
@@ -607,7 +613,7 @@ export default function TenantsPage() {
                                         <td style={{ padding: "14px 20px" }}>
                                             <StatusPill status={tenant.periodStatus} />
                                         </td>
-                                        <td style={{ padding: "14px 20px" }}>
+                                        <td style={{ padding: "14px 20px" }} onClick={(e) => e.stopPropagation()}>
                                             <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                                                 {tenant.currentUnit && (
                                                     <button
@@ -634,17 +640,19 @@ export default function TenantsPage() {
                                                 >
                                                     <Pencil size={13} /> Edit
                                                 </button>
-                                                <button
-                                                    onClick={() => setDeleteTenant(tenant)}
-                                                    style={{
-                                                        padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
-                                                        border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                                        color: "#dc2626", cursor: "pointer",
-                                                        display: "flex", alignItems: "center", gap: "4px",
-                                                    }}
-                                                >
-                                                    <Trash2 size={13} /> Delete
-                                                </button>
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() => setDeleteTenant(tenant)}
+                                                        style={{
+                                                            padding: "6px 12px", borderRadius: "6px", fontSize: "13px",
+                                                            border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                                            color: "#dc2626", cursor: "pointer",
+                                                            display: "flex", alignItems: "center", gap: "4px",
+                                                        }}
+                                                    >
+                                                        <Trash2 size={13} /> Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -758,9 +766,14 @@ export default function TenantsPage() {
             {selectedTenantId && (
                 <TenantDetailSheet
                     tenantId={selectedTenantId}
+                    canDelete={canDelete}
                     onClose={() => setSelectedTenantId(null)}
                     onEdit={(tenant) => setEditTenant(tenant)}
                     onDelete={(tenant) => setDeleteTenant(tenant)}
+                    onViewLedger={(tenant) => {
+                        setSelectedTenantId(null)
+                        setLedgerTenantId(tenant.id)
+                    }}
                 />
             )}
             {ledgerTenantId && (

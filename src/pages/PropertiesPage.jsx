@@ -1,6 +1,7 @@
 import {useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useCreateProperty, useDeleteProperty, useProperties, useUpdateProperty} from "@/hooks/useProperties"
+import useAuthStore from "@/store/authStore"
 import {useForm} from "react-hook-form"
 import {Building2, Home, Pencil, Plus, Trash2, Users, X} from "lucide-react"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -230,6 +231,7 @@ export default function PropertiesPage() {
     const [showModal, setShowModal] = useState(false)
     const [editProperty, setEditProperty] = useState(null)
     const [deleteProperty, setDeleteProperty] = useState(null)
+    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
 
     const actions = (
         <button onClick={() => setShowModal(true)} style={{
@@ -337,15 +339,17 @@ export default function PropertiesPage() {
                                 }}>
                                     <Pencil size={13}/> Edit
                                 </button>
-                                <button onClick={() => setDeleteProperty(p)} style={{
-                                    flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
-                                    border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                    color: "#dc2626", cursor: "pointer",
-                                    display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
-                                    fontFamily: "'DM Sans', sans-serif",
-                                }}>
-                                    <Trash2 size={13}/> Delete
-                                </button>
+                                {canDelete && (
+                                    <button onClick={() => setDeleteProperty(p)} style={{
+                                        flex: 1, padding: "8px", borderRadius: "8px", fontSize: "13px",
+                                        border: "1px solid #fee2e2", backgroundColor: "#fff",
+                                        color: "#dc2626", cursor: "pointer",
+                                        display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                                        fontFamily: "'DM Sans', sans-serif",
+                                    }}>
+                                        <Trash2 size={13}/> Delete
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
