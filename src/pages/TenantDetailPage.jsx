@@ -81,12 +81,20 @@ export default function TenantDetailPage() {
                     Tenant not found.
                 </div>
             ) : (
-                <div style={{
-                    display: "flex", flexDirection: "column", gap: "16px",
-                    maxWidth: "900px", fontFamily: "'DM Sans', sans-serif",
-                }}>
+                <div className="tdp-wrap" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                    <style>{`
+                        .tdp-wrap { max-width: 1180px; margin: 0 auto; }
+                        .tdp-grid { display: flex; flex-direction: column; gap: 16px; }
+                        .tdp-side { display: flex; flex-direction: column; gap: 16px; }
+                        @media (min-width: 960px) {
+                            .tdp-grid { flex-direction: row; align-items: flex-start; }
+                            .tdp-side { width: 360px; flex-shrink: 0; }
+                            .tdp-main { flex: 1; min-width: 0; }
+                        }
+                    `}</style>
+
                     {/* Header card — identity + actions */}
-                    <div style={{ ...cardStyle, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                    <div style={{ ...cardStyle, marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                             <div style={{
                                 width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "#0a4a38",
@@ -124,44 +132,51 @@ export default function TenantDetailPage() {
                         </div>
                     </div>
 
-                    {/* Contact */}
-                    <div style={cardStyle}>
-                        <p style={sectionLabel}>Contact</p>
-                        <DetailRow label="Phone" value={tenant.phone} />
-                        <DetailRow label="Email" value={tenant.email || "—"} />
-                        <DetailRow label="Address" value={tenant.address || "—"} />
-                    </div>
-
-                    {/* Current tenancy */}
-                    {tenant.currentUnit ? (
-                        <div style={cardStyle}>
-                            <p style={sectionLabel}>Current Tenancy</p>
-                            <DetailRow label="Unit" value={tenant.currentUnit} />
-                            <DetailRow label="Monthly Rent" value={formatUGX(tenant.monthlyRent)} />
-                            <DetailRow label="Period" value={formatCycle(tenant.currentCycleStart, tenant.currentCycleEnd)} />
-                            <DetailRow
-                                label="Outstanding"
-                                value={tenant.currentBalance > 0 ? formatUGX(tenant.currentBalance) : "Paid up"}
-                                valueColor={tenant.currentBalance > 0 ? "#dc2626" : "#0F6E56"}
-                            />
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: "13px", color: "#9ca3af" }}>Status</span>
-                                <StatusPill status={tenant.periodStatus} />
+                    {/* Two-column on desktop: info on the left, ledger on the right */}
+                    <div className="tdp-grid">
+                        <div className="tdp-side">
+                            {/* Contact */}
+                            <div style={cardStyle}>
+                                <p style={sectionLabel}>Contact</p>
+                                <DetailRow label="Phone" value={tenant.phone} />
+                                <DetailRow label="Email" value={tenant.email || "—"} />
+                                <DetailRow label="Address" value={tenant.address || "—"} />
                             </div>
-                        </div>
-                    ) : (
-                        <div style={{ ...cardStyle, fontSize: "13px", color: "#9ca3af" }}>
-                            No active agreement for this tenant.
-                        </div>
-                    )}
 
-                    {/* Ledger & arrears */}
-                    {tenant.currentUnit && (
-                        <div style={cardStyle}>
-                            <p style={sectionLabel}>Ledger &amp; Arrears</p>
-                            <TenantLedgerView tenantId={id} />
+                            {/* Current tenancy */}
+                            {tenant.currentUnit ? (
+                                <div style={cardStyle}>
+                                    <p style={sectionLabel}>Current Tenancy</p>
+                                    <DetailRow label="Unit" value={tenant.currentUnit} />
+                                    <DetailRow label="Monthly Rent" value={formatUGX(tenant.monthlyRent)} />
+                                    <DetailRow label="Period" value={formatCycle(tenant.currentCycleStart, tenant.currentCycleEnd)} />
+                                    <DetailRow
+                                        label="Outstanding"
+                                        value={tenant.currentBalance > 0 ? formatUGX(tenant.currentBalance) : "Paid up"}
+                                        valueColor={tenant.currentBalance > 0 ? "#dc2626" : "#0F6E56"}
+                                    />
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <span style={{ fontSize: "13px", color: "#9ca3af" }}>Status</span>
+                                        <StatusPill status={tenant.periodStatus} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ ...cardStyle, fontSize: "13px", color: "#9ca3af" }}>
+                                    No active agreement for this tenant.
+                                </div>
+                            )}
                         </div>
-                    )}
+
+                        {/* Ledger & arrears */}
+                        {tenant.currentUnit && (
+                            <div className="tdp-main">
+                                <div style={cardStyle}>
+                                    <p style={sectionLabel}>Ledger &amp; Arrears</p>
+                                    <TenantLedgerView tenantId={id} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 

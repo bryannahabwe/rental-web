@@ -187,13 +187,29 @@ export default function PageWrapper({title, actions, mobileAction, showBack, chi
                         position: "sticky", top: 0, zIndex: 50,
                     }}
                 >
-                    <h1 style={{
-                        fontSize: "15px", fontWeight: "600",
-                        color: "#111827", margin: 0,
-                        fontFamily: "'DM Sans', sans-serif",
-                    }}>
-                        {title}
-                    </h1>
+                    <div style={{display: "flex", alignItems: "center", gap: "12px"}}>
+                        {showBack && (
+                            <button
+                                onClick={() => navigate(-1)}
+                                aria-label="Go back"
+                                style={{
+                                    background: "none", border: "none",
+                                    cursor: "pointer", padding: "4px",
+                                    display: "flex", alignItems: "center",
+                                    color: "#6b7280",
+                                }}
+                            >
+                                <ArrowLeft size={18}/>
+                            </button>
+                        )}
+                        <h1 style={{
+                            fontSize: "15px", fontWeight: "600",
+                            color: "#111827", margin: 0,
+                            fontFamily: "'DM Sans', sans-serif",
+                        }}>
+                            {title}
+                        </h1>
+                    </div>
                     {actions && (
                         <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
                             {actions}
