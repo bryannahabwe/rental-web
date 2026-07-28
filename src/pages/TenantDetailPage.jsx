@@ -156,7 +156,7 @@ export default function TenantDetailPage() {
                                         valueColor={tenant.currentBalance > 0 ? "#dc2626" : "#0F6E56"}
                                     />
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <span style={{ fontSize: "13px", color: "#9ca3af" }}>Status</span>
+                                        <span style={{ fontSize: "13px", color: "#9ca3af" }}>Account status</span>
                                         <StatusPill status={tenant.periodStatus} />
                                     </div>
                                 </div>
