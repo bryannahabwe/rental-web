@@ -70,7 +70,11 @@ export default function TenantLedgerView({ tenantId }) {
     const transactions = ledger ? [...ledger.transactions, ...extraTransactions] : []
     const hasMore = ledger && transactions.length < ledger.transactionsTotal
 
-    const overdueCycles = ledger ? ledger.cycles.filter(c => c.due && c.balance > 0) : []
+    // A cycle is overdue when it's due and its OWN rent isn't fully covered
+    // (status UNPAID/PARTIAL) — not when the cumulative running balance is
+    // positive, which can happen on a fully-paid cycle (e.g. arrears-billing
+    // timing lag or opening arrears carried forward).
+    const overdueCycles = ledger ? ledger.cycles.filter(c => c.due && c.status !== "PAID") : []
     const inArrears = ledger && ledger.outstanding > 0
 
     const loadMore = async () => {
@@ -168,7 +172,7 @@ export default function TenantLedgerView({ tenantId }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "560px" }}>
                     <thead>
                         <tr style={{ backgroundColor: "#f9fafb" }}>
-                            {["Period", "Expected", "Paid", "Running Balance", "Status", ""].map((h) => (
+                            {["Period", "Expected", "Paid", "Balance", "Status", ""].map((h) => (
                                 <th key={h} style={{
                                     padding: "9px 14px", textAlign: "left", fontSize: "11px",
                                     fontWeight: "500", color: "#9ca3af", textTransform: "uppercase",
@@ -179,7 +183,13 @@ export default function TenantLedgerView({ tenantId }) {
                     </thead>
                     <tbody>
                         {ledger.cycles.map((c, i) => {
-                            const isOverdue = c.due && c.balance > 0
+                            const isOverdue = c.due && c.status !== "PAID"
+                            // Per-cycle balance: what THIS period still owes
+                            // (expected − paid), counted only once the cycle is
+                            // due. Negative = a credit/prepayment on this cycle.
+                            // This matches the Status column and the top-line
+                            // Outstanding, unlike a cumulative cash running total.
+                            const cycleBalance = (c.due ? Number(c.expectedAmount) : 0) - Number(c.paidAmount)
                             return (
                             <tr key={i} style={{
                                 borderTop: "1px solid #f9f9f9",
@@ -197,9 +207,11 @@ export default function TenantLedgerView({ tenantId }) {
                                 </td>
                                 <td style={{
                                     padding: "10px 14px", fontSize: "13px", fontWeight: "500",
-                                    color: c.balance > 0 ? "#dc2626" : "#0F6E56",
+                                    color: cycleBalance > 0 ? "#dc2626" : "#0F6E56",
                                 }}>
-                                    {formatUGX(c.balance)}
+                                    {cycleBalance < 0
+                                        ? `${formatUGX(Math.abs(cycleBalance))} cr`
+                                        : formatUGX(cycleBalance)}
                                 </td>
                                 <td style={{ padding: "10px 14px" }}>
                                     <Pill label={c.status} />
