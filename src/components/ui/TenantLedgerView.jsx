@@ -254,6 +254,11 @@ export default function TenantLedgerView({ tenantId }) {
                                         </td>
                                         <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: "500", color: "#111827" }}>
                                             {formatUGX(t.amount)}
+                                            {t.overpayment > 0 && (
+                                                <div style={{ fontSize: "11px", fontWeight: "400", color: "#2C4C9B", marginTop: "2px" }}>
+                                                    {formatUGX(t.expectedAmount)} applied · {formatUGX(t.overpayment)} rolled over
+                                                </div>
+                                            )}
                                         </td>
                                         <td style={{ padding: "10px 14px", fontSize: "13px", color: "#6b7280" }}>
                                             {formatDate(t.periodStartDate)} – {formatDate(t.periodEndDate)}

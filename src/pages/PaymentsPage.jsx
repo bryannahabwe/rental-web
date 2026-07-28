@@ -1037,6 +1037,11 @@ export default function PaymentsPage() {
                                         </td>
                                         <td style={{ padding: "14px 20px", fontSize: "14px", color: "#111827", fontWeight: "500" }}>
                                             {formatUGX(p.amount)}
+                                            {p.overpayment > 0 && (
+                                                <div style={{ fontSize: "11px", fontWeight: "400", color: "#2C4C9B", marginTop: "2px" }}>
+                                                    {formatUGX(p.expectedAmount)} applied · {formatUGX(p.overpayment)} rolled over
+                                                </div>
+                                            )}
                                         </td>
                                         <td style={{ padding: "14px 20px", fontSize: "14px", color: "#6b7280" }}>
                                             {formatUGX(p.expectedAmount)}
