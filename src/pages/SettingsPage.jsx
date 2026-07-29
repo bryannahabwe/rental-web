@@ -2,7 +2,7 @@ import {useNavigate} from "react-router-dom"
 import PageWrapper from "@/components/layout/PageWrapper"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
-import {Activity, BarChart3, Briefcase, Building, Building2, ChevronRight, FileText, LogOut, Receipt, Users,} from "lucide-react"
+import {Activity, BarChart3, Briefcase, Building, Building2, ChevronRight, FileText, LogOut, Receipt, UserCircle, Users,} from "lucide-react"
 
 export default function SettingsPage() {
     const navigate = useNavigate()
@@ -23,6 +23,13 @@ export default function SettingsPage() {
         {
             label: "ACCOUNT",
             items: [
+                {
+                    icon: UserCircle,
+                    label: "My Profile",
+                    description: "Your name and phone number",
+                    path: "/settings/profile",
+                    color: "#185FA5",
+                },
                 {
                     icon: Briefcase,
                     label: "Business Profile",

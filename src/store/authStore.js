@@ -35,6 +35,11 @@ const useAuthStore = create(
 
             setAccessToken: (accessToken) => set({accessToken}),
 
+            // Patch the cached profile after a self-update (name / phone).
+            updateLandlord: (patch) => set(state => ({
+                landlord: {...state.landlord, ...patch},
+            })),
+
             isManager: () => get().role === "PROPERTY_MANAGER",
             isAdmin: () => get().role === "ADMIN" || get().role === "SUPER_ADMIN",
             isSuperAdmin: () => get().role === "SUPER_ADMIN",

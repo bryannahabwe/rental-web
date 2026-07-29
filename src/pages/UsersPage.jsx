@@ -11,7 +11,7 @@ import {
 import {useProperties} from "@/hooks/useProperties"
 import useAuthStore from "@/store/authStore"
 import {useForm} from "react-hook-form"
-import {Pencil, Plus, Send, ShieldOff, UserCog, X} from "lucide-react"
+import {ChevronRight, Pencil, Plus, Send, ShieldOff, UserCog, X} from "lucide-react"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const inputStyle = {
@@ -130,6 +130,7 @@ function InviteModal({onClose}) {
         try {
             await inviteUser.mutateAsync({
                 name: data.name,
+                phoneNumber: data.phoneNumber,
                 email: data.email,
                 role,
                 propertyIds: role === "PROPERTY_MANAGER" ? propertyIds : [],
@@ -174,6 +175,21 @@ function InviteModal({onClose}) {
                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}/>
                             {errors.name && <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>{errors.name.message}</p>}
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Phone number</label>
+                            <input {...register("phoneNumber", {
+                                       required: "Phone number is required",
+                                       pattern: {
+                                           value: /^\+?[0-9]{10,15}$/,
+                                           message: "Invalid phone number format",
+                                       },
+                                   })}
+                                   type="tel" style={inputStyle} placeholder="0771234567"
+                                   onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                   onBlur={e => e.target.style.borderColor = "#d1d5db"}/>
+                            {errors.phoneNumber && <p style={{fontSize: "12px", color: "#ef4444", marginTop: "4px"}}>{errors.phoneNumber.message}</p>}
                         </div>
 
                         <div>
@@ -243,6 +259,7 @@ function EditUserModal({user, onClose}) {
     const currentRole = useAuthStore(s => s.role)
     const {data: properties = []} = useProperties()
     const [role, setRole] = useState(user.role)
+    const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "")
     const [propertyIds, setPropertyIds] = useState(user.assignedPropertyIds || [])
     const [error, setError] = useState("")
 
@@ -252,6 +269,10 @@ function EditUserModal({user, onClose}) {
     const onSubmit = async (e) => {
         e.preventDefault()
         setError("")
+        if (!/^\+?[0-9]{10,15}$/.test(phoneNumber.trim())) {
+            setError("Enter a valid phone number")
+            return
+        }
         if (role === "PROPERTY_MANAGER" && propertyIds.length === 0) {
             setError("Assign at least one property to a property manager")
             return
@@ -261,6 +282,7 @@ function EditUserModal({user, onClose}) {
                 id: user.id,
                 data: {
                     role,
+                    phoneNumber: phoneNumber.trim(),
                     propertyIds: role === "PROPERTY_MANAGER" ? propertyIds : [],
                 },
             })
@@ -305,11 +327,19 @@ function EditUserModal({user, onClose}) {
 
                         <div>
                             <label style={labelStyle}>Email</label>
-                            <input value={user.email || user.phoneNumber || "—"} readOnly disabled
+                            <input value={user.email || "—"} readOnly disabled
                                    style={{...inputStyle, backgroundColor: "#f9fafb", color: "#6b7280"}}/>
                             <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "5px"}}>
                                 Name and email can't be changed here.
                             </p>
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Phone number</label>
+                            <input value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
+                                   type="tel" style={inputStyle} placeholder="0771234567"
+                                   onFocus={e => e.target.style.borderColor = "#0F6E56"}
+                                   onBlur={e => e.target.style.borderColor = "#d1d5db"}/>
                         </div>
 
                         <div>
@@ -561,6 +591,7 @@ export default function UsersPage() {
                                         {u.email || u.phoneNumber}
                                     </div>
                                 </div>
+                                <ChevronRight size={18} color="#c4c9d0" style={{flexShrink: 0, marginTop: "2px"}}/>
                             </div>
 
                             <div style={{display: "flex", gap: "8px", flexWrap: "wrap"}}>

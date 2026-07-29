@@ -15,6 +15,14 @@ export function useMe() {
     })
 }
 
+export function useUpdateMe() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: usersService.updateMe,
+        onSuccess: () => queryClient.invalidateQueries({queryKey: ["users"]}),
+    })
+}
+
 export function useInviteUser() {
     const queryClient = useQueryClient()
     return useMutation({
