@@ -7,6 +7,7 @@ import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
 import {useState} from "react"
 import {getErrorMessage} from "@/utils/errorMessage"
+import PasswordInput from "@/components/ui/PasswordInput"
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -151,9 +152,8 @@ export default function LoginPage() {
                             }}>
                                 Password
                             </label>
-                            <input
+                            <PasswordInput
                                 {...register("password", {required: "Password is required"})}
-                                type="password"
                                 placeholder="••••••••"
                                 style={{
                                     width: "100%", padding: "11px 14px", fontSize: "14px",

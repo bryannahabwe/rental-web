@@ -3,6 +3,7 @@ import {Link, useNavigate} from "react-router-dom"
 import {authService} from "@/services/authService"
 import {useState} from "react"
 import {getErrorMessage} from "@/utils/errorMessage"
+import PasswordInput from "@/components/ui/PasswordInput"
 
 export default function RegisterPage() {
     const navigate = useNavigate()
@@ -169,12 +170,11 @@ export default function RegisterPage() {
                         {/* Password */}
                         <div style={{marginBottom: "28px"}}>
                             <label style={labelStyle}>Password</label>
-                            <input
+                            <PasswordInput
                                 {...register("password", {
                                     required: "Password is required",
                                     minLength: {value: 6, message: "Minimum 6 characters"},
                                 })}
-                                type="password"
                                 placeholder="••••••••"
                                 style={inputStyle}
                                 onFocus={e => e.target.style.borderColor = "#0F6E56"}

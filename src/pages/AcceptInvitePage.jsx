@@ -4,6 +4,7 @@ import {useQueryClient} from "@tanstack/react-query"
 import {authService} from "@/services/authService"
 import useAuthStore from "@/store/authStore"
 import {getErrorMessage} from "@/utils/errorMessage"
+import PasswordInput from "@/components/ui/PasswordInput"
 
 const inputStyle = {
     width: "100%", padding: "11px 14px", fontSize: "14px",
@@ -107,7 +108,7 @@ export default function AcceptInvitePage() {
                             <form onSubmit={onSubmit}>
                                 <div style={{marginBottom: "20px"}}>
                                     <label style={labelStyle}>Password</label>
-                                    <input type="password" value={password}
+                                    <PasswordInput value={password}
                                            onChange={e => setPassword(e.target.value)}
                                            placeholder="••••••••" style={inputStyle}
                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
@@ -115,7 +116,7 @@ export default function AcceptInvitePage() {
                                 </div>
                                 <div style={{marginBottom: "28px"}}>
                                     <label style={labelStyle}>Confirm password</label>
-                                    <input type="password" value={confirm}
+                                    <PasswordInput value={confirm}
                                            onChange={e => setConfirm(e.target.value)}
                                            placeholder="••••••••" style={inputStyle}
                                            onFocus={e => e.target.style.borderColor = "#0F6E56"}
