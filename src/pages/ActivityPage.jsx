@@ -1,17 +1,24 @@
 import {useEffect, useState} from "react"
 import PageWrapper from "@/components/layout/PageWrapper"
 import {useActivity} from "@/hooks/useActivity"
-import {Building2, CreditCard, FileText, Home, LogIn, UserCog, Users} from "lucide-react"
+import {
+    BarChart3, Building2, CreditCard, FileText, Home, LogIn,
+    Receipt, Settings, ShieldAlert, UserCog, Users,
+} from "lucide-react"
 
-const MODULES = [
-    {value: "", label: "All activity"},
-    {value: "PAYMENT", label: "Payments"},
-    {value: "TENANT", label: "Tenants"},
-    {value: "UNIT", label: "Units"},
-    {value: "RENTAL_AGREEMENT", label: "Agreements"},
-    {value: "PROPERTY", label: "Properties"},
-    {value: "USER", label: "Users"},
-    {value: "AUTHENTICATION", label: "Sign-ins"},
+// Each entry is a filter preset: a module, optionally narrowed to one action.
+const FILTERS = [
+    {id: "", label: "All activity"},
+    {id: "PAYMENT", label: "Payments", module: "PAYMENT"},
+    {id: "TENANT", label: "Tenants", module: "TENANT"},
+    {id: "UNIT", label: "Units", module: "UNIT"},
+    {id: "RENTAL_AGREEMENT", label: "Agreements", module: "RENTAL_AGREEMENT"},
+    {id: "PROPERTY", label: "Properties", module: "PROPERTY"},
+    {id: "USER", label: "Users", module: "USER"},
+    {id: "SETTINGS", label: "Settings & receipts", module: "SETTINGS"},
+    {id: "REPORT", label: "Reports", module: "REPORT"},
+    {id: "AUTHENTICATION", label: "Sign-ins", module: "AUTHENTICATION"},
+    {id: "LOGIN_FAILED", label: "Failed sign-ins", module: "AUTHENTICATION", action: "LOGIN_FAILED"},
 ]
 
 const MODULE_ICON = {
@@ -21,17 +28,27 @@ const MODULE_ICON = {
     PAYMENT: CreditCard,
     PROPERTY: Home,
     USER: UserCog,
+    SETTINGS: Settings,
+    REPORT: BarChart3,
     AUTHENTICATION: LogIn,
 }
 
 const MODULE_TINT = {
     TENANT: "#E1F5EE", UNIT: "#eef2ff", RENTAL_AGREEMENT: "#fef9c3",
-    PAYMENT: "#dcfce7", PROPERTY: "#E1F5EE", USER: "#f3e8ff", AUTHENTICATION: "#f1f5f9",
+    PAYMENT: "#dcfce7", PROPERTY: "#E1F5EE", USER: "#f3e8ff",
+    SETTINGS: "#fef3c7", REPORT: "#e0f2fe", AUTHENTICATION: "#f1f5f9",
 }
 const MODULE_COLOR = {
     TENANT: "#0F6E56", UNIT: "#4338ca", RENTAL_AGREEMENT: "#854d0e",
-    PAYMENT: "#15803d", PROPERTY: "#0F6E56", USER: "#7e22ce", AUTHENTICATION: "#475569",
+    PAYMENT: "#15803d", PROPERTY: "#0F6E56", USER: "#7e22ce",
+    SETTINGS: "#854F0B", REPORT: "#0369a1", AUTHENTICATION: "#475569",
 }
+
+// A few actions read better with their own mark than their module's — a
+// rejected sign-in especially, which shouldn't look like a routine one.
+const ACTION_ICON = {LOGIN_FAILED: ShieldAlert, ISSUE_RECEIPT: Receipt, VIEW_REPORT: BarChart3}
+const ACTION_TINT = {LOGIN_FAILED: "#fee2e2"}
+const ACTION_COLOR = {LOGIN_FAILED: "#b91c1c"}
 
 function formatTime(iso) {
     const d = new Date(iso)
@@ -51,7 +68,7 @@ function formatTime(iso) {
 
 export default function ActivityPage() {
     const [page, setPage] = useState(0)
-    const [module, setModule] = useState("")
+    const [filterId, setFilterId] = useState("")
     const [search, setSearch] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
 
@@ -63,9 +80,12 @@ export default function ActivityPage() {
         return () => clearTimeout(t)
     }, [search])
 
+    const filter = FILTERS.find(f => f.id === filterId) || FILTERS[0]
+
     const {data, isLoading} = useActivity({
         page, size: 20,
-        module: module || undefined,
+        module: filter.module,
+        action: filter.action,
         search: debouncedSearch || undefined,
     })
 
@@ -93,9 +113,9 @@ export default function ActivityPage() {
                     onBlur={e => e.target.style.borderColor = "#e5e7eb"}
                 />
                 <select
-                    value={module}
+                    value={filterId}
                     onChange={e => {
-                        setModule(e.target.value)
+                        setFilterId(e.target.value)
                         setPage(0)
                     }}
                     style={{
@@ -104,7 +124,7 @@ export default function ActivityPage() {
                         fontFamily: "'DM Sans', sans-serif", color: "#374151", backgroundColor: "#fff",
                     }}
                 >
-                    {MODULES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    {FILTERS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
                 </select>
             </div>
 
@@ -123,7 +143,9 @@ export default function ActivityPage() {
                 ) : (
                     <>
                         {entries.map((e, i) => {
-                            const Icon = MODULE_ICON[e.module] || FileText
+                            const Icon = ACTION_ICON[e.action] || MODULE_ICON[e.module] || FileText
+                            const tint = ACTION_TINT[e.action] || MODULE_TINT[e.module] || "#f1f5f9"
+                            const color = ACTION_COLOR[e.action] || MODULE_COLOR[e.module] || "#475569"
                             const time = formatTime(e.createdAt)
                             return (
                                 <div key={e.id} style={{
@@ -132,10 +154,10 @@ export default function ActivityPage() {
                                 }}>
                                     <div style={{
                                         width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                                        backgroundColor: MODULE_TINT[e.module] || "#f1f5f9",
+                                        backgroundColor: tint,
                                         display: "flex", alignItems: "center", justifyContent: "center",
                                     }}>
-                                        <Icon size={17} color={MODULE_COLOR[e.module] || "#475569"}/>
+                                        <Icon size={17} color={color}/>
                                     </div>
                                     <div style={{flex: 1, minWidth: 0}}>
                                         <div style={{fontSize: "14px", color: "#111827", lineHeight: 1.5}}>
