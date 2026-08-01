@@ -1,6 +1,7 @@
 import {NavLink} from "react-router-dom"
 import {Building2, CreditCard, FileText, LayoutDashboard, Settings, Users} from "lucide-react"
 import useAuthStore from "@/store/authStore"
+import {cn} from "@/lib/cn"
 
 const adminItems = [
     {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
@@ -17,29 +18,24 @@ const managerItems = [
 ]
 
 export default function BottomNav() {
-    const role = useAuthStore(s => s.role)
+    const role = useAuthStore((s) => s.role)
     const navItems = role === "PROPERTY_MANAGER" ? managerItems : adminItems
 
     return (
-        <nav className="bottom-nav" style={{
-            position: "fixed", bottom: 0, left: 0, right: 0,
-            backgroundColor: "#0a4a38",
-            borderTop: "1px solid rgba(255,255,255,0.08)",
-            display: "flex", zIndex: 100,
-            paddingBottom: "env(safe-area-inset-bottom)",
-        }}>
+        <nav
+            className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/10 bg-secondary-900 pb-[env(safe-area-inset-bottom)] md:hidden">
             {navItems.map(({label, path, icon: Icon}) => (
                 <NavLink
                     key={path}
                     to={path}
-                    style={({isActive}) => ({
-                        flex: 1, display: "flex", flexDirection: "column",
-                        alignItems: "center", justifyContent: "center",
-                        padding: "10px 2px", textDecoration: "none",
-                        color: isActive ? "#5DCAA5" : "rgba(255,255,255,0.45)",
-                        fontSize: "10px", fontFamily: "'DM Sans', sans-serif",
-                        gap: "4px",
-                    })}
+                    className={({isActive}) =>
+                        cn(
+                            "flex flex-1 flex-col items-center justify-center gap-1 px-0.5 py-2.5 text-2xs transition-colors",
+                            // Label sizes step up from 10px to text-2xs (11px):
+                            // 10px body text is below the legibility floor on a phone.
+                            isActive ? "text-primary-300" : "text-white/50",
+                        )
+                    }
                 >
                     <Icon size={20}/>
                     {label}

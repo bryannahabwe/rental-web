@@ -1,19 +1,27 @@
-import { useState } from "react"
-import { useDeleteTenant } from "@/hooks/useTenants"
-import { getErrorMessage } from "@/utils/errorMessage"
+import {useState} from "react"
+import {Trash2} from "lucide-react"
+import {useDeleteTenant} from "@/hooks/useTenants"
+import Dialog from "./Dialog"
+import Button from "./Button"
+import {toast} from "./toastStore"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 /**
  * Confirm-and-delete a tenant. `onClose` closes the dialog (cancel or after
  * success); `onDeleted` (optional) fires only after a successful delete — the
  * detail page uses it to navigate back to the list.
+ *
+ * Kept as its own component rather than folded into `useConfirm` because it
+ * owns the mutation and the post-delete navigation hand-off.
  */
-export default function DeleteTenantConfirm({ tenant, onClose, onDeleted }) {
+export default function DeleteTenantConfirm({tenant, onClose, onDeleted}) {
     const deleteTenant = useDeleteTenant()
     const [error, setError] = useState("")
 
     const handleDelete = async () => {
         try {
             await deleteTenant.mutateAsync(tenant.id)
+            toast.success("Tenant deleted", tenant.name)
             onClose()
             onDeleted?.()
         } catch (err) {
@@ -22,48 +30,32 @@ export default function DeleteTenantConfirm({ tenant, onClose, onDeleted }) {
     }
 
     return (
-        <div style={{
-            position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.4)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 200, padding: "16px",
-        }}>
-            <div style={{
-                backgroundColor: "#fff", borderRadius: "16px",
-                width: "100%", maxWidth: "400px",
-                padding: "28px", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-            }}>
-                <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "0 0 8px" }}>
-                    Delete tenant?
-                </h2>
-                <p style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 20px", lineHeight: "1.5" }}>
-                    Are you sure you want to delete <strong>{tenant.name}</strong>? This cannot be undone.
+        <Dialog
+            onClose={onClose}
+            size="sm"
+            hideHeader
+            footer={
+                <>
+                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button variant="danger" loading={deleteTenant.isPending} onClick={handleDelete}>
+                        Delete
+                    </Button>
+                </>
+            }
+        >
+            <div className="flex flex-col items-center text-center">
+                <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-danger-50 text-danger-500">
+                    <Trash2 size={24}/>
+                </span>
+                <h2 className="font-heading text-lg font-medium text-neutral-90">Delete tenant?</h2>
+                <p className="mt-1.5 text-sm leading-relaxed text-neutral-50">
+                    <strong className="font-medium text-neutral-80">{tenant.name}</strong> will be permanently
+                    removed. This cannot be undone.
                 </p>
                 {error && (
-                    <div style={{
-                        backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
-                        padding: "10px 14px", borderRadius: "8px", marginBottom: "16px",
-                        borderLeft: "3px solid #ef4444",
-                    }}>
-                        {error}
-                    </div>
+                    <p className="mt-4 w-full rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>
                 )}
-                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                    <button onClick={onClose} style={{
-                        padding: "9px 18px", borderRadius: "8px", fontSize: "14px",
-                        border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                        color: "#374151", cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                    }}>
-                        Cancel
-                    </button>
-                    <button onClick={handleDelete} disabled={deleteTenant.isPending} style={{
-                        padding: "9px 20px", borderRadius: "8px", fontSize: "14px",
-                        backgroundColor: "#dc2626", color: "#fff", border: "none",
-                        cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                    }}>
-                        {deleteTenant.isPending ? "Deleting..." : "Delete"}
-                    </button>
-                </div>
             </div>
-        </div>
+        </Dialog>
     )
 }

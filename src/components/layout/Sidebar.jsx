@@ -1,8 +1,12 @@
 import {NavLink, useNavigate} from "react-router-dom"
-import {Activity, BarChart3, Building2, CreditCard, FileText, Home, LayoutDashboard, LogOut, Settings, UserCog, Users,} from "lucide-react"
+import {
+    Activity, BarChart3, Building2, CreditCard, FileText, Home, LayoutDashboard, LogOut, Settings, UserCog, Users,
+} from "lucide-react"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
 import PropertySwitcher from "./PropertySwitcher"
+import {Avatar} from "@/components/ui"
+import {cn} from "@/lib/cn"
 
 // managerOk = visible to PROPERTY_MANAGERs; everything else is admin/owner-only.
 const mainLinks = [
@@ -24,31 +28,38 @@ const manageLinks = [
     {label: "Settings", path: "/settings", icon: Settings, managerOk: false},
 ]
 
-const linkStyle = (isActive) => ({
-    display: "flex", alignItems: "center", gap: "10px",
-    padding: "9px 16px", borderRadius: "8px",
-    textDecoration: "none", fontSize: "14px",
-    fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-    color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-    backgroundColor: isActive ? "rgba(255,255,255,0.1)" : "transparent",
-    transition: "all 0.15s",
-})
-
+/**
+ * Dark-surface hierarchy is built from white alphas over secondary-900,
+ * exactly as the design system prescribes. The one accent is primary-300,
+ * NOT primary-500: our brand green is dark, and primary-500 on
+ * secondary-900 is 1.65:1 — effectively invisible.
+ */
 function SidebarSection({label, links}) {
     if (links.length === 0) return null
     return (
-        <div style={{marginBottom: "8px"}}>
-            <p style={{
-                fontSize: "10px", fontWeight: "500", color: "rgba(255,255,255,0.3)",
-                textTransform: "uppercase", letterSpacing: "0.08em",
-                padding: "0 16px", marginBottom: "4px",
-            }}>
+        <div className="mb-2">
+            <p className="mb-1 px-4 text-2xs font-medium uppercase tracking-[0.08em] text-white/30">
                 {label}
             </p>
-            {links.map(({label, path, icon: Icon}) => (
-                <NavLink key={path} to={path} style={({isActive}) => linkStyle(isActive)}>
-                    <Icon size={16}/>
-                    {label}
+            {links.map(({label: text, path, icon: Icon}) => (
+                <NavLink
+                    key={path}
+                    to={path}
+                    className={({isActive}) =>
+                        cn(
+                            "flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
+                            isActive
+                                ? "bg-white/10 text-white"
+                                : "text-white/60 hover:bg-white/5 hover:text-white",
+                        )
+                    }
+                >
+                    {({isActive}) => (
+                        <>
+                            <Icon size={16} className={isActive ? "text-primary-300" : undefined}/>
+                            {text}
+                        </>
+                    )}
                 </NavLink>
             ))}
         </div>
@@ -62,11 +73,7 @@ export default function Sidebar() {
 
     // Managers only see the sections they're allowed to act on.
     const isManager = role === "PROPERTY_MANAGER"
-    const visible = (links) => links.filter(l => !isManager || l.managerOk)
-
-    const initials = landlord?.name
-        ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
-        : "RL"
+    const visible = (links) => links.filter((l) => !isManager || l.managerOk)
 
     const companyName = settings?.companyName || "RentFlow"
     const logoUrl = settings?.logoUrl || null
@@ -78,126 +85,52 @@ export default function Sidebar() {
     }
 
     return (
-        <aside className="sidebar-desktop" style={{
-            width: "240px", backgroundColor: "#0a4a38",
-            position: "fixed", top: 0, left: 0, bottom: 0,
-            display: "flex", flexDirection: "column",
-            zIndex: 100, overflowY: "auto",
-        }}>
+        <aside
+            className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col overflow-y-auto bg-secondary-900 md:flex">
             {/* Brand */}
-            <div style={{ padding: "24px 20px 20px" }}>
+            <div className="px-5 pb-5 pt-6">
                 {logoUrl ? (
                     <>
-                        <img
-                            src={logoUrl}
-                            alt={companyName}
-                            style={{
-                                height: "44px", maxWidth: "160px",
-                                objectFit: "contain", marginBottom: "4px",
-                            }}
-                        />
-                        <p style={{
-                            fontSize: "11px", color: "rgba(255,255,255,0.4)",
-                            margin: "4px 0 0",
-                        }}>
-                            {companyName}
-                        </p>
+                        <img src={logoUrl} alt={companyName} className="mb-1 h-11 max-w-40 object-contain"/>
+                        <p className="mt-1 text-2xs text-white/40">{companyName}</p>
                     </>
                 ) : (
                     <>
-                        <h1 style={{
-                            fontFamily: "'DM Serif Display', serif",
-                            fontSize: "22px", color: "#fff",
-                            margin: 0, lineHeight: 1,
-                        }}>
-                            {companyName}
-                        </h1>
-                        <p style={{
-                            fontSize: "11px", color: "rgba(255,255,255,0.4)",
-                            margin: "4px 0 0",
-                        }}>
-                            Property Management
-                        </p>
+                        <h1 className="truncate font-heading text-2xl leading-none text-white">{companyName}</h1>
+                        <p className="mt-1 text-2xs text-white/40">Property Management</p>
                     </>
                 )}
             </div>
 
-            {/* Property switcher */}
-            <div style={{padding: "0 16px 12px"}}>
+            <div className="px-4 pb-3">
                 <PropertySwitcher/>
             </div>
 
-            <div style={{
-                height: "1px",
-                backgroundColor: "rgba(255,255,255,0.08)",
-                margin: "0 16px",
-            }}/>
+            <div className="mx-4 h-px bg-white/10"/>
 
-            {/* Nav links */}
-            <nav style={{flex: 1, padding: "16px 8px"}}>
+            <nav className="flex-1 px-2 py-4">
                 <SidebarSection label="Main" links={visible(mainLinks)}/>
                 <SidebarSection label="Financials" links={visible(financialLinks)}/>
                 <SidebarSection label="Manage" links={visible(manageLinks)}/>
             </nav>
 
-            <div style={{
-                height: "1px",
-                backgroundColor: "rgba(255,255,255,0.08)",
-                margin: "0 16px",
-            }}/>
+            <div className="mx-4 h-px bg-white/10"/>
 
-            {/* User + sign out */}
-            <div style={{padding: "16px 8px"}}>
-                {/* User card */}
-                <div style={{
-                    display: "flex", alignItems: "center", gap: "10px",
-                    padding: "10px 16px", borderRadius: "8px",
-                    backgroundColor: "rgba(255,255,255,0.06)",
-                    marginBottom: "4px",
-                }}>
-                    <div style={{
-                        width: "32px", height: "32px", borderRadius: "50%",
-                        backgroundColor: "#1D9E75",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "12px", color: "#fff", fontWeight: "600", flexShrink: 0,
-                    }}>
-                        {initials}
-                    </div>
-                    <div style={{flex: 1, minWidth: 0}}>
-                        <div style={{
-                            fontSize: "13px", fontWeight: "600", color: "#fff",
-                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                        }}>
+            <div className="px-2 py-4">
+                <div className="mb-1 flex items-center gap-2.5 rounded-lg bg-white/5 px-4 py-2.5">
+                    <Avatar name={landlord?.name} size={32} className="bg-primary-400 text-white"/>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white">
                             {landlord?.name || "Landlord"}
-                        </div>
-                        <div style={{
-                            fontSize: "11px", color: "rgba(255,255,255,0.4)",
-                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                        }}>
-                            {landlord?.phoneNumber || ""}
-                        </div>
+                        </p>
+                        <p className="truncate text-2xs text-white/40">{landlord?.phoneNumber || ""}</p>
                     </div>
                 </div>
 
-                {/* Sign out */}
                 <button
+                    type="button"
                     onClick={handleLogout}
-                    style={{
-                        width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                        padding: "9px 16px", borderRadius: "8px",
-                        backgroundColor: "transparent", border: "none",
-                        color: "rgba(255,255,255,0.5)", fontSize: "14px",
-                        fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
-                        transition: "all 0.15s",
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)"
-                        e.currentTarget.style.color = "#fff"
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.backgroundColor = "transparent"
-                        e.currentTarget.style.color = "rgba(255,255,255,0.5)"
-                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white"
                 >
                     <LogOut size={16}/>
                     Sign out

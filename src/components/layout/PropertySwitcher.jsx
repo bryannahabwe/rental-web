@@ -4,21 +4,22 @@ import {Building2, Check, ChevronsUpDown, Plus} from "lucide-react"
 import usePropertyStore from "@/store/propertyStore"
 import useAuthStore from "@/store/authStore"
 import {useProperties} from "@/hooks/useProperties"
+import {cn} from "@/lib/cn"
 
 const ALL = "__all__"
 
 /**
  * Workspace-style property switcher. Lists the landlord's properties plus an
  * "All properties" aggregate option, and lets them jump to the manage screen.
- * Rendered on the dark green sidebar/top-bar, so the trigger is styled for a
- * dark background while the dropdown itself is light.
+ * Rendered on the dark secondary-900 sidebar/top-bar, so the trigger uses the
+ * white-alpha system while the dropdown itself is a light popover.
  */
 export default function PropertySwitcher() {
     const navigate = useNavigate()
     const {data: properties = []} = useProperties()
-    const selectedPropertyId = usePropertyStore(s => s.selectedPropertyId)
-    const setSelectedProperty = usePropertyStore(s => s.setSelectedProperty)
-    const isManager = useAuthStore(s => s.role === "PROPERTY_MANAGER")
+    const selectedPropertyId = usePropertyStore((s) => s.selectedPropertyId)
+    const setSelectedProperty = usePropertyStore((s) => s.setSelectedProperty)
+    const isManager = useAuthStore((s) => s.role === "PROPERTY_MANAGER")
     const [open, setOpen] = useState(false)
     const ref = useRef(null)
 
@@ -36,8 +37,7 @@ export default function PropertySwitcher() {
     // the single property when a landlord only has one.
     useEffect(() => {
         if (!properties.length) return
-        const stillValid = selectedPropertyId
-            && properties.some(p => p.id === selectedPropertyId)
+        const stillValid = selectedPropertyId && properties.some((p) => p.id === selectedPropertyId)
         if (isManager) {
             // Managers have no aggregate view — always land on an assigned property.
             if (!stillValid) setSelectedProperty(properties[0].id)
@@ -49,7 +49,7 @@ export default function PropertySwitcher() {
         }
     }, [properties, selectedPropertyId, setSelectedProperty, isManager])
 
-    const current = properties.find(p => p.id === selectedPropertyId)
+    const current = properties.find((p) => p.id === selectedPropertyId)
     const label = current ? current.name : "All properties"
 
     const choose = (id) => {
@@ -58,50 +58,32 @@ export default function PropertySwitcher() {
     }
 
     return (
-        <div ref={ref} style={{position: "relative"}}>
+        <div ref={ref} className="relative">
             <button
-                onClick={() => setOpen(v => !v)}
-                style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                    padding: "9px 12px", borderRadius: "8px", cursor: "pointer",
-                    backgroundColor: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    color: "#fff", fontFamily: "'DM Sans', sans-serif",
-                    textAlign: "left",
-                }}
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                className="flex w-full items-center gap-2.5 rounded-lg border border-white/15 bg-white/8 px-3 py-2.5 text-left text-white transition-colors hover:bg-white/12"
             >
-                <div style={{
-                    width: "26px", height: "26px", borderRadius: "6px", flexShrink: 0,
-                    backgroundColor: "rgba(255,255,255,0.14)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
+                <span
+                    className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-md bg-white/15 text-white">
                     <Building2 size={15}/>
-                </div>
-                <div style={{flex: 1, minWidth: 0}}>
-                    <div style={{
-                        fontSize: "10px", color: "rgba(255,255,255,0.5)",
-                        textTransform: "uppercase", letterSpacing: "0.06em",
-                    }}>
-                        Property
-                    </div>
-                    <div style={{
-                        fontSize: "13px", fontWeight: 600, color: "#fff",
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                    }}>
-                        {label}
-                    </div>
-                </div>
-                <ChevronsUpDown size={15} color="rgba(255,255,255,0.6)"/>
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span
+                        className="block text-2xs uppercase tracking-[0.06em] text-white/50">Property</span>
+                    <span className="block truncate text-sm font-semibold text-white">{label}</span>
+                </span>
+                <ChevronsUpDown size={15} className="shrink-0 text-white/60"/>
             </button>
 
             {open && (
-                <div style={{
-                    position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
-                    backgroundColor: "#fff", borderRadius: "10px",
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
-                    border: "1px solid #eef0ef", zIndex: 400, overflow: "hidden",
-                }}>
-                    <div style={{maxHeight: "260px", overflowY: "auto", padding: "6px"}}>
+                <div
+                    role="listbox"
+                    className="absolute inset-x-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-xl border border-neutral-5 bg-white shadow-dialog animate-scale-in"
+                >
+                    <div className="max-h-65 overflow-y-auto p-1.5">
                         {!isManager && (
                             <SwitchRow
                                 active={selectedPropertyId === null}
@@ -110,7 +92,7 @@ export default function PropertySwitcher() {
                                 onClick={() => choose(ALL)}
                             />
                         )}
-                        {properties.map(p => (
+                        {properties.map((p) => (
                             <SwitchRow
                                 key={p.id}
                                 active={p.id === selectedPropertyId}
@@ -120,21 +102,15 @@ export default function PropertySwitcher() {
                             />
                         ))}
                     </div>
+
                     {!isManager && (
                         <button
+                            type="button"
                             onClick={() => {
                                 setOpen(false)
                                 navigate("/properties")
                             }}
-                            style={{
-                                width: "100%", display: "flex", alignItems: "center", gap: "8px",
-                                padding: "11px 14px", borderTop: "1px solid #f3f4f6",
-                                backgroundColor: "#fff", border: "none", cursor: "pointer",
-                                fontSize: "13px", color: "#0F6E56", fontWeight: 500,
-                                fontFamily: "'DM Sans', sans-serif",
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f6fbf9"}
-                            onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
+                            className="flex w-full items-center gap-2 border-t border-neutral-5 px-3.5 py-2.5 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
                         >
                             <Plus size={15}/> Manage properties
                         </button>
@@ -148,31 +124,20 @@ export default function PropertySwitcher() {
 function SwitchRow({active, title, subtitle, onClick}) {
     return (
         <button
+            type="button"
+            role="option"
+            aria-selected={active}
             onClick={onClick}
-            style={{
-                width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                padding: "9px 10px", borderRadius: "8px", cursor: "pointer",
-                backgroundColor: active ? "#E1F5EE" : "transparent",
-                border: "none", textAlign: "left",
-                fontFamily: "'DM Sans', sans-serif",
-            }}
-            onMouseEnter={e => {
-                if (!active) e.currentTarget.style.backgroundColor = "#f6f7f7"
-            }}
-            onMouseLeave={e => {
-                if (!active) e.currentTarget.style.backgroundColor = "transparent"
-            }}
+            className={cn(
+                "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
+                active ? "bg-primary-50" : "hover:bg-neutral-5",
+            )}
         >
-            <div style={{flex: 1, minWidth: 0}}>
-                <div style={{
-                    fontSize: "13px", fontWeight: 600, color: "#111827",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>
-                    {title}
-                </div>
-                <div style={{fontSize: "11px", color: "#9ca3af"}}>{subtitle}</div>
-            </div>
-            {active && <Check size={15} color="#0F6E56"/>}
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-neutral-90">{title}</span>
+                <span className="block truncate text-2xs text-neutral-40">{subtitle}</span>
+            </span>
+            {active && <Check size={15} className="shrink-0 text-primary-600"/>}
         </button>
     )
 }

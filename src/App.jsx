@@ -16,6 +16,7 @@ import PaymentsPage from "@/pages/PaymentsPage"
 import ReportsPage from "@/pages/ReportsPage"
 import SettingsPage from "@/pages/SettingsPage"
 import useAuthStore from "@/store/authStore"
+import {ConfirmProvider, ToastHost} from "@/components/ui"
 import BusinessProfilePage from "@/pages/BusinessProfilePage"
 import ReceiptSettingsPage from "@/pages/ReceiptSettingsPage"
 import ProfilePage from "@/pages/ProfilePage"
@@ -62,8 +63,11 @@ function HomeRedirect() {
 
 export default function App() {
     return (
-        <>
+        <ConfirmProvider>
             <TokenGuard/>
+            {/* Mounted once — toast() is callable from anywhere, including
+                mutation callbacks that fire outside a component. */}
+            <ToastHost/>
             <Routes>
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route path="/register" element={<RegisterPage/>}/>
@@ -93,6 +97,6 @@ export default function App() {
                     }
                 />
             </Routes>
-        </>
+        </ConfirmProvider>
     )
 }
