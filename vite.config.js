@@ -15,8 +15,8 @@ export default defineConfig({
                 name: "RentFlow — Property Management",
                 short_name: "RentFlow",
                 description: "Manage your rental properties, tenants, and payments",
-                theme_color: "#0a4a38",
-                background_color: "#f8faf9",
+                theme_color: "#0a4a38", // secondary-900
+                background_color: "#F5F6F8", // neutral-0 — must match the body background
                 display: "standalone",
                 orientation: "portrait",
                 scope: "/",
@@ -41,7 +41,10 @@ export default defineConfig({
                 ],
             },
             workbox: {
-                globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+                // woff2 is required — without it the 8 self-hosted brand
+                // fonts (~520KB) are not precached and every offline load
+                // falls back to system serif/sans.
+                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
                 runtimeCaching: [
                     {
                         urlPattern: /^https?:\/\/.*\/api\/v1\/.*/i,

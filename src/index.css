@@ -1,109 +1,427 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap');
+/* ═══════════════════════════════════════════════════════════════════
+   RentFlow design system — ported from the VIDA Wealth design system
+   Tailwind CSS v4 · CSS-first config
+   ═══════════════════════════════════════════════════════════════════ */
 @import "tailwindcss";
 
-@theme {
-    --font-sans: "DM Sans", sans-serif;
-    --font-display: "DM Serif Display", serif;
+/* `static` is deliberate. Tailwind v4 prunes theme variables that no
+   generated utility references, and its scanner cannot see
+   `var(--color-…)` inside React inline styles. While ~880 inline style
+   objects are still being migrated, every token must be addressable from
+   `style={{}}`. Costs ~95 custom properties in :root (<1KB gzipped). */
+@theme static {
+    /* ── Clear the stock palette ────────────────────────────────────
+       MUST come first: the clear executes at its declaration position.
+       Required because our neutral scale runs 0→100 (inverted vs
+       Tailwind's 50→950) and collides at `50` and `100` — without this,
+       `--color-neutral-50: #696D85` would silently overwrite Tailwind's
+       near-white neutral-50. After the clear, an unmapped class emits
+       nothing at all, which is the correct failure mode while 30+ files
+       still hold raw hex. */
+    --color-*: initial;
 
-    --color-teal-50: #E1F5EE;
-    --color-teal-100: #9FE1CB;
-    --color-teal-200: #5DCAA5;
-    --color-teal-400: #1D9E75;
-    --color-teal-600: #0F6E56;
-    --color-teal-800: #085041;
-    --color-teal-900: #04342C;
+    --color-white: #ffffff;
+    --color-black: #000000;
+
+    /* ── Primary — brand green, #0F6E56 pinned at 500 ────────────────
+       Derived in OKLCH at the brand's own hue (170.1°) rather than by
+       naive sRGB tinting, which turns a dark low-chroma green into mud.
+       Pinning the brand at 500 is what lets every design-system recipe
+       string port verbatim.
+
+       NOTE: primary-500 is a DARK token (6.20:1 against white). On any
+       secondary-* surface step down to primary-300 — `text-primary-500`
+       on a dark background is always a bug. */
+    --color-primary-0: #FFFFFF;
+    --color-primary-50: #E8F9F2;
+    --color-primary-100: #D5F3E7;
+    --color-primary-150: #BEEBDA;
+    --color-primary-200: #A2E2CA;
+    --color-primary-300: #64CDAB;
+    --color-primary-400: #14A27F;
+    --color-primary-500: #0F6E56; /* brand */
+    --color-primary-600: #035B46; /* hover */
+    --color-primary-700: #024937; /* active */
+    --color-primary-800: #023729;
+    --color-primary-850: #022C21;
+    --color-primary-900: #012118;
+    --color-primary-950: #010F09;
+    --color-primary-1000: #000000;
+
+    /* ── Secondary — deep green-black, #0A4A38 pinned at 900 ─────────
+       SURFACE FAMILY ONLY: sidebar, mobile topbar, bottom nav, auth
+       panel, dialog scrim. #0A4A38 is also the <meta name="theme-color">
+       and the PWA manifest theme_color, so it must own a token.
+
+       Steps 0–600 exist so ported class strings compile, but are
+       RESERVED — do not use them as tints. Two greens are
+       indistinguishable at tint weight, so the badge `secondary` tone is
+       dropped, avatars use neutral, and charts use info instead. */
+    --color-secondary-0: #FFFFFF;
+    --color-secondary-50: #EBF3F0;
+    --color-secondary-100: #DAE7E3;
+    --color-secondary-150: #CADCD6;
+    --color-secondary-200: #B8CFC7;
+    --color-secondary-300: #99B8AD;
+    --color-secondary-400: #779D90;
+    --color-secondary-500: #5A8777;
+    --color-secondary-600: #437463;
+    --color-secondary-700: #2D6250;
+    --color-secondary-800: #1F5947;
+    --color-secondary-850: #14523F;
+    --color-secondary-900: #0A4A38; /* brand dark surface */
+    --color-secondary-950: #012319;
+    --color-secondary-1000: #000000;
+
+    /* ── Neutral — 0 → 100, NOT Tailwind's 50 → 950 ──────────────────
+       neutral-0 is the page background, not white.
+       neutral-100 is pure black, not a light grey.
+       Pure white is not in this scale at all — use `bg-white`. */
+    --color-neutral-0: #F5F6F8; /* page background */
+    --color-neutral-5: #E7E8ED; /* default border, divider */
+    --color-neutral-10: #D9DBE1; /* badge border, menu border */
+    --color-neutral-15: #CBCDD6; /* form-control border, scrollbar thumb */
+    --color-neutral-20: #BDBFCA; /* checkbox border */
+    --color-neutral-30: #A1A4B3; /* placeholder, disabled */
+    --color-neutral-40: #85889C; /* captions, table headers */
+    --color-neutral-50: #696D85; /* muted prose */
+    --color-neutral-60: #54576A; /* secondary body */
+    --color-neutral-70: #3F4150; /* form labels, ghost buttons */
+    --color-neutral-80: #2A2C35; /* body text, table cells */
+    --color-neutral-85: #202128; /* global default text */
+    --color-neutral-90: #15161B; /* headings, input values */
+    --color-neutral-95: #0B0B0D; /* dialog scrim */
+    --color-neutral-100: #000000;
+
+    /* ── Semantic — five steps each. There is no success-200. ────────
+       Sticking to 50 (fill) / 100 (border) / 500 (solid) / 600–700
+       (text) isn't a convention, it's the whole scale. */
+    --color-success-50: #E6FCF9;
+    --color-success-100: #CCF9F3;
+    --color-success-500: #00B59A;
+    --color-success-600: #008874;
+    --color-success-700: #005A4D;
+
+    --color-warning-50: #FFF7E6;
+    --color-warning-100: #FDECC8;
+    --color-warning-500: #F5A623;
+    --color-warning-600: #D98A0B;
+    /* Darkened from the source system's #A66807, which was 4.28:1 on
+       warning-50 — just short of AA. This is 6.95:1, and happens to sit
+       closer to the #854F0B the app already uses 23 times. */
+    --color-warning-700: #7A4B05;
+
+    --color-danger-50: #FDEBEC;
+    --color-danger-100: #FAD1D4;
+    --color-danger-500: #E5484D;
+    --color-danger-600: #C62A2F;
+    --color-danger-700: #9E1E23;
+
+    /* info is now the only non-green accent, so it stands alone rather
+       than being derived from secondary. */
+    --color-info-50: #EBECF8;
+    --color-info-100: #D7DAF2;
+    --color-info-500: #3645BD;
+    --color-info-600: #2B3797;
+    --color-info-700: #202971;
+
+    /* ── Type ───────────────────────────────────────────────────────
+       PP Eiko ships Regular + Bold only — font-medium (500) and
+       font-semibold (600) synthesise to Regular. Don't expect a true
+       medium optical weight on headings. */
+    --font-sans: "GT Walsheim", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-heading: "PP Eiko", ui-serif, Georgia, Cambria,
+    "Times New Roman", serif;
+
+    /* Micro-labels only: bottom-nav labels, sm badges, section eyebrows. */
+    --text-2xs: 0.6875rem;
+    --text-2xs--line-height: 1rem;
+
+    /* ── Radii — only these two differ from v4 stock ─────────────────
+       rounded-lg (0.5rem) is the workhorse: buttons, form controls,
+       cards, menu items, nav items, table wrapper. Larger radii are
+       reserved for floating surfaces. */
+    --radius-xl: 0.875rem;
+    --radius-2xl: 1.125rem;
+
+    /* ── Elevation — tinted with secondary-900/950, never neutral grey.
+       That tint is what gives elevation its slight green cast. */
+    --shadow-card: 0 1px 2px 0 rgb(10 74 56 / 0.05), 0 4px 16px -2px rgb(10 74 56 / 0.10);
+    --shadow-card-hover: 0 2px 4px 0 rgb(10 74 56 / 0.07), 0 12px 28px -4px rgb(10 74 56 / 0.16);
+    --shadow-dialog: 0 24px 64px -12px rgb(1 35 25 / 0.45);
+    --shadow-fab: 0 4px 16px rgb(15 110 86 / 0.45);
+
+    /* ── Motion ─────────────────────────────────────────────────────
+       Every transform animation uses out-expo. */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --animate-fade-in: fade-in 0.2s ease-out;
+    --animate-scale-in: scale-in 0.22s var(--ease-out-expo);
+    --animate-slide-up: slide-up 0.3s var(--ease-out-expo);
+    --animate-slide-down: slide-down 0.25s var(--ease-out-expo);
+    --animate-slide-left: slide-left 0.3s var(--ease-out-expo);
+    --animate-slide-right: slide-right 0.3s var(--ease-out-expo);
+    --animate-shimmer: shimmer 1.6s linear infinite;
+
+    /* Keyframes belong INSIDE @theme in v4 — Tailwind does the same for
+       spin/ping/pulse. They're emitted only when the matching --animate-*
+       utility is actually generated. */
+    @keyframes fade-in {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+    @keyframes scale-in {
+        0% {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    @keyframes slide-up {
+        0% {
+            transform: translateY(100%);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+    @keyframes slide-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-16px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes slide-left {
+        0% {
+            transform: translateX(100%);
+        }
+        100% {
+            transform: translateX(0);
+        }
+    }
+    @keyframes slide-right {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(0);
+        }
+    }
+    @keyframes shimmer {
+        0% {
+            background-position: -800px 0;
+        }
+        100% {
+            background-position: 800px 0;
+        }
+    }
+
+    /* ── Breakpoints ────────────────────────────────────────────────
+       Stock md = 48rem = 768px is EXACTLY the app's existing breakpoint,
+       so `md:` is a 1:1 replacement for the legacy !important toggles
+       below. `xs` is additive — the source system is desktop-only and
+       has no phone layer. */
+    --breakpoint-xs: 26rem;
+
+    /* Layout constants (plain vars, not a Tailwind namespace). */
+    --layout-sidebar-w: 15rem;
+    --layout-bottomnav-h: 4rem;
+    --layout-content-max: 1600px;
 }
 
-/* ── Reset ── */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* ═══════════════════════════════════════════════════════════════════
+   Brand fonts — served from public/assets/fonts/ at /assets/fonts/…
+   @font-face sits at top level: cascade layers don't apply to it.
+   ═══════════════════════════════════════════════════════════════════ */
+@font-face {
+    font-family: "GT Walsheim";
+    src: url("/assets/fonts/gt_Walsheim/GT-Walsheim-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
 }
 
-body {
-    font-family: "DM Sans", sans-serif;
-    background-color: #f8faf9;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+@font-face {
+    font-family: "GT Walsheim";
+    src: url("/assets/fonts/gt_Walsheim/GT-Walsheim-Regular-Oblique.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
 }
 
-input, button, textarea, select {
-    font-family: "DM Sans", sans-serif;
+@font-face {
+    font-family: "GT Walsheim";
+    src: url("/assets/fonts/gt_Walsheim/GT-Walsheim-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
 }
 
-button {
-    cursor: pointer;
+@font-face {
+    font-family: "GT Walsheim";
+    src: url("/assets/fonts/gt_Walsheim/GT-Walsheim-Medium-Oblique.woff2") format("woff2");
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
 }
 
-/* ── Desktop (768px+) ── */
-@media (min-width: 768px) {
-    .desktop-table {
-        display: block !important;
+@font-face {
+    font-family: "GT Walsheim";
+    src: url("/assets/fonts/gt_Walsheim/GT-Walsheim-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "GT Walsheim";
+    src: url("/assets/fonts/gt_Walsheim/GT-Walsheim-Bold-Oblique.woff2") format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "PP Eiko";
+    src: url("/assets/fonts/pp_Eiko/PPEiko-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "PP Eiko";
+    src: url("/assets/fonts/pp_Eiko/PPEiko-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Base layer
+
+   No hand-written reset here: `@import "tailwindcss"` already pulls in
+   preflight, which sets box-sizing, zeroes margin/padding, and resets
+   borders. It has been running since Tailwind was installed.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer base {
+    html, body {
+        height: 100%;
     }
 
-    .desktop-topbar {
-        display: flex !important;
+    body {
+        background-color: var(--color-neutral-0);
+        color: var(--color-neutral-85);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
 
-    .mobile-cards {
-        display: none !important;
+    h1, h2, h3, h4, h5 {
+        font-family: var(--font-heading);
+        letter-spacing: -0.01em;
     }
 
-    .mobile-topbar {
-        display: none !important;
+    /* v4 preflight sets `cursor: default` on buttons — a change from v3.
+       Without this rule every button in the app loses its pointer. */
+    button {
+        cursor: pointer;
     }
 
-    .sidebar-desktop {
-        display: flex !important;
+    /* Number inputs never show spinner arrows anywhere in the app. */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
 
-    .main-content {
-        margin-left: 240px !important;
+    input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
     }
 
-    .bottom-nav {
-        display: none !important;
+    /* Global focus ring. Written as `outline` rather than the ring
+       utilities so it needs no --tw-ring-* machinery and cannot be
+       clipped by an overflow:hidden ancestor. */
+    :focus-visible {
+        outline: 2px solid var(--color-primary-500);
+        outline-offset: 2px;
+        border-radius: inherit;
     }
 
-    .page-content {
-        padding: 28px !important;
-        padding-bottom: 40px !important;
+    /* Thin, on-brand scrollbars. */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-neutral-15) transparent;
+    }
+
+    *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background-color: var(--color-neutral-15);
+        border-radius: 9999px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-neutral-20);
     }
 }
 
-/* ── Mobile (below 768px) ── */
-@media (max-width: 767px) {
-    .desktop-table {
-        display: none !important;
-    }
+/* ═══════════════════════════════════════════════════════════════════
+   Custom utilities — v4 uses @utility, not @layer components.
 
-    .desktop-topbar {
-        display: none !important;
-    }
+   NOTE: `tabular-nums` is deliberately NOT redefined here. Tailwind v4
+   ships it as a real utility; a bare class would shadow it and break
+   composition with `ordinal` / `slashed-zero`.
+   ═══════════════════════════════════════════════════════════════════ */
 
-    .mobile-cards {
-        display: flex !important;
-    }
+/* Skeleton shimmer. The stops sit between neutral-0 and neutral-5 and
+   are intentionally not palette tokens. */
+@utility shimmer {
+    background-image: linear-gradient(
+            90deg,
+            #eef0f3 0%, #e2e5ea 20%, #eef0f3 40%, #eef0f3 100%
+    );
+    background-size: 800px 100%;
+    animation: var(--animate-shimmer);
+}
 
-    .mobile-topbar {
-        display: flex !important;
-    }
-
-    .sidebar-desktop {
-        display: none !important;
-    }
-
-    .main-content {
-        margin-left: 0 !important;
-    }
-
-    .bottom-nav {
-        display: flex !important;
-    }
-
-    .page-content {
-        padding: 14px !important;
-        padding-bottom: 100px !important;
+/* ═══════════════════════════════════════════════════════════════════
+   Reduced motion — handled globally, no per-component guards needed.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
     }
 }
+
+/* The legacy `!important` display toggles that used to live here
+   (.desktop-table, .mobile-cards, .main-content, .desktop-topbar,
+   .mobile-topbar, .page-content, .sidebar-desktop, .bottom-nav) are gone.
+   Responsiveness is Tailwind's `md:` breakpoint throughout — see AppShell
+   for the shell and DataTable for the table↔card swap. */
