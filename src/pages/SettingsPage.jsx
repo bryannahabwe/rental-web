@@ -1,17 +1,56 @@
-import {useNavigate} from "react-router-dom"
-import PageWrapper from "@/components/layout/PageWrapper"
+import {Link, useNavigate} from "react-router-dom"
+import {
+    Activity, BarChart3, Briefcase, Building, Building2, ChevronRight,
+    FileText, LogOut, Receipt, UserCircle, Users,
+} from "lucide-react"
+import AppShell from "@/components/layout/AppShell"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
-import {Activity, BarChart3, Briefcase, Building, Building2, ChevronRight, FileText, LogOut, Receipt, UserCircle, Users,} from "lucide-react"
+import {Avatar, Button, Card} from "@/components/ui"
+
+/**
+ * Nav rows are icon + label + description. The icons already distinguish
+ * them, so the chips are a single neutral tint rather than nine hand-picked
+ * colours that encoded nothing.
+ */
+const SECTIONS = [
+    {
+        label: "Account",
+        items: [
+            {icon: UserCircle, label: "My Profile", description: "Your name and phone number", path: "/settings/profile"},
+            {icon: Briefcase, label: "Business Profile", description: "Company name, logo and address", path: "/settings/business-profile"},
+            {icon: Receipt, label: "Receipt Settings", description: "Prefix, numbering and style", path: "/settings/receipt-settings"},
+        ],
+    },
+    {
+        label: "Manage",
+        items: [
+            {icon: Building, label: "Properties", description: "Add and manage properties", path: "/properties"},
+            {icon: Building2, label: "Units", description: "Manage your rental units", path: "/units"},
+            {icon: FileText, label: "Agreements", description: "Tenant agreements & billing", path: "/agreements"},
+        ],
+    },
+    {
+        label: "Administration",
+        items: [
+            {icon: Users, label: "User Management", description: "Invite and manage team members", path: "/users"},
+            {icon: Activity, label: "Activity Log", description: "Audit trail of account actions", path: "/activity"},
+        ],
+    },
+    {
+        label: "Reports",
+        items: [
+            {icon: BarChart3, label: "Reports", description: "Revenue & occupancy analytics", path: "/reports"},
+        ],
+    },
+]
 
 export default function SettingsPage() {
     const navigate = useNavigate()
     const {landlord, logout} = useAuthStore()
     const {settings, clearSettings} = useSettingsStore()
 
-    const initials = landlord?.name
-        ? landlord.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
-        : "RL"
+    const companyName = settings?.companyName || "RentFlow"
 
     const handleLogout = () => {
         logout()
@@ -19,243 +58,63 @@ export default function SettingsPage() {
         navigate("/login")
     }
 
-    const sections = [
-        {
-            label: "ACCOUNT",
-            items: [
-                {
-                    icon: UserCircle,
-                    label: "My Profile",
-                    description: "Your name and phone number",
-                    path: "/settings/profile",
-                    color: "#185FA5",
-                },
-                {
-                    icon: Briefcase,
-                    label: "Business Profile",
-                    description: "Company name, logo and address",
-                    path: "/settings/business-profile",
-                    color: "#0F6E56",
-                },
-                {
-                    icon: Receipt,
-                    label: "Receipt Settings",
-                    description: "Prefix, numbering and style",
-                    path: "/settings/receipt-settings",
-                    color: "#854F0B",
-                },
-            ],
-        },
-        {
-            label: "MANAGE",
-            items: [
-                {
-                    icon: Building,
-                    label: "Properties",
-                    description: "Add and manage properties",
-                    path: "/properties",
-                    color: "#7C3AED",
-                },
-                {
-                    icon: Building2,
-                    label: "Units",
-                    description: "Manage your rental units",
-                    path: "/units",
-                    color: "#185FA5",
-                },
-                {
-                    icon: FileText,
-                    label: "Agreements",
-                    description: "Tenant agreements & billing",
-                    path: "/agreements",
-                    color: "#0a4a38",
-                },
-            ],
-        },
-        {
-            label: "ADMINISTRATION",
-            items: [
-                {
-                    icon: Users,
-                    label: "User Management",
-                    description: "Invite and manage team members",
-                    path: "/users",
-                    color: "#0F6E56",
-                },
-                {
-                    icon: Activity,
-                    label: "Activity Log",
-                    description: "Audit trail of account actions",
-                    path: "/activity",
-                    color: "#854F0B",
-                },
-            ],
-        },
-        {
-            label: "REPORTS",
-            items: [
-                {
-                    icon: BarChart3,
-                    label: "Reports",
-                    description: "Revenue & occupancy analytics",
-                    path: "/reports",
-                    color: "#6b7280",
-                },
-            ],
-        },
-    ]
-
     return (
-        <PageWrapper title="Settings">
-
-            {/* Landlord profile card */}
-            <div style={{
-                backgroundColor: "#fff", borderRadius: "12px",
-                border: "1px solid #f0f0f0", padding: "20px",
-                marginBottom: "20px",
-                display: "flex", alignItems: "center", gap: "16px",
-            }}>
-                {settings?.logoUrl ? (
-                    <img
-                        src={settings.logoUrl}
-                        alt={settings.companyName || "Logo"}
-                        style={{
-                            width: "56px", height: "56px", borderRadius: "12px",
-                            objectFit: "contain", border: "1px solid #f0f0f0",
-                        }}
-                    />
-                ) : (
-                    <div style={{
-                        width: "56px", height: "56px", borderRadius: "50%",
-                        backgroundColor: "#0a4a38",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "20px", color: "#fff", fontWeight: "600", flexShrink: 0,
-                    }}>
-                        {initials}
-                    </div>
-                )}
-                <div style={{flex: 1, minWidth: 0}}>
-                    <div style={{
-                        fontSize: "17px", fontWeight: "700", color: "#111827",
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                    }}>
-                        {settings?.companyName || landlord?.name || "Landlord"}
-                    </div>
-                    <div style={{fontSize: "13px", color: "#9ca3af", marginTop: "2px"}}>
-                        {landlord?.phoneNumber || ""}
-                    </div>
-                    {landlord?.email && (
-                        <div style={{fontSize: "13px", color: "#9ca3af"}}>
-                            {landlord.email}
+        <AppShell title="Settings" subtitle="Your account and how the app behaves">
+            <div className="mx-auto flex max-w-3xl flex-col gap-5">
+                <Card>
+                    <div className="flex items-center gap-3.5">
+                        <Avatar name={landlord?.name} size={48} className="bg-secondary-900 text-white"/>
+                        <div className="min-w-0">
+                            <p className="truncate font-heading text-lg font-medium text-neutral-90">
+                                {landlord?.name || "Landlord"}
+                            </p>
+                            <p className="truncate text-sm text-neutral-40">
+                                {landlord?.email || landlord?.phoneNumber || companyName}
+                            </p>
                         </div>
-                    )}
-                </div>
+                    </div>
+                </Card>
+
+                {SECTIONS.map((section) => (
+                    <section key={section.label}>
+                        <p className="mb-2 px-1 text-2xs font-medium uppercase tracking-wide text-neutral-40">
+                            {section.label}
+                        </p>
+                        <Card bodyClass="p-0">
+                            <ul className="divide-y divide-neutral-5">
+                                {section.items.map(({icon: Icon, label, description, path}) => (
+                                    <li key={path}>
+                                        <Link
+                                            to={path}
+                                            className="group flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-neutral-0"
+                                        >
+                                            <span
+                                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-5 text-neutral-60">
+                                                <Icon size={18}/>
+                                            </span>
+                                            <span className="min-w-0 flex-1">
+                                                <span
+                                                    className="block truncate text-sm font-medium text-neutral-90">{label}</span>
+                                                <span
+                                                    className="block truncate text-sm text-neutral-40">{description}</span>
+                                            </span>
+                                            <ChevronRight
+                                                size={18}
+                                                className="shrink-0 text-neutral-15 transition-colors group-hover:text-primary-500"
+                                            />
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Card>
+                    </section>
+                ))}
+
+                <Button variant="outline" size="lg" iconLeft={LogOut}
+                        className="text-danger-600 hover:bg-danger-50" onClick={handleLogout}>
+                    Sign out
+                </Button>
             </div>
-
-            {/* Menu sections */}
-            {sections.map((section) => (
-                <div key={section.label} style={{marginBottom: "20px"}}>
-                    <p style={{
-                        fontSize: "11px", fontWeight: "500", color: "#9ca3af",
-                        textTransform: "uppercase", letterSpacing: "0.08em",
-                        marginBottom: "8px", paddingLeft: "4px",
-                    }}>
-                        {section.label}
-                    </p>
-                    <div style={{
-                        backgroundColor: "#fff", borderRadius: "12px",
-                        border: "1px solid #f0f0f0", overflow: "hidden",
-                    }}>
-                        {section.items.map((item, i) => (
-                            <button
-                                key={item.path}
-                                onClick={() => navigate(item.path)}
-                                style={{
-                                    width: "100%", padding: "16px 20px",
-                                    display: "flex", alignItems: "center", gap: "14px",
-                                    backgroundColor: "#fff", border: "none",
-                                    borderTop: i === 0 ? "none" : "1px solid #f3f4f6",
-                                    cursor: "pointer", textAlign: "left",
-                                    fontFamily: "'DM Sans', sans-serif",
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f9fafb"}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
-                            >
-                                <div style={{
-                                    width: "40px", height: "40px", borderRadius: "10px",
-                                    backgroundColor: item.color + "15",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    flexShrink: 0,
-                                }}>
-                                    <item.icon size={18} color={item.color}/>
-                                </div>
-                                <div style={{flex: 1}}>
-                                    <div style={{fontSize: "14px", fontWeight: "600", color: "#111827"}}>
-                                        {item.label}
-                                    </div>
-                                    <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "2px"}}>
-                                        {item.description}
-                                    </div>
-                                </div>
-                                <ChevronRight size={16} color="#9ca3af"/>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            ))}
-
-            {/* Sign out */}
-            <div style={{marginBottom: "20px"}}>
-                <p style={{
-                    fontSize: "11px", fontWeight: "500", color: "#9ca3af",
-                    textTransform: "uppercase", letterSpacing: "0.08em",
-                    marginBottom: "8px", paddingLeft: "4px",
-                }}>
-                    DANGER ZONE
-                </p>
-                <div style={{
-                    backgroundColor: "#fff", borderRadius: "12px",
-                    border: "1px solid #f0f0f0", overflow: "hidden",
-                }}>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            width: "100%", padding: "16px 20px",
-                            display: "flex", alignItems: "center", gap: "14px",
-                            backgroundColor: "#fff", border: "none",
-                            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "#fef2f2"}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}
-                    >
-                        <div style={{
-                            width: "40px", height: "40px", borderRadius: "10px",
-                            backgroundColor: "#fef2f2",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            flexShrink: 0,
-                        }}>
-                            <LogOut size={18} color="#dc2626"/>
-                        </div>
-                        <div style={{flex: 1}}>
-                            <div style={{fontSize: "14px", fontWeight: "600", color: "#dc2626"}}>
-                                Sign out
-                            </div>
-                            <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "2px"}}>
-                                Log out of your account
-                            </div>
-                        </div>
-                        <ChevronRight size={16} color="#9ca3af"/>
-                    </button>
-                </div>
-            </div>
-
-            <p style={{
-                textAlign: "center", fontSize: "12px",
-                color: "#d1d5db", marginTop: "8px",
-            }}>
-                RentFlow · Property Management · v1.0
-            </p>
-
-        </PageWrapper>
+        </AppShell>
     )
 }

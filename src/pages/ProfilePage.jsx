@@ -1,31 +1,21 @@
 import {useState} from "react"
-import PageWrapper from "@/components/layout/PageWrapper"
+import {useForm} from "react-hook-form"
+import AppShell from "@/components/layout/AppShell"
 import {useUpdateMe} from "@/hooks/useUsers"
 import useAuthStore from "@/store/authStore"
-import {useForm} from "react-hook-form"
+import {Button, Card, FormField, Input, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
-const inputStyle = {
-    width: "100%", padding: "10px 14px", fontSize: "14px",
-    borderRadius: "8px", border: "1px solid #d1d5db",
-    outline: "none", boxSizing: "border-box",
-    fontFamily: "'DM Sans', sans-serif",
-    backgroundColor: "#fff", color: "#111827",
+const PHONE_PATTERN = {
+    value: /^\+?[0-9]{10,15}$/,
+    message: "Invalid phone number format",
 }
-
-const labelStyle = {
-    display: "block", fontSize: "13px", fontWeight: "500",
-    color: "#374151", marginBottom: "6px",
-}
-
-const errorStyle = {fontSize: "12px", color: "#ef4444", marginTop: "4px"}
 
 export default function ProfilePage() {
-    const landlord = useAuthStore(s => s.landlord)
-    const updateLandlord = useAuthStore(s => s.updateLandlord)
+    const landlord = useAuthStore((s) => s.landlord)
+    const updateLandlord = useAuthStore((s) => s.updateLandlord)
     const updateMe = useUpdateMe()
     const [error, setError] = useState("")
-    const [success, setSuccess] = useState("")
 
     const {register, handleSubmit, formState: {errors}} = useForm({
         values: {
@@ -42,100 +32,42 @@ export default function ProfilePage() {
                 phoneNumber: data.phoneNumber.trim(),
             })
             updateLandlord({name: res.data.name, phoneNumber: res.data.phoneNumber})
-            setSuccess("Profile updated successfully")
-            setTimeout(() => setSuccess(""), 3000)
+            // Replaces the self-clearing success banner the page used to
+            // manage with a setTimeout.
+            toast.success("Profile updated")
         } catch (err) {
             setError(getErrorMessage(err))
         }
     }
 
     return (
-        <PageWrapper title="My Profile" showBack>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div style={{display: "flex", flexDirection: "column", gap: "20px"}}>
+        <AppShell title="My Profile" subtitle="Your name and contact details" showBack>
+            <form onSubmit={handleSubmit(onSubmit)} className="mx-auto flex max-w-2xl flex-col gap-5">
+                <Card title="Your Details">
+                    <div className="flex flex-col gap-4">
+                        <FormField label="Full name" error={errors.name?.message} required>
+                            <Input {...register("name", {required: "Name is required"})}
+                                   invalid={!!errors.name} placeholder="John Katende"/>
+                        </FormField>
 
-                    <div style={{
-                        backgroundColor: "#fff", borderRadius: "12px",
-                        border: "1px solid #f0f0f0", padding: "24px",
-                        display: "flex", flexDirection: "column", gap: "16px",
-                    }}>
-                        <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
-                            Your Details
-                        </p>
+                        <FormField label="Phone number" error={errors.phoneNumber?.message} required>
+                            <Input {...register("phoneNumber", {
+                                required: "Phone number is required",
+                                pattern: PHONE_PATTERN,
+                            })}
+                                   type="tel" invalid={!!errors.phoneNumber} placeholder="0771234567"/>
+                        </FormField>
 
-                        <div>
-                            <label style={labelStyle}>Full name</label>
-                            <input
-                                {...register("name", {required: "Name is required"})}
-                                style={inputStyle}
-                                placeholder="John Katende"
-                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                            />
-                            {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
-                        </div>
-
-                        <div>
-                            <label style={labelStyle}>Phone number</label>
-                            <input
-                                {...register("phoneNumber", {
-                                    required: "Phone number is required",
-                                    pattern: {
-                                        value: /^\+?[0-9]{10,15}$/,
-                                        message: "Invalid phone number format",
-                                    },
-                                })}
-                                type="tel"
-                                style={inputStyle}
-                                placeholder="0771234567"
-                                onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                            />
-                            {errors.phoneNumber && <p style={errorStyle}>{errors.phoneNumber.message}</p>}
-                        </div>
-
-                        <div>
-                            <label style={labelStyle}>Email</label>
-                            <input value={landlord?.email || "—"} readOnly disabled
-                                   style={{...inputStyle, backgroundColor: "#f9fafb", color: "#6b7280"}}/>
-                            <p style={{fontSize: "12px", color: "#9ca3af", marginTop: "5px"}}>
-                                Your email is used to sign in and can't be changed here.
-                            </p>
-                        </div>
+                        <FormField label="Email" hint="Your email is used to sign in and can't be changed here.">
+                            <Input value={landlord?.email || "—"} readOnly disabled/>
+                        </FormField>
                     </div>
+                </Card>
 
-                    {success && (
-                        <div style={{
-                            backgroundColor: "#E1F5EE", color: "#0F6E56", fontSize: "13px",
-                            padding: "10px 14px", borderRadius: "8px", borderLeft: "3px solid #0F6E56",
-                        }}>
-                            {success}
-                        </div>
-                    )}
-                    {error && (
-                        <div style={{
-                            backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
-                            padding: "10px 14px", borderRadius: "8px", borderLeft: "3px solid #ef4444",
-                        }}>
-                            {error}
-                        </div>
-                    )}
+                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
 
-                    <button
-                        type="submit"
-                        disabled={updateMe.isPending}
-                        style={{
-                            padding: "12px", borderRadius: "10px", fontSize: "14px",
-                            backgroundColor: updateMe.isPending ? "#6b9e8f" : "#0F6E56",
-                            color: "#fff", border: "none", cursor: "pointer",
-                            fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                        }}
-                    >
-                        {updateMe.isPending ? "Saving..." : "Save changes"}
-                    </button>
-
-                </div>
+                <Button type="submit" size="lg" loading={updateMe.isPending}>Save changes</Button>
             </form>
-        </PageWrapper>
+        </AppShell>
     )
 }

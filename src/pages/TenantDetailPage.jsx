@@ -1,186 +1,140 @@
-import { useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import PageWrapper from "@/components/layout/PageWrapper"
-import { useTenant } from "@/hooks/useTenants"
+import {useState} from "react"
+import {useNavigate, useParams} from "react-router-dom"
+import {Pencil, Trash2} from "lucide-react"
+import AppShell from "@/components/layout/AppShell"
+import {useTenant} from "@/hooks/useTenants"
 import useAuthStore from "@/store/authStore"
-import { Pencil, Trash2 } from "lucide-react"
+import {Avatar, Badge, Button, Card, EmptyState, LoadingPanel} from "@/components/ui"
+import {formatCycle, formatUGX} from "@/lib/format"
+import {statusTone} from "@/lib/statusTone"
 import TenantLedgerView from "@/components/ui/TenantLedgerView"
 import TenantFormModal from "@/components/ui/TenantFormModal"
 import DeleteTenantConfirm from "@/components/ui/DeleteTenantConfirm"
+import {cn} from "@/lib/cn"
 
-const formatUGX = (amount) =>
-    amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
-
-const formatCycleDate = (dateStr) => {
-    if (!dateStr) return "—"
-    return new Date(dateStr).toLocaleDateString("en-UG", { day: "numeric", month: "short" })
-}
-
-const formatCycle = (start, end) =>
-    (!start || !end) ? "—" : `${formatCycleDate(start)} – ${formatCycleDate(end)}`
-
-function DetailRow({ label, value, valueColor }) {
+/** A label/value pair stacked in the sidebar cards. */
+function Row({label, value, tone = "default"}) {
     return (
-        <div style={{
-            display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-            gap: "16px", paddingBottom: "14px", marginBottom: "14px",
-            borderBottom: "1px solid #f3f4f6",
-        }}>
-            <span style={{ fontSize: "13px", color: "#9ca3af", flexShrink: 0 }}>{label}</span>
-            <span style={{ fontSize: "13px", fontWeight: "500", color: valueColor || "#111827", textAlign: "right" }}>
+        <div className="flex items-start justify-between gap-4 border-b border-neutral-5 pb-3.5 last:border-0 last:pb-0">
+            <span className="shrink-0 text-sm text-neutral-40">{label}</span>
+            <span
+                className={cn(
+                    "text-right text-sm font-medium",
+                    tone === "danger" ? "text-danger-600"
+                        : tone === "success" ? "text-success-600"
+                            : "text-neutral-90",
+                )}
+            >
                 {value}
             </span>
         </div>
     )
 }
 
-function StatusPill({ status }) {
-    if (!status) return <span style={{ color: "#9ca3af", fontSize: "13px" }}>No agreement</span>
-    const styles = {
-        PAID: { bg: "#E1F5EE", color: "#0F6E56" },
-        PARTIAL: { bg: "#FAEEDA", color: "#854F0B" },
-        UNPAID: { bg: "#FCEBEB", color: "#A32D2D" },
-    }
-    const s = styles[status] || { bg: "#f3f4f6", color: "#6b7280" }
-    return (
-        <span style={{
-            display: "inline-block", padding: "3px 10px", borderRadius: "20px",
-            fontSize: "12px", fontWeight: "500", backgroundColor: s.bg, color: s.color,
-        }}>
-            {status}
-        </span>
-    )
-}
-
-const cardStyle = {
-    backgroundColor: "#fff", borderRadius: "12px",
-    border: "1px solid #f0f0f0", padding: "20px",
-}
-
-const sectionLabel = {
-    fontSize: "11px", fontWeight: "500", color: "#9ca3af",
-    textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px",
-}
+const SECTION = "mb-3.5 text-2xs font-medium uppercase tracking-wide text-neutral-40"
 
 export default function TenantDetailPage() {
-    const { id } = useParams()
+    const {id} = useParams()
     const navigate = useNavigate()
-    const { data: tenant, isLoading } = useTenant(id)
+    const {data: tenant, isLoading} = useTenant(id)
     const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
     const [editing, setEditing] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
     return (
-        <PageWrapper title={tenant?.name || "Tenant"} showBack>
+        <AppShell title={tenant?.name || "Tenant"} subtitle={tenant?.phone} showBack>
             {isLoading ? (
-                <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
-                    Loading…
-                </div>
+                <LoadingPanel/>
             ) : !tenant ? (
-                <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px" }}>
-                    Tenant not found.
-                </div>
+                <EmptyState title="Tenant not found" message="This tenant may have been removed."/>
             ) : (
-                <div className="tdp-wrap" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                    <style>{`
-                        .tdp-wrap { max-width: 1180px; margin: 0 auto; }
-                        .tdp-grid { display: flex; flex-direction: column; gap: 16px; }
-                        .tdp-side { display: flex; flex-direction: column; gap: 16px; }
-                        @media (min-width: 960px) {
-                            .tdp-grid { flex-direction: row; align-items: flex-start; }
-                            .tdp-side { width: 360px; flex-shrink: 0; }
-                            .tdp-main { flex: 1; min-width: 0; }
-                        }
-                    `}</style>
-
-                    {/* Header card — identity + actions */}
-                    <div style={{ ...cardStyle, marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                            <div style={{
-                                width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "#0a4a38",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: "18px", color: "#fff", fontWeight: "600", flexShrink: 0,
-                            }}>
-                                {tenant.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                /* The old layout used a hand-written <style> block with a custom
+                   960px breakpoint. It now snaps to `lg:` (1024px) — a deliberate
+                   64px shift so this page shares the app's breakpoint ladder. */
+                <div className="mx-auto max-w-[1180px]">
+                    <Card className="mb-4">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center gap-3.5">
+                                <Avatar name={tenant.name} size={52} className="bg-secondary-900 text-white"/>
+                                <div className="min-w-0">
+                                    <p className="font-heading text-xl font-medium text-neutral-90">{tenant.name}</p>
+                                    <p className="mt-0.5 text-sm tabular-nums text-neutral-40">{tenant.phone}</p>
+                                </div>
                             </div>
-                            <div>
-                                <div style={{ fontSize: "18px", fontWeight: "700", color: "#111827" }}>{tenant.name}</div>
-                                <div style={{ fontSize: "13px", color: "#9ca3af", marginTop: "2px" }}>{tenant.phone}</div>
+                            <div className="flex gap-2.5">
+                                <Button variant="outline" iconLeft={Pencil} onClick={() => setEditing(true)}>
+                                    Edit
+                                </Button>
+                                {canDelete && (
+                                    <Button variant="outline" iconLeft={Trash2}
+                                            className="text-danger-600 hover:bg-danger-50"
+                                            onClick={() => setDeleting(true)}>
+                                        Delete
+                                    </Button>
+                                )}
                             </div>
                         </div>
-                        <div style={{ display: "flex", gap: "10px" }}>
-                            <button onClick={() => setEditing(true)} style={{
-                                padding: "10px 16px", borderRadius: "10px",
-                                border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                color: "#374151", cursor: "pointer", fontSize: "14px",
-                                fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                                display: "flex", alignItems: "center", gap: "6px",
-                            }}>
-                                <Pencil size={15} /> Edit
-                            </button>
-                            {canDelete && (
-                                <button onClick={() => setDeleting(true)} style={{
-                                    padding: "10px 16px", borderRadius: "10px",
-                                    border: "1px solid #fee2e2", backgroundColor: "#fff",
-                                    color: "#dc2626", cursor: "pointer", fontSize: "14px",
-                                    fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                                    display: "flex", alignItems: "center", gap: "6px",
-                                }}>
-                                    <Trash2 size={15} /> Delete
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    </Card>
 
-                    {/* Two-column on desktop: info on the left, ledger on the right */}
-                    <div className="tdp-grid">
-                        <div className="tdp-side">
-                            {/* Contact */}
-                            <div style={cardStyle}>
-                                <p style={sectionLabel}>Contact</p>
-                                <DetailRow label="Phone" value={tenant.phone} />
-                                <DetailRow label="Email" value={tenant.email || "—"} />
-                                <DetailRow label="Address" value={tenant.address || "—"} />
-                            </div>
+                    {/* Info on the left, ledger on the right, from lg up. */}
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                        <div className="flex flex-col gap-4 lg:w-90 lg:shrink-0">
+                            <Card>
+                                <p className={SECTION}>Contact</p>
+                                <div className="flex flex-col gap-3.5">
+                                    <Row label="Phone" value={tenant.phone}/>
+                                    <Row label="Email" value={tenant.email || "—"}/>
+                                    <Row label="Address" value={tenant.address || "—"}/>
+                                </div>
+                            </Card>
 
-                            {/* Current tenancy */}
                             {tenant.currentUnit ? (
-                                <div style={cardStyle}>
-                                    <p style={sectionLabel}>Current Tenancy</p>
-                                    <DetailRow label="Unit" value={tenant.currentUnit} />
-                                    <DetailRow label="Monthly Rent" value={formatUGX(tenant.monthlyRent)} />
-                                    <DetailRow label="Period" value={formatCycle(tenant.currentCycleStart, tenant.currentCycleEnd)} />
-                                    <DetailRow
-                                        label="Outstanding"
-                                        value={tenant.currentBalance > 0 ? formatUGX(tenant.currentBalance) : "Paid up"}
-                                        valueColor={tenant.currentBalance > 0 ? "#dc2626" : "#0F6E56"}
-                                    />
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                        <span style={{ fontSize: "13px", color: "#9ca3af" }}>Account status</span>
-                                        <StatusPill status={tenant.periodStatus} />
+                                <Card>
+                                    <p className={SECTION}>Current Tenancy</p>
+                                    <div className="flex flex-col gap-3.5">
+                                        <Row label="Unit" value={tenant.currentUnit}/>
+                                        <Row label="Monthly Rent" value={formatUGX(tenant.monthlyRent)}/>
+                                        <Row label="Period"
+                                             value={formatCycle(tenant.currentCycleStart, tenant.currentCycleEnd)}/>
+                                        <Row
+                                            label="Outstanding"
+                                            value={tenant.currentBalance > 0 ? formatUGX(tenant.currentBalance) : "Paid up"}
+                                            tone={tenant.currentBalance > 0 ? "danger" : "success"}
+                                        />
+                                        <div className="flex items-center justify-between gap-4">
+                                            <span className="text-sm text-neutral-40">Account status</span>
+                                            {tenant.periodStatus ? (
+                                                <Badge tone={statusTone("period", tenant.periodStatus)}>
+                                                    {tenant.periodStatus}
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-sm text-neutral-30">No agreement</span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                </Card>
                             ) : (
-                                <div style={{ ...cardStyle, fontSize: "13px", color: "#9ca3af" }}>
-                                    No active agreement for this tenant.
-                                </div>
+                                <Card>
+                                    <p className="text-sm text-neutral-40">
+                                        No active agreement for this tenant.
+                                    </p>
+                                </Card>
                             )}
                         </div>
 
-                        {/* Ledger & arrears */}
                         {tenant.currentUnit && (
-                            <div className="tdp-main">
-                                <div style={cardStyle}>
-                                    <p style={sectionLabel}>Ledger &amp; Arrears</p>
-                                    <TenantLedgerView tenantId={id} />
-                                </div>
+                            <div className="min-w-0 lg:flex-1">
+                                <Card>
+                                    <p className={SECTION}>Ledger &amp; Arrears</p>
+                                    <TenantLedgerView tenantId={id}/>
+                                </Card>
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {editing && <TenantFormModal tenant={tenant} onClose={() => setEditing(false)} />}
+            {editing && <TenantFormModal tenant={tenant} onClose={() => setEditing(false)}/>}
             {deleting && (
                 <DeleteTenantConfirm
                     tenant={tenant}
@@ -188,6 +142,6 @@ export default function TenantDetailPage() {
                     onDeleted={() => navigate("/tenants")}
                 />
             )}
-        </PageWrapper>
+        </AppShell>
     )
 }

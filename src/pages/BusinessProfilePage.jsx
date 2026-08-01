@@ -1,22 +1,12 @@
 import {useRef, useState} from "react"
-import PageWrapper from "@/components/layout/PageWrapper"
-import {useSettings, useUpdateSettings, useUploadLogo} from "@/hooks/useSettings"
 import {useForm} from "react-hook-form"
 import {Camera, X} from "lucide-react"
+import AppShell from "@/components/layout/AppShell"
+import {useSettings, useUpdateSettings, useUploadLogo} from "@/hooks/useSettings"
+import {Button, Card, FormField, Input, LoadingPanel, Textarea, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
-const inputStyle = {
-    width: "100%", padding: "10px 14px", fontSize: "14px",
-    borderRadius: "8px", border: "1px solid #d1d5db",
-    outline: "none", boxSizing: "border-box",
-    fontFamily: "'DM Sans', sans-serif",
-    backgroundColor: "#fff", color: "#111827",
-}
-
-const labelStyle = {
-    display: "block", fontSize: "13px", fontWeight: "500",
-    color: "#374151", marginBottom: "6px",
-}
+const MAX_LOGO_BYTES = 5 * 1024 * 1024
 
 export default function BusinessProfilePage() {
     const {data: settings, isLoading} = useSettings()
@@ -25,7 +15,6 @@ export default function BusinessProfilePage() {
     const fileInputRef = useRef(null)
     const [preview, setPreview] = useState(null)
     const [error, setError] = useState("")
-    const [success, setSuccess] = useState("")
 
     const {register, handleSubmit} = useForm({
         values: {
@@ -38,31 +27,26 @@ export default function BusinessProfilePage() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        // Validate file type
         if (!file.type.startsWith("image/")) {
             setError("Please select an image file")
             return
         }
-
-        // Validate file size — max 5MB
-        if (file.size > 5 * 1024 * 1024) {
+        if (file.size > MAX_LOGO_BYTES) {
             setError("Image must be under 5MB")
             return
         }
 
-        // Show preview immediately
+        // Show a preview immediately, then upload.
         const reader = new FileReader()
-        reader.onload = (e) => setPreview(e.target.result)
+        reader.onload = (ev) => setPreview(ev.target.result)
         reader.readAsDataURL(file)
 
-        // Upload to Cloudinary via backend
         try {
             setError("")
             const formData = new FormData()
             formData.append("file", file)
             await uploadLogo.mutateAsync(formData)
-            setSuccess("Logo uploaded successfully")
-            setTimeout(() => setSuccess(""), 3000)
+            toast.success("Logo uploaded")
         } catch (err) {
             setError(getErrorMessage(err, "Logo upload failed"))
             setPreview(null)
@@ -76,8 +60,7 @@ export default function BusinessProfilePage() {
                 companyName: data.companyName || null,
                 address: data.address || null,
             })
-            setSuccess("Profile updated successfully")
-            setTimeout(() => setSuccess(""), 3000)
+            toast.success("Business profile updated")
         } catch (err) {
             setError(getErrorMessage(err))
         }
@@ -86,174 +69,73 @@ export default function BusinessProfilePage() {
     const currentLogo = preview || settings?.logoUrl
 
     return (
-        <PageWrapper title="Business Profile" showBack>
+        <AppShell title="Business Profile" subtitle="How your business appears on receipts" showBack>
             {isLoading ? (
-                <div style={{textAlign: "center", color: "#9ca3af", padding: "60px 0"}}>
-                    Loading...
-                </div>
+                <LoadingPanel/>
             ) : (
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <div style={{display: "flex", flexDirection: "column", gap: "20px"}}>
-
-                        {/* Logo upload */}
-                        <div style={{
-                            backgroundColor: "#fff", borderRadius: "12px",
-                            border: "1px solid #f0f0f0", padding: "24px",
-                            display: "flex", flexDirection: "column",
-                            alignItems: "center", gap: "16px",
-                        }}>
-                            <p style={{
-                                fontSize: "13px", fontWeight: "600", color: "#111827",
-                                alignSelf: "flex-start",
-                            }}>
-                                Company Logo
-                            </p>
-
-                            {/* Logo preview */}
-                            <div style={{position: "relative"}}>
+                <form onSubmit={handleSubmit(onSubmit)} className="mx-auto flex max-w-2xl flex-col gap-5">
+                    <Card title="Logo" subtitle="Shown on receipts and in the sidebar">
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div
+                                className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-10 bg-neutral-0">
                                 {currentLogo ? (
-                                    <div style={{position: "relative"}}>
-                                        <img
-                                            src={currentLogo}
-                                            alt="Logo"
-                                            style={{
-                                                width: "120px", height: "120px",
-                                                borderRadius: "16px", objectFit: "contain",
-                                                border: "1px solid #f0f0f0",
-                                                backgroundColor: "#f9fafb",
-                                            }}
-                                        />
+                                    <>
+                                        <img src={currentLogo} alt="Company logo"
+                                             className="h-full w-full object-contain"/>
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setPreview(null)
-                                                fileInputRef.current.value = ""
-                                            }}
-                                            style={{
-                                                position: "absolute", top: "-8px", right: "-8px",
-                                                width: "24px", height: "24px", borderRadius: "50%",
-                                                backgroundColor: "#dc2626", border: "none",
-                                                cursor: "pointer", display: "flex",
-                                                alignItems: "center", justifyContent: "center",
-                                            }}
+                                            aria-label="Remove logo preview"
+                                            onClick={() => setPreview(null)}
+                                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-neutral-50 shadow-xs transition-colors hover:text-neutral-80"
                                         >
-                                            <X size={12} color="#fff"/>
+                                            <X size={14}/>
                                         </button>
-                                    </div>
+                                    </>
                                 ) : (
-                                    <div style={{
-                                        width: "120px", height: "120px", borderRadius: "16px",
-                                        backgroundColor: "#f9fafb", border: "2px dashed #e5e7eb",
-                                        display: "flex", flexDirection: "column",
-                                        alignItems: "center", justifyContent: "center", gap: "8px",
-                                    }}>
-                                        <Camera size={28} color="#9ca3af"/>
-                                        <span style={{fontSize: "11px", color: "#9ca3af"}}>
-                      No logo
-                    </span>
-                                    </div>
+                                    <Camera size={26} className="text-neutral-30"/>
                                 )}
                             </div>
 
-                            {/* Upload button */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                style={{display: "none"}}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploadLogo.isPending}
-                                style={{
-                                    padding: "9px 20px", borderRadius: "8px", fontSize: "13px",
-                                    border: "1px solid #e5e7eb", backgroundColor: "#fff",
-                                    color: "#374151", cursor: "pointer",
-                                    fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                                }}
-                            >
-                                {uploadLogo.isPending ? "Uploading..." : currentLogo ? "Change Logo" : "Upload Logo"}
-                            </button>
-                            <p style={{fontSize: "12px", color: "#9ca3af", textAlign: "center"}}>
-                                PNG, JPG or SVG · Max 5MB
-                                <br/>
-                                Cloudinary will resize to fit automatically
-                            </p>
-                        </div>
-
-                        {/* Company details */}
-                        <div style={{
-                            backgroundColor: "#fff", borderRadius: "12px",
-                            border: "1px solid #f0f0f0", padding: "24px",
-                            display: "flex", flexDirection: "column", gap: "16px",
-                        }}>
-                            <p style={{fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0}}>
-                                Company Details
-                            </p>
-
-                            <div>
-                                <label style={labelStyle}>Company / Property name</label>
+                            <div className="min-w-0">
                                 <input
-                                    {...register("companyName")}
-                                    style={inputStyle}
-                                    placeholder="e.g. Nahabwe Properties"
-                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="sr-only"
                                 />
-                            </div>
-
-                            <div>
-                                <label style={labelStyle}>Address</label>
-                                <textarea
-                                    {...register("address")}
-                                    rows={3}
-                                    style={{...inputStyle, resize: "vertical"}}
-                                    placeholder="e.g. Kamwokya, Kampala, Uganda"
-                                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                                    onBlur={e => e.target.style.borderColor = "#d1d5db"}
-                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    iconLeft={Camera}
+                                    loading={uploadLogo.isPending}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    {currentLogo ? "Replace logo" : "Upload logo"}
+                                </Button>
+                                <p className="mt-2 text-xs text-neutral-40">PNG or JPG, under 5MB.</p>
                             </div>
                         </div>
+                    </Card>
 
-                        {/* Success / Error */}
-                        {success && (
-                            <div style={{
-                                backgroundColor: "#E1F5EE", color: "#0F6E56", fontSize: "13px",
-                                padding: "10px 14px", borderRadius: "8px",
-                                borderLeft: "3px solid #0F6E56",
-                            }}>
-                                {success}
-                            </div>
-                        )}
-                        {error && (
-                            <div style={{
-                                backgroundColor: "#fef2f2", color: "#dc2626", fontSize: "13px",
-                                padding: "10px 14px", borderRadius: "8px",
-                                borderLeft: "3px solid #ef4444",
-                            }}>
-                                {error}
-                            </div>
-                        )}
+                    <Card title="Business Details">
+                        <div className="flex flex-col gap-4">
+                            <FormField label="Company / Property name">
+                                <Input {...register("companyName")} placeholder="e.g. Nansana Apartments"/>
+                            </FormField>
 
-                        {/* Save */}
-                        <button
-                            type="submit"
-                            disabled={updateSettings.isPending}
-                            style={{
-                                padding: "12px", borderRadius: "10px", fontSize: "14px",
-                                backgroundColor: updateSettings.isPending ? "#6b9e8f" : "#0F6E56",
-                                color: "#fff", border: "none", cursor: "pointer",
-                                fontFamily: "'DM Sans', sans-serif", fontWeight: "500",
-                            }}
-                        >
-                            {updateSettings.isPending ? "Saving..." : "Save changes"}
-                        </button>
+                            <FormField label="Address" hint="Appears on printed receipts.">
+                                <Textarea {...register("address")} rows={3}
+                                          placeholder="Plot 14, Kira Road, Kampala"/>
+                            </FormField>
+                        </div>
+                    </Card>
 
-                    </div>
+                    {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+
+                    <Button type="submit" size="lg" loading={updateSettings.isPending}>Save changes</Button>
                 </form>
             )}
-        </PageWrapper>
+        </AppShell>
     )
 }

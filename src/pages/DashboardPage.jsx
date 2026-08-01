@@ -1,116 +1,33 @@
-import PageWrapper from "@/components/layout/PageWrapper"
+import {useMemo} from "react"
+import {Link} from "react-router-dom"
+import {Building2, CreditCard, TrendingUp, Users} from "lucide-react"
+import AppShell from "@/components/layout/AppShell"
 import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
 import {usePayments} from "@/hooks/usePayments"
 import {useTenants} from "@/hooks/useTenants"
-import {Building2, CreditCard, TrendingUp, Users} from "lucide-react"
+import {Badge, Card, DataTable, ProgressBar, SummaryCard} from "@/components/ui"
+import {formatCycle, formatDate, formatUGX, todayStr} from "@/lib/format"
+import {statusTone} from "@/lib/statusTone"
+import {cn} from "@/lib/cn"
 
-const formatUGX = (amount) =>
-    amount == null ? "—" : `UGX ${Number(amount).toLocaleString()}`
-
-const formatCycleDate = (dateStr) => {
-    if (!dateStr) return "—"
-    const d = new Date(dateStr)
-    return d.toLocaleDateString("en-UG", {day: "numeric", month: "short"})
-}
-
-const formatCycle = (start, end) => {
-    if (!start || !end) return "—"
-    return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
-}
-
-const formatUGXShort = (amount) => {
-    if (amount == null) return "—"
-    const n = Number(amount)
-    if (n >= 1_000_000) return `UGX ${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`
-    if (n >= 1_000) return `UGX ${(n / 1_000).toFixed(0)}K`
-    return `UGX ${n.toLocaleString()}`
-}
-
-const formatDate = (dateStr) => {
-    if (!dateStr) return "—"
-    return new Date(dateStr).toLocaleDateString("en-UG", {
-        day: "numeric", month: "short", year: "numeric",
-    })
-}
-
-function StatCard({icon: Icon, label, value, sub, color}) {
-    return (
-        <div style={{
-            backgroundColor: "#ffffff", borderRadius: "12px",
-            border: "1px solid #f0f0f0", padding: "20px 22px",
-            display: "flex", flexDirection: "column", gap: "12px",
-        }}>
-            <div style={{display: "flex", alignItems: "center", justifyContent: "space-between"}}>
-                <span style={{fontSize: "13px", color: "#6b7280", fontWeight: "500"}}>{label}</span>
-                <div style={{
-                    width: "36px", height: "36px", borderRadius: "10px",
-                    backgroundColor: color + "18",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                    <Icon size={18} color={color}/>
-                </div>
-            </div>
-            <div>
-                <div style={{fontSize: "26px", fontWeight: "600", color: "#111827", lineHeight: 1}}>
-                    {value}
-                </div>
-                {sub && (
-                    <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "6px"}}>{sub}</div>
-                )}
-            </div>
-        </div>
-    )
-}
-
-function MobileStatCard({icon: Icon, label, value, sub, color}) {
-    return (
-        <div style={{
-            backgroundColor: "#ffffff", borderRadius: "12px",
-            border: "1px solid #f0f0f0", padding: "14px",
-            display: "flex", flexDirection: "column", gap: "6px",
-        }}>
-            <div style={{display: "flex", alignItems: "center", justifyContent: "space-between"}}>
-                <span style={{fontSize: "11px", color: "#6b7280", fontWeight: "500"}}>{label}</span>
-                <div style={{
-                    width: "28px", height: "28px", borderRadius: "8px",
-                    backgroundColor: color + "18",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                    <Icon size={14} color={color}/>
-                </div>
-            </div>
-            <div style={{fontSize: "22px", fontWeight: "700", color: "#111827", lineHeight: 1}}>
-                {value}
-            </div>
-            {sub && (
-                <div style={{fontSize: "10px", color: "#9ca3af"}}>{sub}</div>
-            )}
-        </div>
-    )
-}
-
-function PeriodStatusPill({status}) {
-    const styles = {
-        PAID: {bg: "#E1F5EE", color: "#0F6E56"},
-        PARTIAL: {bg: "#FAEEDA", color: "#854F0B"},
-        UNPAID: {bg: "#FCEBEB", color: "#A32D2D"},
-    }
-    const s = styles[status] || {bg: "#f3f4f6", color: "#6b7280"}
-    return (
-        <span style={{
-            display: "inline-block", padding: "2px 8px",
-            borderRadius: "20px", fontSize: "11px", fontWeight: "500",
-            backgroundColor: s.bg, color: s.color,
-        }}>
-            {status}
-        </span>
-    )
-}
-
-const todayStr = () => new Date().toISOString().split("T")[0]
 const firstOfMonthStr = () => {
     const d = new Date()
     return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split("T")[0]
+}
+
+/** Section header with a "view all" link, shared by the two list cards. */
+function SectionHeader({title, count, countTone = "danger", to, linkLabel = "View all"}) {
+    return (
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-5 px-4 py-3.5">
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-neutral-90">{title}</span>
+                {count != null && <Badge size="sm" tone={countTone}>{count}</Badge>}
+            </div>
+            <Link to={to} className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                {linkLabel} →
+            </Link>
+        </div>
+    )
 }
 
 export default function DashboardPage() {
@@ -122,12 +39,11 @@ export default function DashboardPage() {
     const {data: tenantsData, isLoading: tenantsLoading} = useTenants({
         page: 0, size: 100, sortBy: "createdAt", sortDir: "desc",
     })
-    // Cash actually received this calendar month — the same computation
-    // the Reports page uses. Billing-cycle dates (currentCycleStart) don't
-    // align with calendar months (they depend on each tenant's billingDay
-    // and ADVANCE/ARREARS model), so they can't be used to answer "how much
-    // came in this month" — that mismatch was why this widget used to be
-    // wrong.
+    // Cash actually received this calendar month — the same computation the
+    // Reports page uses. Billing-cycle dates (currentCycleStart) don't align
+    // with calendar months (they depend on each tenant's billingDay and
+    // ADVANCE/ARREARS model), so they can't answer "how much came in this
+    // month" — that mismatch was why this widget used to be wrong.
     const {data: monthReport, isLoading: monthReportLoading} = usePaymentReport({
         from: firstOfMonthStr(), to: todayStr(),
     })
@@ -136,13 +52,11 @@ export default function DashboardPage() {
     const allTenants = tenantsData?.content || []
 
     const outstandingTenants = allTenants.filter(
-        t => t.periodStatus === "UNPAID" || t.periodStatus === "PARTIAL"
+        (t) => t.periodStatus === "UNPAID" || t.periodStatus === "PARTIAL",
     )
 
-    // Tenants with active agreements
-    const tenantsWithAgreements = allTenants.filter(t => t.monthlyRent != null)
+    const tenantsWithAgreements = allTenants.filter((t) => t.monthlyRent != null)
 
-    // Total monthly rent across all active tenants
     const totalMonthlyRent = tenantsWithAgreements
         .reduce((sum, t) => sum + Number(t.monthlyRent), 0)
 
@@ -156,464 +70,188 @@ export default function DashboardPage() {
         ? Math.round((paidThisMonth / totalMonthlyRent) * 100)
         : 0
 
+    const outstandingColumns = useMemo(() => [
+        {
+            key: "name", header: "Tenant", card: "title",
+            cellClass: "whitespace-nowrap font-medium text-neutral-90",
+        },
+        {
+            key: "currentUnit", header: "Unit", card: "meta", cellClass: "whitespace-nowrap",
+            cell: (t) => (t.currentUnit ? `Unit ${t.currentUnit}` : "—"),
+        },
+        {
+            key: "cycle", header: "Current Cycle", card: "meta", cardLabel: null,
+            cellClass: "whitespace-nowrap",
+            cell: (t) => formatCycle(t.currentCycleStart, t.currentCycleEnd),
+        },
+        {
+            key: "monthlyRent", header: "Monthly Rent", align: "right",
+            cellClass: "whitespace-nowrap tabular-nums", cell: (t) => formatUGX(t.monthlyRent),
+        },
+        {
+            key: "currentBalance", header: "Total Outstanding", align: "right",
+            card: "meta", cardLabel: "Outstanding",
+            cellClass: "whitespace-nowrap font-medium tabular-nums text-danger-600",
+            cell: (t) => formatUGX(t.currentBalance),
+        },
+        {
+            key: "periodStatus", header: "Status", card: "badge",
+            cell: (t) => <Badge tone={statusTone("period", t.periodStatus)}>{t.periodStatus}</Badge>,
+        },
+    ], [])
+
+    const paymentColumns = useMemo(() => [
+        {
+            key: "tenantName", header: "Tenant", card: "title",
+            cellClass: "whitespace-nowrap font-medium text-neutral-90",
+        },
+        {
+            key: "roomNumber", header: "Unit", card: "meta", cellClass: "whitespace-nowrap",
+            cell: (p) => (p.roomNumber ? `Unit ${p.roomNumber}` : "—"),
+        },
+        {
+            key: "period", header: "Period", card: "meta", cardLabel: null,
+            cellClass: "whitespace-nowrap",
+            cell: (p) => formatCycle(p.periodStartDate, p.periodEndDate),
+        },
+        {
+            key: "amount", header: "Amount", align: "right",
+            cellClass: "whitespace-nowrap font-semibold tabular-nums text-neutral-90",
+            card: "meta", cardLabel: "Amount",
+            cell: (p) => formatUGX(p.amount),
+        },
+        {
+            key: "periodStatus", header: "Status", card: "badge",
+            cell: (p) => p.periodStatus
+                ? <Badge tone={statusTone("period", p.periodStatus)}>{p.periodStatus}</Badge>
+                : <span className="text-sm text-neutral-30">—</span>,
+        },
+        {
+            key: "paymentDate", header: "Date", cellClass: "whitespace-nowrap",
+            card: "meta", cardLabel: "Paid",
+            cell: (p) => formatDate(p.paymentDate),
+        },
+    ], [])
+
     return (
-        <PageWrapper title="Dashboard">
-
-            {/* ── DESKTOP stat cards ── */}
-            <div className="desktop-table">
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                    gap: "16px", marginBottom: "28px",
-                }}>
-                    <StatCard
-                        icon={Building2} color="#0F6E56" label="Total Units"
-                        value={summaryLoading ? "—" : summary?.totalUnits ?? "—"}
-                        sub={`${summary?.availableUnits ?? "—"} available`}
-                    />
-                    <StatCard
-                        icon={Users} color="#1D9E75" label="Active Tenants"
-                        value={summaryLoading ? "—" : summary?.totalTenants ?? "—"}
-                        sub={`${summary?.activeAgreements ?? "—"} active agreements`}
-                    />
-                    <StatCard
-                        icon={CreditCard} color="#085041" label="Total Revenue"
-                        value={summaryLoading ? "—" : formatUGX(summary?.totalRevenueAllTime)}
-                        sub="All time collected"
-                    />
-                    <StatCard
-                        icon={TrendingUp} color="#0a4a38" label="Occupancy Rate"
-                        value={occupancyLoading ? "—" : `${occupancy?.occupancyRate ?? "—"}%`}
-                        sub={`${occupancy?.occupiedUnits ?? "—"} of ${occupancy?.totalUnits ?? "—"} units`}
-                    />
-                </div>
+        <AppShell title="Dashboard" subtitle="How collection is tracking right now">
+            {/* One responsive KPI strip — this replaces the separate desktop and
+                mobile stat-card components the page rendered side by side. */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+                <SummaryCard
+                    icon={Building2} tone="primary" label="Total Units"
+                    value={summaryLoading ? "—" : summary?.totalUnits ?? "—"}
+                    hint={`${summary?.availableUnits ?? "—"} available`}
+                />
+                <SummaryCard
+                    icon={Users} tone="info" label="Active Tenants"
+                    value={summaryLoading ? "—" : summary?.totalTenants ?? "—"}
+                    hint={`${summary?.activeAgreements ?? "—"} active agreements`}
+                />
+                <SummaryCard
+                    icon={CreditCard} tone="success" label="Total Revenue"
+                    value={summaryLoading ? "—" : formatUGX(summary?.totalRevenueAllTime)}
+                    hint="All time collected"
+                />
+                <SummaryCard
+                    icon={TrendingUp} tone="primary" label="Occupancy Rate"
+                    value={occupancyLoading ? "—" : `${occupancy?.occupancyRate ?? "—"}%`}
+                    hint={`${occupancy?.occupiedUnits ?? "—"} of ${occupancy?.totalUnits ?? "—"} units`}
+                />
             </div>
 
-            {/* ── MOBILE stat cards ── */}
-            <div className="mobile-cards">
-                <div style={{
-                    display: "grid", gridTemplateColumns: "1fr 1fr",
-                    gap: "10px", marginBottom: "16px", width: "100%",
-                }}>
-                    <MobileStatCard
-                        icon={Building2} color="#0F6E56" label="Total Units"
-                        value={summaryLoading ? "—" : summary?.totalUnits ?? "—"}
-                        sub={`${summary?.availableUnits ?? "—"} available`}
-                    />
-                    <MobileStatCard
-                        icon={Users} color="#1D9E75" label="Tenants"
-                        value={summaryLoading ? "—" : summary?.totalTenants ?? "—"}
-                        sub={`${summary?.activeAgreements ?? "—"} agreements`}
-                    />
-                    <MobileStatCard
-                        icon={TrendingUp} color="#085041" label="Occupancy"
-                        value={occupancyLoading ? "—" : `${occupancy?.occupancyRate ?? "—"}%`}
-                        sub={`${occupancy?.occupiedUnits ?? "—"} of ${occupancy?.totalUnits ?? "—"}`}
-                    />
-                    <MobileStatCard
-                        icon={CreditCard} color="#0a4a38" label="Revenue"
-                        value={summaryLoading ? "—" : formatUGXShort(summary?.totalRevenueAllTime)}
-                        sub="All time"
-                    />
-                </div>
-            </div>
-
-            {/* ── Outstanding summary ── */}
             {!tenantsLoading && tenantsWithAgreements.length > 0 && (
-                <div style={{
-                    backgroundColor: "#fff", borderRadius: "12px",
-                    border: "1px solid #f0f0f0", padding: "16px 20px",
-                    marginBottom: "16px",
-                }}>
-                    {/* Header */}
-                    <div style={{
-                        display: "flex", alignItems: "center",
-                        justifyContent: "space-between", marginBottom: "12px",
-                    }}>
-                        <span style={{fontSize: "13px", fontWeight: "600", color: "#111827"}}>
-                             This Month's Collection
+                <Card className="mt-4" bodyClass="px-4 py-4 md:px-5">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-neutral-90">
+                            This Month&apos;s Collection
                         </span>
-                        <span style={{
-                            fontSize: "12px", fontWeight: "600",
-                            color: collectionPct >= 100 ? "#0F6E56" : "#854F0B",
-                        }}>
-                            {monthReportLoading ? "—" : `${collectionPct}% collected paid this month`}
+                        <span
+                            className={cn(
+                                "text-xs font-semibold tabular-nums",
+                                collectionPct >= 100 ? "text-success-600" : "text-warning-700",
+                            )}
+                        >
+                            {monthReportLoading ? "—" : `${collectionPct}% collected this month`}
                         </span>
                     </div>
 
-                    {/* Progress bar — based on PAID tenants this cycle */}
-                    <div style={{
-                        height: "8px", borderRadius: "8px",
-                        backgroundColor: "#f3f4f6", overflow: "hidden",
-                        marginBottom: "12px",
-                    }}>
-                        <div style={{
-                            height: "100%", borderRadius: "8px",
-                            backgroundColor: collectionPct >= 100 ? "#0F6E56" : "#1D9E75",
-                            width: `${Math.min(100, Math.max(0, collectionPct))}%`,
-                            transition: "width 0.5s ease",
-                        }}/>
-                    </div>
+                    <ProgressBar
+                        className="mb-3"
+                        value={collectionPct}
+                        tone={collectionPct >= 100 ? "success" : "primary"}
+                        label="Share of monthly rent collected"
+                    />
 
-                    {/* Desktop — 3 stats */}
-                    <div className="desktop-table">
-                        <div style={{display: "flex", gap: "24px", justifyContent: "flex-end"}}>
-                            {[
-                                {
-                                    label: "MONTHLY RENT",
-                                    value: formatUGX(totalMonthlyRent),
-                                    color: "#111827",
-                                },
-                                {
-                                    label: "COLLECTED",
-                                    value: monthReportLoading ? "—" : formatUGX(paidThisMonth),
-                                    color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
-                                },
-                                {
-                                    label: "OUTSTANDING",
-                                    value: formatUGX(totalOutstanding),
-                                    color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56",
-                                },
-                            ].map((s, i) => (
-                                <div key={i} style={{textAlign: "right"}}>
-                                    <div style={{fontSize: "11px", color: "#9ca3af", marginBottom: "2px"}}>
-                                        {s.label}
-                                    </div>
-                                    <div style={{fontSize: "15px", fontWeight: "600", color: s.color}}>
-                                        {s.value}
-                                    </div>
-                                </div>
-                            ))}
+                    {/* One row at every width — these figures are short enough
+                        that the desktop/mobile split wasn't buying anything. */}
+                    <dl className="grid grid-cols-3 gap-3 text-right md:flex md:justify-end md:gap-6">
+                        <div>
+                            <dt className="text-2xs uppercase tracking-wide text-neutral-40">Monthly Rent</dt>
+                            <dd className="mt-0.5 text-sm font-semibold tabular-nums text-neutral-90">
+                                {formatUGX(totalMonthlyRent)}
+                            </dd>
                         </div>
-                    </div>
-
-                    {/* Mobile — 3 boxes */}
-                    <div className="mobile-cards">
-                        <div style={{
-                            display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-                            gap: "8px", width: "100%",
-                        }}>
-                            {[
-                                {
-                                    label: "Monthly",
-                                    value: formatUGXShort(totalMonthlyRent),
-                                    color: "#111827",
-                                },
-                                {
-                                    label: "Collected",
-                                    value: monthReportLoading ? "—" : formatUGXShort(paidThisMonth),
-                                    color: paidThisMonth > 0 ? "#0F6E56" : "#9ca3af",
-                                },
-                                {
-                                    label: "Outstanding",
-                                    value: formatUGXShort(totalOutstanding),
-                                    color: totalOutstanding > 0 ? "#dc2626" : "#0F6E56",
-                                },
-                            ].map((s, i) => (
-                                <div key={i} style={{
-                                    backgroundColor: "#f9fafb", borderRadius: "8px",
-                                    padding: "8px 6px", textAlign: "center",
-                                }}>
-                                    <div style={{fontSize: "10px", color: "#9ca3af", marginBottom: "3px"}}>
-                                        {s.label.toUpperCase()}
-                                    </div>
-                                    <div style={{
-                                        fontSize: "12px", fontWeight: "700",
-                                        color: s.color, wordBreak: "break-word",
-                                    }}>
-                                        {s.value}
-                                    </div>
-                                </div>
-                            ))}
+                        <div>
+                            <dt className="text-2xs uppercase tracking-wide text-neutral-40">Collected</dt>
+                            <dd className="mt-0.5 text-sm font-semibold tabular-nums text-success-600">
+                                {monthReportLoading ? "—" : formatUGX(paidThisMonth)}
+                            </dd>
                         </div>
-                    </div>
-                </div>
+                        <div>
+                            <dt className="text-2xs uppercase tracking-wide text-neutral-40">Outstanding</dt>
+                            <dd
+                                className={cn(
+                                    "mt-0.5 text-sm font-semibold tabular-nums",
+                                    totalOutstanding > 0 ? "text-danger-600" : "text-success-600",
+                                )}
+                            >
+                                {formatUGX(totalOutstanding)}
+                            </dd>
+                        </div>
+                    </dl>
+                </Card>
             )}
 
-            {/* ── Outstanding tenants ── */}
-            {!tenantsLoading && outstandingTenants.length > 0 && (
-                <div style={{
-                    backgroundColor: "#fff", borderRadius: "12px",
-                    border: "1px solid #f0f0f0", overflow: "hidden",
-                    marginBottom: "16px",
-                }}>
-                    <div style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "14px 16px", borderBottom: "1px solid #f9f9f9",
-                    }}>
-                        <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
-                            <span style={{fontSize: "13px", fontWeight: "600", color: "#111827"}}>
-                                Outstanding Tenants
-                            </span>
-                            <span style={{
-                                padding: "2px 8px", borderRadius: "20px", fontSize: "11px",
-                                fontWeight: "500", backgroundColor: "#FCEBEB", color: "#A32D2D",
-                            }}>
-                                {outstandingTenants.length}
-                            </span>
-                        </div>
-                        <a href="/tenants" style={{
-                            fontSize: "12px", color: "#0F6E56",
-                            textDecoration: "none", fontWeight: "500",
-                        }}>
-                            View all →
-                        </a>
-                    </div>
+            <Card
+                className="mt-4"
+                bodyClass="p-0"
+                header={
+                    <SectionHeader
+                        title="Outstanding Tenants"
+                        count={outstandingTenants.length}
+                        to="/tenants"
+                    />
+                }
+            >
+                <DataTable
+                    columns={outstandingColumns}
+                    rows={outstandingTenants}
+                    rowKey="id"
+                    loading={tenantsLoading}
+                    skeletonRows={4}
+                    cardSkeletonRows={3}
+                    emptyTitle="Everyone is paid up"
+                    emptyMessage="No tenant currently owes rent."
+                />
+            </Card>
 
-                    {/* Desktop table */}
-                    <div className="desktop-table">
-                        <table style={{width: "100%", borderCollapse: "collapse"}}>
-                            <thead>
-                            <tr style={{backgroundColor: "#f9fafb"}}>
-                                {["Tenant", "Unit", "Current Cycle", "Monthly Rent", "Total Outstanding", "Status"].map((h, i) => (
-                                    <th key={i} style={{
-                                        padding: "10px 22px", textAlign: "left",
-                                        fontSize: "11px", fontWeight: "500", color: "#9ca3af",
-                                        textTransform: "uppercase", letterSpacing: "0.05em",
-                                    }}>{h}</th>
-                                ))}
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {outstandingTenants.map((t, i) => (
-                                <tr key={t.id} style={{borderTop: i === 0 ? "none" : "1px solid #f9f9f9"}}>
-                                    <td style={{
-                                        padding: "13px 22px",
-                                        fontSize: "14px",
-                                        color: "#111827",
-                                        fontWeight: "500"
-                                    }}>
-                                        {t.name}
-                                    </td>
-                                    <td style={{padding: "13px 22px", fontSize: "14px", color: "#6b7280"}}>
-                                        {t.currentUnit || "—"}
-                                    </td>
-                                    <td style={{padding: "13px 22px", fontSize: "14px", color: "#6b7280"}}>
-                                        {t.currentCycleStart
-                                            ? formatCycle(t.currentCycleStart, t.currentCycleEnd)
-                                            : "—"}
-                                    </td>
-                                    <td style={{padding: "13px 22px", fontSize: "14px", color: "#6b7280"}}>
-                                        {formatUGX(t.monthlyRent)}
-                                    </td>
-                                    <td style={{
-                                        padding: "13px 22px",
-                                        fontSize: "14px",
-                                        color: "#dc2626",
-                                        fontWeight: "600"
-                                    }}>
-                                        {formatUGX(t.currentBalance)}
-                                    </td>
-                                    <td style={{padding: "13px 22px"}}>
-                                        <PeriodStatusPill status={t.periodStatus}/>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Mobile cards */}
-                    <div className="mobile-cards">
-                        <div style={{display: "flex", flexDirection: "column", width: "100%"}}>
-                            {outstandingTenants.map((t, i) => (
-                                <div key={t.id} style={{
-                                    padding: "12px 16px",
-                                    borderTop: i === 0 ? "none" : "1px solid #f9f9f9",
-                                }}>
-                                    <div style={{
-                                        display: "flex", alignItems: "center",
-                                        justifyContent: "space-between", marginBottom: "4px",
-                                    }}>
-                                        <span style={{fontSize: "14px", fontWeight: "600", color: "#111827"}}>
-                                            {t.name}
-                                        </span>
-                                        <PeriodStatusPill status={t.periodStatus}/>
-                                    </div>
-                                    <div style={{fontSize: "12px", color: "#6b7280", marginBottom: "8px"}}>
-                                        Unit {t.currentUnit} · {t.currentCycleStart
-                                        ? formatCycle(t.currentCycleStart, t.currentCycleEnd)
-                                        : "—"}
-                                    </div>
-                                    <div style={{display: "flex", gap: "8px"}}>
-                                        <div style={{
-                                            flex: 1, backgroundColor: "#f9fafb",
-                                            borderRadius: "8px", padding: "8px",
-                                            textAlign: "center",
-                                        }}>
-                                            <div style={{fontSize: "10px", color: "#9ca3af", marginBottom: "2px"}}>
-                                                MONTHLY RENT
-                                            </div>
-                                            <div style={{fontSize: "13px", fontWeight: "600", color: "#111827"}}>
-                                                {formatUGX(t.monthlyRent)}
-                                            </div>
-                                        </div>
-                                        <div style={{
-                                            flex: 1, backgroundColor: "#fef2f2",
-                                            borderRadius: "8px", padding: "8px",
-                                            textAlign: "center",
-                                        }}>
-                                            <div style={{fontSize: "10px", color: "#9ca3af", marginBottom: "2px"}}>
-                                                OUTSTANDING
-                                            </div>
-                                            <div style={{fontSize: "13px", fontWeight: "700", color: "#dc2626"}}>
-                                                {formatUGXShort(t.currentBalance)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Recent payments ── */}
-            <div style={{
-                backgroundColor: "#ffffff", borderRadius: "12px",
-                border: "1px solid #f0f0f0", overflow: "hidden",
-            }}>
-                <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "14px 16px", borderBottom: "1px solid #f9f9f9",
-                }}>
-                    <span style={{fontSize: "13px", fontWeight: "600", color: "#111827"}}>
-                        Recent Payments
-                    </span>
-                    <a href="/payments" style={{
-                        fontSize: "12px", color: "#0F6E56",
-                        textDecoration: "none", fontWeight: "500",
-                    }}>
-                        View all →
-                    </a>
-                </div>
-
-                {paymentsLoading ? (
-                    <div style={{padding: "30px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
-                        Loading...
-                    </div>
-                ) : payments.length === 0 ? (
-                    <div style={{padding: "30px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
-                        No payments recorded yet
-                    </div>
-                ) : (
-                    <>
-                        {/* Desktop table */}
-                        <div className="desktop-table">
-                            <table style={{width: "100%", borderCollapse: "collapse"}}>
-                                <thead>
-                                <tr style={{backgroundColor: "#f9fafb"}}>
-                                    {["Tenant", "Unit", "Period", "Amount", "Status", "Date"].map(h => (
-                                        <th key={h} style={{
-                                            padding: "10px 22px", textAlign: "left",
-                                            fontSize: "11px", fontWeight: "500", color: "#9ca3af",
-                                            textTransform: "uppercase", letterSpacing: "0.05em",
-                                        }}>{h}</th>
-                                    ))}
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {payments.map((p, i) => (
-                                    <tr key={p.id} style={{borderTop: i === 0 ? "none" : "1px solid #f9f9f9"}}>
-                                        <td style={{
-                                            padding: "14px 22px",
-                                            fontSize: "14px",
-                                            color: "#111827",
-                                            fontWeight: "500"
-                                        }}>
-                                            {p.tenantName}
-                                        </td>
-                                        <td style={{padding: "14px 22px", fontSize: "14px", color: "#6b7280"}}>
-                                            {p.roomNumber}
-                                        </td>
-                                        <td style={{padding: "14px 22px", fontSize: "14px", color: "#6b7280"}}>
-                                            {formatCycle(p.periodStartDate, p.periodEndDate)}
-                                        </td>
-                                        <td style={{
-                                            padding: "14px 22px",
-                                            fontSize: "14px",
-                                            color: "#111827",
-                                            fontWeight: "500"
-                                        }}>
-                                            {formatUGX(p.amount)}
-                                        </td>
-                                        <td style={{padding: "14px 22px"}}>
-                                                <span style={{
-                                                    display: "inline-block", padding: "3px 10px",
-                                                    borderRadius: "20px", fontSize: "12px", fontWeight: "500",
-                                                    backgroundColor:
-                                                        p.periodStatus === "PAID" ? "#E1F5EE" :
-                                                            p.periodStatus === "PARTIAL" ? "#FAEEDA" :
-                                                                p.periodStatus === "ROLLOVER" ? "#E6F1FB" : "#f3f4f6",
-                                                    color:
-                                                        p.periodStatus === "PAID" ? "#0F6E56" :
-                                                            p.periodStatus === "PARTIAL" ? "#854F0B" :
-                                                                p.periodStatus === "ROLLOVER" ? "#185FA5" : "#6b7280",
-                                                }}>
-                                                    {p.periodStatus || "Paid"}
-                                                </span>
-                                        </td>
-                                        <td style={{padding: "14px 22px", fontSize: "14px", color: "#6b7280"}}>
-                                            {formatDate(p.paymentDate)}
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Mobile payment cards */}
-                        <div className="mobile-cards">
-                            <div style={{display: "flex", flexDirection: "column", width: "100%"}}>
-                                {payments.map((p, i) => (
-                                    <div key={p.id} style={{
-                                        padding: "12px 16px",
-                                        borderTop: i === 0 ? "none" : "1px solid #f9f9f9",
-                                    }}>
-                                        <div style={{
-                                            display: "flex", alignItems: "center",
-                                            justifyContent: "space-between", marginBottom: "4px",
-                                        }}>
-                                            <span style={{fontSize: "14px", fontWeight: "600", color: "#111827"}}>
-                                                {p.tenantName}
-                                            </span>
-                                            <span style={{
-                                                display: "inline-block", padding: "2px 8px",
-                                                borderRadius: "20px", fontSize: "11px", fontWeight: "500",
-                                                backgroundColor:
-                                                    p.periodStatus === "PAID" ? "#E1F5EE" :
-                                                        p.periodStatus === "PARTIAL" ? "#FAEEDA" :
-                                                            p.periodStatus === "ROLLOVER" ? "#E6F1FB" : "#f3f4f6",
-                                                color:
-                                                    p.periodStatus === "PAID" ? "#0F6E56" :
-                                                        p.periodStatus === "PARTIAL" ? "#854F0B" :
-                                                            p.periodStatus === "ROLLOVER" ? "#185FA5" : "#6b7280",
-                                            }}>
-                                                {p.periodStatus || "—"}
-                                            </span>
-                                        </div>
-                                        <div style={{fontSize: "12px", color: "#6b7280", marginBottom: "6px"}}>
-                                            Unit {p.roomNumber} · {formatCycle(p.periodStartDate, p.periodEndDate)}
-                                        </div>
-                                        <div style={{
-                                            display: "flex", alignItems: "center",
-                                            justifyContent: "space-between",
-                                        }}>
-                                            <span style={{fontSize: "15px", fontWeight: "700", color: "#111827"}}>
-                                                {formatUGX(p.amount)}
-                                            </span>
-                                            <span style={{fontSize: "12px", color: "#9ca3af"}}>
-                                                {formatDate(p.paymentDate)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-        </PageWrapper>
+            <Card
+                className="mt-4"
+                bodyClass="p-0"
+                header={<SectionHeader title="Recent Payments" to="/payments"/>}
+            >
+                <DataTable
+                    columns={paymentColumns}
+                    rows={payments}
+                    rowKey="id"
+                    loading={paymentsLoading}
+                    skeletonRows={5}
+                    cardSkeletonRows={3}
+                    emptyTitle="No payments recorded yet"
+                    emptyMessage="Payments will appear here as they come in."
+                />
+            </Card>
+        </AppShell>
     )
 }

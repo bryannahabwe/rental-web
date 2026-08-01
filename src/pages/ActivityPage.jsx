@@ -1,10 +1,14 @@
-import {useEffect, useState} from "react"
-import PageWrapper from "@/components/layout/PageWrapper"
-import {useActivity} from "@/hooks/useActivity"
+import {useState} from "react"
 import {
     BarChart3, Building2, CreditCard, FileText, Home, LogIn,
     Receipt, Settings, ShieldAlert, UserCog, Users,
 } from "lucide-react"
+import AppShell from "@/components/layout/AppShell"
+import {useActivity} from "@/hooks/useActivity"
+import useDebouncedValue from "@/hooks/useDebouncedValue"
+import {Card, EmptyState, LoadingPanel, Pagination, SearchInput, Select, Toolbar} from "@/components/ui"
+import {formatRelativeTime} from "@/lib/format"
+import {cn} from "@/lib/cn"
 
 // Each entry is a filter preset: a module, optionally narrowed to one action.
 const FILTERS = [
@@ -33,171 +37,117 @@ const MODULE_ICON = {
     AUTHENTICATION: LogIn,
 }
 
-const MODULE_TINT = {
-    TENANT: "#E1F5EE", UNIT: "#eef2ff", RENTAL_AGREEMENT: "#fef9c3",
-    PAYMENT: "#dcfce7", PROPERTY: "#E1F5EE", USER: "#f3e8ff",
-    SETTINGS: "#fef3c7", REPORT: "#e0f2fe", AUTHENTICATION: "#f1f5f9",
-}
-const MODULE_COLOR = {
-    TENANT: "#0F6E56", UNIT: "#4338ca", RENTAL_AGREEMENT: "#854d0e",
-    PAYMENT: "#15803d", PROPERTY: "#0F6E56", USER: "#7e22ce",
-    SETTINGS: "#854F0B", REPORT: "#0369a1", AUTHENTICATION: "#475569",
-}
-
 // A few actions read better with their own mark than their module's — a
 // rejected sign-in especially, which shouldn't look like a routine one.
 const ACTION_ICON = {LOGIN_FAILED: ShieldAlert, ISSUE_RECEIPT: Receipt, VIEW_REPORT: BarChart3}
-const ACTION_TINT = {LOGIN_FAILED: "#fee2e2"}
-const ACTION_COLOR = {LOGIN_FAILED: "#b91c1c"}
 
-function formatTime(iso) {
-    const d = new Date(iso)
-    if (isNaN(d)) return ""
-    const diffMs = Date.now() - d.getTime()
-    const mins = Math.round(diffMs / 60000)
-    let rel
-    if (mins < 1) rel = "just now"
-    else if (mins < 60) rel = `${mins}m ago`
-    else if (mins < 1440) rel = `${Math.round(mins / 60)}h ago`
-    else rel = `${Math.round(mins / 1440)}d ago`
-    const abs = d.toLocaleString("en-GB", {
-        day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-    })
-    return {rel, abs}
+/**
+ * Colour here carries MEANING, not category — the icon already tells you
+ * which module an entry belongs to. The previous nine hand-picked tints were
+ * decorative and mostly off-palette; only two of them said anything:
+ * money moved, and a sign-in was rejected.
+ */
+const CHIP = {
+    danger: "bg-danger-50 text-danger-600",
+    success: "bg-success-50 text-success-600",
+    neutral: "bg-neutral-5 text-neutral-60",
+}
+
+const chipTone = (entry) => {
+    if (entry.action === "LOGIN_FAILED") return "danger"
+    if (entry.module === "PAYMENT") return "success"
+    return "neutral"
 }
 
 export default function ActivityPage() {
     const [page, setPage] = useState(0)
     const [filterId, setFilterId] = useState("")
     const [search, setSearch] = useState("")
-    const [debouncedSearch, setDebouncedSearch] = useState("")
 
-    useEffect(() => {
-        const t = setTimeout(() => {
-            setDebouncedSearch(search)
-            setPage(0)
-        }, 400)
-        return () => clearTimeout(t)
-    }, [search])
+    const query = useDebouncedValue(search)
 
-    const filter = FILTERS.find(f => f.id === filterId) || FILTERS[0]
+    const onSearchChange = (value) => {
+        setSearch(value)
+        setPage(0)
+    }
+
+    const filter = FILTERS.find((f) => f.id === filterId) || FILTERS[0]
 
     const {data, isLoading} = useActivity({
         page, size: 20,
         module: filter.module,
         action: filter.action,
-        search: debouncedSearch || undefined,
+        search: query || undefined,
     })
 
     const entries = data?.content || []
     const totalPages = data?.totalPages || 0
 
     return (
-        <PageWrapper title="Activity" showBack>
-            {/* Filters */}
-            <div style={{
-                marginBottom: "16px", display: "flex", gap: "10px",
-                alignItems: "center", flexWrap: "wrap",
-            }}>
-                <input
-                    type="text" value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search activity..."
-                    style={{
-                        flex: 1, minWidth: "160px", maxWidth: "360px",
-                        padding: "10px 14px", fontSize: "14px", borderRadius: "8px",
-                        border: "1px solid #e5e7eb", outline: "none", boxSizing: "border-box",
-                        fontFamily: "'DM Sans', sans-serif", color: "#111827", backgroundColor: "#fff",
-                    }}
-                    onFocus={e => e.target.style.borderColor = "#0F6E56"}
-                    onBlur={e => e.target.style.borderColor = "#e5e7eb"}
-                />
-                <select
-                    value={filterId}
-                    onChange={e => {
-                        setFilterId(e.target.value)
-                        setPage(0)
-                    }}
-                    style={{
-                        padding: "10px 14px", fontSize: "14px", borderRadius: "8px",
-                        border: "1px solid #e5e7eb", outline: "none",
-                        fontFamily: "'DM Sans', sans-serif", color: "#374151", backgroundColor: "#fff",
-                    }}
-                >
-                    {FILTERS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
-                </select>
-            </div>
-
-            <div style={{
-                backgroundColor: "#fff", borderRadius: "12px",
-                border: "1px solid #f0f0f0", overflow: "hidden",
-            }}>
+        <AppShell title="Activity" subtitle="Everything that happened, and who did it" showBack>
+            <Card bodyClass="p-0" header={
+                <Toolbar>
+                    <SearchInput value={search} onChange={onSearchChange}
+                                 placeholder="Search activity…" className="md:w-80"/>
+                    <Select
+                        className="md:w-56"
+                        value={filterId}
+                        onChange={(e) => {
+                            setFilterId(e.target.value)
+                            setPage(0)
+                        }}
+                        aria-label="Filter activity"
+                        options={FILTERS.map((f) => ({label: f.label, value: f.id}))}
+                    />
+                </Toolbar>
+            }>
                 {isLoading ? (
-                    <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
-                        Loading activity...
-                    </div>
+                    <LoadingPanel message="Loading activity…"/>
                 ) : entries.length === 0 ? (
-                    <div style={{padding: "60px", textAlign: "center", color: "#9ca3af", fontSize: "14px"}}>
-                        No activity yet.
-                    </div>
+                    <EmptyState
+                        title="No activity yet"
+                        message="Actions across the portal will show up here."
+                    />
                 ) : (
                     <>
-                        {entries.map((e, i) => {
-                            const Icon = ACTION_ICON[e.action] || MODULE_ICON[e.module] || FileText
-                            const tint = ACTION_TINT[e.action] || MODULE_TINT[e.module] || "#f1f5f9"
-                            const color = ACTION_COLOR[e.action] || MODULE_COLOR[e.module] || "#475569"
-                            const time = formatTime(e.createdAt)
-                            return (
-                                <div key={e.id} style={{
-                                    display: "flex", gap: "14px", padding: "14px 20px",
-                                    borderTop: i === 0 ? "none" : "1px solid #f5f5f5",
-                                }}>
-                                    <div style={{
-                                        width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                                        backgroundColor: tint,
-                                        display: "flex", alignItems: "center", justifyContent: "center",
-                                    }}>
-                                        <Icon size={17} color={color}/>
-                                    </div>
-                                    <div style={{flex: 1, minWidth: 0}}>
-                                        <div style={{fontSize: "14px", color: "#111827", lineHeight: 1.5}}>
-                                            {e.statement}
+                        <ul className="divide-y divide-neutral-5">
+                            {entries.map((e) => {
+                                const Icon = ACTION_ICON[e.action] || MODULE_ICON[e.module] || FileText
+                                const time = formatRelativeTime(e.createdAt)
+                                return (
+                                    <li key={e.id} className="flex gap-3.5 px-4 py-3.5 md:px-5">
+                                        <span
+                                            className={cn(
+                                                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                                                CHIP[chipTone(e)],
+                                            )}
+                                        >
+                                            <Icon size={17}/>
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm leading-relaxed text-neutral-90">{e.statement}</p>
+                                            <p className="mt-0.5 text-xs text-neutral-40" title={time.abs}>
+                                                {e.actingUserName} · {time.rel}
+                                            </p>
                                         </div>
-                                        <div style={{fontSize: "12px", color: "#9ca3af", marginTop: "3px"}}
-                                             title={time.abs}>
-                                            {e.actingUserName} · {time.rel}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                    </li>
+                                )
+                            })}
+                        </ul>
 
                         {totalPages > 1 && (
-                            <div style={{
-                                display: "flex", alignItems: "center", justifyContent: "space-between",
-                                padding: "14px 20px", borderTop: "1px solid #f3f4f6",
-                            }}>
-                                <span style={{fontSize: "13px", color: "#9ca3af"}}>
-                                    Page {page + 1} of {totalPages}
-                                </span>
-                                <div style={{display: "flex", gap: "8px"}}>
-                                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-                                            style={pageBtn(page === 0)}>Previous</button>
-                                    <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}
-                                            style={pageBtn(page >= totalPages - 1)}>Next</button>
-                                </div>
-                            </div>
+                            <Pagination
+                                className="border-t border-neutral-5 px-4 py-2"
+                                page={page}
+                                pageSize={20}
+                                totalPages={totalPages}
+                                totalElements={data?.totalElements}
+                                onPageChange={setPage}
+                            />
                         )}
                     </>
                 )}
-            </div>
-        </PageWrapper>
+            </Card>
+        </AppShell>
     )
 }
-
-const pageBtn = (disabled) => ({
-    padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-    border: "1px solid #e5e7eb", backgroundColor: "#fff",
-    color: disabled ? "#d1d5db" : "#374151",
-    cursor: disabled ? "not-allowed" : "pointer",
-})
