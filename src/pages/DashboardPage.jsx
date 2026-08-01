@@ -1,6 +1,6 @@
 import {useMemo} from "react"
 import {Link} from "react-router-dom"
-import {Building2, CreditCard, TrendingUp, Users} from "lucide-react"
+import {Building2, CreditCard, TrendingUp, Users, Wallet} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
 import {usePayments} from "@/hooks/usePayments"
@@ -36,8 +36,11 @@ export default function DashboardPage() {
     const {data: paymentsData, isLoading: paymentsLoading} = usePayments({
         page: 0, size: 5, sortBy: "paymentDate", sortDir: "desc",
     })
+    // The dashboard totals and the outstanding table both need every tenant,
+    // not a page of them — a truncated fetch would silently understate
+    // "Total Outstanding". 500 is the practical ceiling for one property.
     const {data: tenantsData, isLoading: tenantsLoading} = useTenants({
-        page: 0, size: 100, sortBy: "createdAt", sortDir: "desc",
+        page: 0, size: 500, sortBy: "createdAt", sortDir: "desc",
     })
     // Cash actually received this calendar month — the same computation the
     // Reports page uses. Billing-cycle dates (currentCycleStart) don't align
@@ -137,7 +140,10 @@ export default function DashboardPage() {
         <AppShell title="Dashboard" subtitle="How collection is tracking right now">
             {/* One responsive KPI strip — this replaces the separate desktop and
                 mobile stat-card components the page rendered side by side. */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+            {/* 3 + 2 rather than a single row of five: at five across the tile
+                is ~248px and a full UGX figure truncates, which would have
+                clipped Total Revenue as well as the new tile. */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
                 <SummaryCard
                     icon={Building2} tone="primary" label="Total Units"
                     value={summaryLoading ? "—" : summary?.totalUnits ?? "—"}
@@ -157,6 +163,22 @@ export default function DashboardPage() {
                     icon={TrendingUp} tone="primary" label="Occupancy Rate"
                     value={occupancyLoading ? "—" : `${occupancy?.occupancyRate ?? "—"}%`}
                     hint={`${occupancy?.occupiedUnits ?? "—"} of ${occupancy?.totalUnits ?? "—"} units`}
+                />
+                {/* Cumulative arrears across every tenant, not just this cycle's
+                    shortfall — the same figure the Outstanding Tenants table sums. */}
+                <SummaryCard
+                    className="col-span-2 lg:col-span-1"
+                    icon={Wallet}
+                    tone={tenantsLoading ? "neutral" : totalOutstanding > 0 ? "danger" : "success"}
+                    label="Total Outstanding"
+                    value={tenantsLoading ? "—" : formatUGX(totalOutstanding)}
+                    hint={
+                        tenantsLoading
+                            ? "Across all tenants"
+                            : outstandingTenants.length === 0
+                                ? "All tenants paid up"
+                                : `${outstandingTenants.length} tenant${outstandingTenants.length === 1 ? "" : "s"} owing`
+                    }
                 />
             </div>
 
