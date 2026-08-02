@@ -94,14 +94,14 @@ export default function UnitsPage() {
             <Button size="sm" variant="outline" iconLeft={Pencil}
                     title="Edit unit" aria-label={`Edit unit ${u.roomNumber}`}
                     onClick={() => setEditUnit(u)}>
-                <span className="md:hidden">Edit</span>
+                Edit
             </Button>
             {canDelete && (
                 <Button size="sm" variant="ghost" iconLeft={Trash2}
                         title="Delete unit" aria-label={`Delete unit ${u.roomNumber}`}
                         className="text-danger-600 hover:bg-danger-50"
                         onClick={() => handleDelete(u)}>
-                    <span className="md:hidden">Delete</span>
+                    Delete
                 </Button>
             )}
         </>

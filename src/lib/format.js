@@ -13,14 +13,56 @@ const EMPTY = "—"
 export const formatUGX = (amount) =>
     amount == null ? EMPTY : `UGX ${Number(amount).toLocaleString()}`
 
-/** `UGX 1.25M` / `UGX 250K` — for KPI tiles and chart axes. */
+/** Only ever strips a fractional tail — `320` must not become `32`. */
+const trimZeros = (s) => (s.includes(".") ? s.replace(/\.?0+$/, "") : s)
+
+/**
+ * `UGX 1.25M` / `UGX 250K` — for KPI tiles and chart axes.
+ *
+ * Held to ~3 significant digits (`1.15M`, `32.5M`, `325M`) so the result is
+ * never wider than 9 characters. Past that the extra decimals are noise on a
+ * KPI, and the tile this exists to serve has no room for them.
+ */
 export const formatUGXShort = (amount) => {
     if (amount == null) return EMPTY
     const n = Number(amount)
     if (Number.isNaN(n)) return EMPTY
-    if (n >= 1_000_000) return `UGX ${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`
-    if (n >= 1_000) return `UGX ${(n / 1_000).toFixed(0)}K`
+    // Scale on the magnitude, not the signed value — otherwise a negative
+    // figure falls past both branches and renders at full length.
+    const abs = Math.abs(n)
+    const sign = n < 0 ? "−" : ""
+    if (abs >= 1_000_000) {
+        const m = abs / 1_000_000
+        return `UGX ${sign}${trimZeros(m.toFixed(m >= 100 ? 0 : m >= 10 ? 1 : 2))}M`
+    }
+    if (abs >= 1_000) return `UGX ${sign}${(abs / 1_000).toFixed(0)}K`
     return `UGX ${n.toLocaleString()}`
+}
+
+/**
+ * Amount inputs are text fields carrying a grouped figure, so the pair below
+ * is the mask: `groupDigits` renders it, `parseAmountInput` reads it back.
+ *
+ * Both pin the separator to en-US rather than the ambient locale — a mask has
+ * to strip exactly what it wrote, and a space- or dot-grouped locale would
+ * leave the two halves disagreeing.
+ */
+const MAX_AMOUNT_DIGITS = 12
+
+/** `1150000` → `"1,150,000"`. */
+export const groupDigits = (value) => {
+    const digits = String(value ?? "").replace(/\D/g, "")
+    return digits === "" ? "" : Number(digits).toLocaleString("en-US")
+}
+
+/**
+ * `"UGX 1,150,000"` → `1150000` — non-digits are dropped, so pasting an
+ * already-formatted figure works. Empty stays `""` rather than 0, so a
+ * required money field still reports as missing.
+ */
+export const parseAmountInput = (value) => {
+    const digits = String(value ?? "").replace(/\D/g, "").slice(0, MAX_AMOUNT_DIGITS)
+    return digits === "" ? "" : Number(digits)
 }
 
 const parse = (value) => {

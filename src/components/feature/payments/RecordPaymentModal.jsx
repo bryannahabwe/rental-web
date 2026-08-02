@@ -8,7 +8,7 @@ import useSettingsStore from "@/store/settingsStore"
 import {settingsService} from "@/services/settingsService"
 import {generateReceipt} from "@/utils/receiptGenerator"
 import {
-    Badge, Button, ChoiceGroup, DateField, Dialog, FormField, Input, Select, Tabs, Textarea, toast,
+    AmountInput, Badge, Button, ChoiceGroup, DateField, Dialog, FormField, Input, Select, Tabs, Textarea, toast,
 } from "@/components/ui"
 import {formatCycle, formatUGX, nullIfEmpty, todayStr} from "@/lib/format"
 import CyclePicker from "./CyclePicker"
@@ -53,12 +53,13 @@ export default function RecordPaymentModal({onClose}) {
     const activeAgreements = agreementsData?.content || []
     const allTenants = tenantsData || []
 
-    const {register, handleSubmit, watch, formState: {errors}} = useForm({
+    const {register, control, handleSubmit, watch, formState: {errors}} = useForm({
         defaultValues: {paymentDate: todayStr(), agreementId: ""},
     })
 
     const {
         register: registerManual,
+        control: controlManual,
         handleSubmit: handleSubmitManual,
         watch: watchManual,
         formState: {errors: manualErrors},
@@ -87,7 +88,7 @@ export default function RecordPaymentModal({onClose}) {
     const selectedAgreement = activeAgreements.find((ag) => ag.id === selectedAgreementId)
     const selectedTenant = allTenants.find((t) => t.id === selectedTenantId)
     const expectedAmount = selectedAgreement?.rentAmount || 0
-    const amountNum = enteredAmount ? parseFloat(enteredAmount) : 0
+    const amountNum = Number(enteredAmount) || 0
     const overpayment = amountNum > expectedAmount ? amountNum - expectedAmount : 0
     const openingArrears = selectedAgreement
         ? Math.max(0, -(Number(selectedAgreement.openingBalance || 0)))
@@ -103,7 +104,7 @@ export default function RecordPaymentModal({onClose}) {
             const result = await createPayment.mutateAsync({
                 agreementId: data.agreementId,
                 paymentDate: data.paymentDate,
-                amount: parseFloat(data.amount),
+                amount: data.amount,
                 method: "CASH",
                 periodStartDate: selectedCycle.start,
                 periodEndDate: selectedCycle.end,
@@ -127,8 +128,8 @@ export default function RecordPaymentModal({onClose}) {
             const manualPayment = {
                 tenantName: selectedTenant?.name || "—",
                 roomNumber: selectedTenant?.currentUnit || "—",
-                amount: parseFloat(data.amount),
-                expectedAmount: parseFloat(data.amount),
+                amount: data.amount,
+                expectedAmount: data.amount,
                 paymentDate: data.paymentDate,
                 periodStartDate: null,
                 periodEndDate: null,
@@ -136,7 +137,7 @@ export default function RecordPaymentModal({onClose}) {
                 method: data.method || "CASH",
                 reference: data.reference || null,
                 notes: data.notes || null,
-                balance: data.balance ? parseFloat(data.balance) : 0,
+                balance: data.balance || 0,
                 isManual: true,
             }
             await generateReceipt(manualPayment, {...settings, receiptStyle: manualStyle}, rNumber)
@@ -253,12 +254,14 @@ export default function RecordPaymentModal({onClose}) {
                             required
                             hint={selectedAgreement ? `Expected ${formatUGX(selectedAgreement.rentAmount)}` : undefined}
                         >
-                            <Input
-                                {...register("amount", {
+                            <AmountInput
+                                name="amount"
+                                control={control}
+                                rules={{
                                     required: "Amount is required",
                                     min: {value: 1, message: "Must be greater than 0"},
-                                })}
-                                type="number" inputMode="numeric" invalid={!!errors.amount} placeholder="180000"
+                                }}
+                                invalid={!!errors.amount} placeholder="180,000"
                             />
                         </FormField>
 
@@ -326,12 +329,14 @@ export default function RecordPaymentModal({onClose}) {
                     </div>
 
                     <FormField label="Amount (UGX)" error={manualErrors.amount?.message} required>
-                        <Input
-                            {...registerManual("amount", {
+                        <AmountInput
+                            name="amount"
+                            control={controlManual}
+                            rules={{
                                 required: "Amount is required",
                                 min: {value: 1, message: "Must be greater than 0"},
-                            })}
-                            type="number" inputMode="numeric" invalid={!!manualErrors.amount} placeholder="180000"
+                            }}
+                            invalid={!!manualErrors.amount} placeholder="180,000"
                         />
                     </FormField>
 
@@ -351,7 +356,7 @@ export default function RecordPaymentModal({onClose}) {
                     </FormField>
 
                     <FormField label="Balance remaining (UGX)" hint="Amount still owed after this payment">
-                        <Input {...registerManual("balance")} type="number" min="0" inputMode="numeric" placeholder="0"/>
+                        <AmountInput name="balance" control={controlManual} placeholder="0"/>
                     </FormField>
 
                     <FormField label="Reference" hint="Optional">

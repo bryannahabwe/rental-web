@@ -159,7 +159,7 @@ export default function PaymentsPage() {
                         <Button size="sm" variant="outline" iconLeft={Eye}
                                 title="View payment" aria-label={`View payment from ${p.tenantName}`}
                                 onClick={() => setSelectedPaymentId(p.id)}>
-                            <span className="md:hidden">View</span>
+                            View
                         </Button>
                     )}
                     emptyTitle={hasFilters ? "No payments match those filters" : "No payments recorded yet"}

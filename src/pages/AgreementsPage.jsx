@@ -94,14 +94,14 @@ export default function AgreementsPage() {
             <Button size="sm" variant="outline" iconLeft={Pencil}
                     title="Edit agreement" aria-label={`Edit agreement for ${ag.tenantName}`}
                     onClick={() => setEditAgreement(ag)}>
-                <span className="md:hidden">Edit</span>
+                Edit
             </Button>
             {ag.status === "ACTIVE" && (
                 <Button size="sm" variant="ghost" iconLeft={LogOut}
                         title="Record move-out" aria-label={`Record move-out for ${ag.tenantName}`}
                         className="text-danger-600 hover:bg-danger-50"
                         onClick={() => setMoveOutAgreement(ag)}>
-                    <span className="md:hidden">Move-out</span>
+                    Move-out
                 </Button>
             )}
         </>

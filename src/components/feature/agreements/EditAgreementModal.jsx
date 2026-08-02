@@ -1,7 +1,7 @@
 import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {useUpdateAgreement} from "@/hooks/useAgreements"
-import {Button, DateField, Dialog, FormField, Input, toast} from "@/components/ui"
+import {AmountInput, Button, DateField, Dialog, FormField, toast} from "@/components/ui"
 import {nullIfEmpty} from "@/lib/format"
 import {BillingDayHint, BillingModelField, OpeningBalanceField} from "./fields"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -12,7 +12,7 @@ export default function EditAgreementModal({agreement, onClose}) {
     const [balanceSign, setBalanceSign] = useState(agreement.openingBalance < 0 ? "negative" : "positive")
     const [error, setError] = useState("")
 
-    const {register, handleSubmit, watch} = useForm({
+    const {register, control, handleSubmit, watch} = useForm({
         defaultValues: {
             rentAmount: agreement.rentAmount,
             depositAmount: agreement.depositAmount || "",
@@ -26,7 +26,7 @@ export default function EditAgreementModal({agreement, onClose}) {
     const onSubmit = async (data) => {
         setError("")
         try {
-            const rawBalance = data.openingBalance ? parseFloat(data.openingBalance) : 0
+            const rawBalance = Number(data.openingBalance) || 0
             const openingBalance = balanceSign === "negative" ? -Math.abs(rawBalance) : Math.abs(rawBalance)
 
             await updateAgreement.mutateAsync({
@@ -34,8 +34,8 @@ export default function EditAgreementModal({agreement, onClose}) {
                 data: {
                     tenantId: agreement.tenantId,
                     unitId: agreement.unitId,
-                    rentAmount: data.rentAmount ? parseFloat(data.rentAmount) : null,
-                    depositAmount: data.depositAmount ? parseFloat(data.depositAmount) : null,
+                    rentAmount: nullIfEmpty(data.rentAmount),
+                    depositAmount: nullIfEmpty(data.depositAmount),
                     startDate: nullIfEmpty(data.startDate),
                     billingModel,
                     openingBalance,
@@ -75,15 +75,15 @@ export default function EditAgreementModal({agreement, onClose}) {
                 </div>
 
                 <FormField label="Monthly rent (UGX)">
-                    <Input {...register("rentAmount")} type="number" inputMode="numeric"/>
+                    <AmountInput name="rentAmount" control={control}/>
                 </FormField>
 
                 <FormField label="Deposit (UGX)" hint="Optional">
-                    <Input {...register("depositAmount")} type="number" inputMode="numeric"/>
+                    <AmountInput name="depositAmount" control={control}/>
                 </FormField>
 
                 <OpeningBalanceField
-                    register={register}
+                    control={control}
                     balanceSign={balanceSign}
                     setBalanceSign={setBalanceSign}
                 />

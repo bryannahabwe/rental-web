@@ -4,9 +4,9 @@ import {useCreateAgreement} from "@/hooks/useAgreements"
 import {useAllTenants} from "@/hooks/useTenants"
 import {useAllUnits} from "@/hooks/useUnits"
 import {
-    Button, ChoiceGroup, DateField, Dialog, FormField, Input, Select, toast,
+    AmountInput, Button, ChoiceGroup, DateField, Dialog, FormField, Select, toast,
 } from "@/components/ui"
-import {formatUGX, nullIfEmpty} from "@/lib/format"
+import {formatUGX, groupDigits, nullIfEmpty} from "@/lib/format"
 import {BillingDayHint, BillingModelField, OpeningBalanceField} from "./fields"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -26,7 +26,7 @@ export default function CreateAgreementModal({onClose}) {
 
     const availableUnits = units.filter((u) => u.isAvailable)
 
-    const {register, handleSubmit, watch, formState: {errors}} = useForm()
+    const {register, control, handleSubmit, watch, formState: {errors}} = useForm()
     const selectedUnitId = watch("unitId")
     const selectedUnit = units.find((u) => u.id === selectedUnitId)
     const startDate = watch("startDate")
@@ -34,7 +34,7 @@ export default function CreateAgreementModal({onClose}) {
     const onSubmit = async (data) => {
         setError("")
         try {
-            const rawBalance = data.openingBalance ? parseFloat(data.openingBalance) : 0
+            const rawBalance = Number(data.openingBalance) || 0
             const openingBalance = tenantType === "EXISTING"
                 ? (balanceSign === "negative" ? -Math.abs(rawBalance) : Math.abs(rawBalance))
                 : 0
@@ -43,8 +43,8 @@ export default function CreateAgreementModal({onClose}) {
                 tenantId: data.tenantId,
                 unitId: data.unitId,
                 startDate: nullIfEmpty(data.startDate),
-                rentAmount: data.rentAmount ? parseFloat(data.rentAmount) : null,
-                depositAmount: data.depositAmount ? parseFloat(data.depositAmount) : null,
+                rentAmount: nullIfEmpty(data.rentAmount),
+                depositAmount: nullIfEmpty(data.depositAmount),
                 tenantType,
                 billingModel,
                 openingBalance,
@@ -116,9 +116,9 @@ export default function CreateAgreementModal({onClose}) {
                         ? `Defaults to ${formatUGX(selectedUnit.rentAmount)} if left blank`
                         : "Optional — defaults to the unit's rent"}
                 >
-                    <Input
-                        {...register("rentAmount")} type="number" inputMode="numeric"
-                        placeholder={selectedUnit ? String(selectedUnit.rentAmount) : "Leave blank to use unit rent"}
+                    <AmountInput
+                        name="rentAmount" control={control}
+                        placeholder={selectedUnit ? groupDigits(selectedUnit.rentAmount) : "Leave blank to use unit rent"}
                     />
                 </FormField>
 
@@ -147,13 +147,13 @@ export default function CreateAgreementModal({onClose}) {
                 </div>
 
                 <FormField label="Deposit (UGX)" hint="Optional">
-                    <Input {...register("depositAmount")} type="number" inputMode="numeric"
-                           placeholder="Leave blank if not applicable"/>
+                    <AmountInput name="depositAmount" control={control}
+                                 placeholder="Leave blank if not applicable"/>
                 </FormField>
 
                 {tenantType === "EXISTING" && (
                     <OpeningBalanceField
-                        register={register}
+                        control={control}
                         balanceSign={balanceSign}
                         setBalanceSign={setBalanceSign}
                         helpText={balanceSign === "negative"

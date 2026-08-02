@@ -46,7 +46,10 @@ export default function Card({
                         {title && (
                             <h3 className="truncate font-heading text-base font-medium text-neutral-90">{title}</h3>
                         )}
-                        {subtitle && <p className="mt-0.5 truncate text-sm text-neutral-40">{subtitle}</p>}
+                        {/* Wraps rather than truncates — a card header has no height
+                            budget to protect, and subtitles here are full sentences
+                            that read as broken when clipped mid-clause. */}
+                        {subtitle && <p className="mt-0.5 text-sm leading-snug text-neutral-40">{subtitle}</p>}
                     </div>
                     {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
                 </div>

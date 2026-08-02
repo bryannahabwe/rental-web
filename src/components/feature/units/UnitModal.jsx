@@ -3,7 +3,7 @@ import {useForm} from "react-hook-form"
 import {useCreateUnit, useUpdateUnit} from "@/hooks/useUnits"
 import {useProperties} from "@/hooks/useProperties"
 import usePropertyStore from "@/store/propertyStore"
-import {Button, Dialog, FormField, Input, Textarea, Select, Toggle, toast} from "@/components/ui"
+import {AmountInput, Button, Dialog, FormField, Input, Textarea, Select, Toggle, toast} from "@/components/ui"
 import {nullIfEmpty} from "@/lib/format"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -22,7 +22,7 @@ export default function UnitModal({unit, onClose}) {
     // landlord must pick one here.
     const needsPropertyChoice = !isEdit && !selectedPropertyId
 
-    const {register, handleSubmit, formState: {errors}} = useForm({
+    const {register, control, handleSubmit, formState: {errors}} = useForm({
         defaultValues: unit
             ? {roomNumber: unit.roomNumber, description: unit.description, rentAmount: unit.rentAmount}
             : {},
@@ -36,7 +36,7 @@ export default function UnitModal({unit, onClose}) {
                 propertyId,
                 roomNumber: data.roomNumber,
                 description: nullIfEmpty(data.description),
-                rentAmount: parseFloat(data.rentAmount),
+                rentAmount: data.rentAmount,
                 isAvailable,
             }
             if (isEdit) {
@@ -89,15 +89,15 @@ export default function UnitModal({unit, onClose}) {
                 </FormField>
 
                 <FormField label="Monthly rent (UGX)" error={errors.rentAmount?.message} required>
-                    <Input
-                        {...register("rentAmount", {
+                    <AmountInput
+                        name="rentAmount"
+                        control={control}
+                        rules={{
                             required: "Rent amount is required",
                             min: {value: 1, message: "Must be greater than 0"},
-                        })}
-                        type="number"
-                        inputMode="numeric"
+                        }}
                         invalid={!!errors.rentAmount}
-                        placeholder="180000"
+                        placeholder="180,000"
                     />
                 </FormField>
 

@@ -75,7 +75,8 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
                     <SummaryCard className="col-span-2 lg:col-span-2"
                                  icon={CreditCard} tone="primary"
-                                 label="All-time Revenue" value={formatUGX(summary?.totalRevenueAllTime)}/>
+                                 label="All-time Revenue" value={formatUGX(summary?.totalRevenueAllTime)}
+                                 valueShort={formatUGXShort(summary?.totalRevenueAllTime)}/>
                     <SummaryCard icon={Building2} tone="primary"
                                  label="Total Units" value={summary?.totalUnits ?? "—"}/>
                     <SummaryCard icon={Users} tone="primary"

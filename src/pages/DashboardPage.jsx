@@ -6,7 +6,7 @@ import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
 import {usePayments} from "@/hooks/usePayments"
 import {useTenants} from "@/hooks/useTenants"
 import {Badge, Card, DataTable, ProgressBar, SummaryCard} from "@/components/ui"
-import {formatCycle, formatDate, formatUGX, todayStr} from "@/lib/format"
+import {formatCycle, formatDate, formatUGX, formatUGXShort, todayStr} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
 import {cn} from "@/lib/cn"
 
@@ -142,7 +142,9 @@ export default function DashboardPage() {
                 mobile stat-card components the page rendered side by side. */}
             {/* 3 + 2 rather than a single row of five: at five across the tile
                 is ~248px and a full UGX figure truncates, which would have
-                clipped Total Revenue as well as the new tile. */}
+                clipped Total Revenue as well as the new tile. The money tiles
+                also pass `valueShort`, which SummaryCard falls back to when its
+                own width can't seat the full figure — half-width on mobile. */}
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
                 <SummaryCard
                     icon={Building2} tone="primary" label="Total Units"
@@ -152,11 +154,12 @@ export default function DashboardPage() {
                 <SummaryCard
                     icon={Users} tone="info" label="Active Tenants"
                     value={summaryLoading ? "—" : summary?.totalTenants ?? "—"}
-                    hint={`${summary?.activeAgreements ?? "—"} active agreements`}
+                    hint={`${summary?.activeAgreements ?? "—"} agreements`}
                 />
                 <SummaryCard
                     icon={CreditCard} tone="success" label="Total Revenue"
                     value={summaryLoading ? "—" : formatUGX(summary?.totalRevenueAllTime)}
+                    valueShort={summaryLoading ? "—" : formatUGXShort(summary?.totalRevenueAllTime)}
                     hint="All time collected"
                 />
                 <SummaryCard
@@ -172,6 +175,7 @@ export default function DashboardPage() {
                     tone={tenantsLoading ? "neutral" : totalOutstanding > 0 ? "danger" : "success"}
                     label="Total Outstanding"
                     value={tenantsLoading ? "—" : formatUGX(totalOutstanding)}
+                    valueShort={tenantsLoading ? "—" : formatUGXShort(totalOutstanding)}
                     hint={
                         tenantsLoading
                             ? "Across all tenants"
@@ -205,26 +209,29 @@ export default function DashboardPage() {
                         label="Share of monthly rent collected"
                     />
 
-                    {/* One row at every width — these figures are short enough
-                        that the desktop/mobile split wasn't buying anything. */}
-                    <dl className="grid grid-cols-3 gap-3 text-right md:flex md:justify-end md:gap-6">
-                        <div>
+                    {/* Label-and-value rows on a phone, columns once there is room.
+                        Three across, a third of the card is ~96px while a full UGX
+                        figure needs ~103 — the arrears total wrapped mid-number. A
+                        row hands it the whole card width instead of shrinking the
+                        type, which is what these figures are here to be read at. */}
+                    <dl className="grid gap-2 text-sm sm:grid-cols-3 sm:gap-3 sm:text-right md:flex md:justify-end md:gap-6">
+                        <div className="flex items-baseline justify-between gap-3 sm:block">
                             <dt className="text-2xs uppercase tracking-wide text-neutral-40">Monthly Rent</dt>
-                            <dd className="mt-0.5 text-sm font-semibold tabular-nums text-neutral-90">
+                            <dd className="font-semibold tabular-nums text-neutral-90 sm:mt-0.5">
                                 {formatUGX(totalMonthlyRent)}
                             </dd>
                         </div>
-                        <div>
+                        <div className="flex items-baseline justify-between gap-3 sm:block">
                             <dt className="text-2xs uppercase tracking-wide text-neutral-40">Collected</dt>
-                            <dd className="mt-0.5 text-sm font-semibold tabular-nums text-success-600">
+                            <dd className="font-semibold tabular-nums text-success-600 sm:mt-0.5">
                                 {monthReportLoading ? "—" : formatUGX(paidThisMonth)}
                             </dd>
                         </div>
-                        <div>
+                        <div className="flex items-baseline justify-between gap-3 sm:block">
                             <dt className="text-2xs uppercase tracking-wide text-neutral-40">Outstanding</dt>
                             <dd
                                 className={cn(
-                                    "mt-0.5 text-sm font-semibold tabular-nums",
+                                    "font-semibold tabular-nums sm:mt-0.5",
                                     totalOutstanding > 0 ? "text-danger-600" : "text-success-600",
                                 )}
                             >

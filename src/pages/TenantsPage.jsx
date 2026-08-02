@@ -95,9 +95,11 @@ export default function TenantsPage() {
     ], [])
 
     /**
-     * `actions` is rendered into both trees, so `md:hidden` on the label gives
-     * compact icon buttons in the desktop table (where seven columns are already
-     * competing for width) and readable labelled buttons in the mobile cards.
+     * `actions` is rendered into both trees, and the labels show in both — an
+     * unlabelled icon is a guess, and these three are destructive or navigational
+     * enough to be worth the width. The cost is real: the actions cell is sticky,
+     * so on a narrow desktop (~1280 with the sidebar) it pins over the balance
+     * column until the table is scrolled. Above ~1500 everything fits.
      *
      * There is no "View" action: the row/card is clickable and carries a
      * chevron affordance, which is exactly what that column is for.
@@ -109,14 +111,14 @@ export default function TenantsPage() {
                         title="View transactions & arrears"
                         aria-label={`View ledger for ${t.name}`}
                         onClick={() => setLedgerTenantId(t.id)}>
-                    <span className="md:hidden">Ledger</span>
+                    Ledger
                 </Button>
             )}
             <Button size="sm" variant="outline" iconLeft={Pencil}
                     title="Edit tenant"
                     aria-label={`Edit ${t.name}`}
                     onClick={() => setEditTenant(t)}>
-                <span className="md:hidden">Edit</span>
+                Edit
             </Button>
             {canDelete && (
                 <Button size="sm" variant="ghost" iconLeft={Trash2}
@@ -124,7 +126,7 @@ export default function TenantsPage() {
                         aria-label={`Delete ${t.name}`}
                         className="text-danger-600 hover:bg-danger-50"
                         onClick={() => setDeleteTenant(t)}>
-                    <span className="md:hidden">Delete</span>
+                    Delete
                 </Button>
             )}
         </>

@@ -89,7 +89,10 @@ export default function AppShell({
                                 <p className="truncate font-heading text-base leading-none tracking-[0.01em] text-white">
                                     {companyName}
                                 </p>
-                                <p className="mt-1 truncate text-xs text-white/55">{subtitle ?? title}</p>
+                                {/* Two lines, not one: the sticky bar can afford the
+                                    extra line, and several page subtitles are
+                                    sentences that lose their point when clipped. */}
+                                <p className="mt-1 line-clamp-2 text-xs leading-snug text-white/55">{subtitle ?? title}</p>
                             </div>
                         </div>
                         <AvatarMenu/>

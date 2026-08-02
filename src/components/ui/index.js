@@ -14,6 +14,8 @@
  *
  *   register-compatible : Input · Textarea · Select · DateField · Checkbox
  *   Controller-only     : Toggle · SegmentedFilter
+ *   Controller-wrapped  : AmountInput — takes `name` + `control`, owns its own
+ *                         Controller, and holds a number in form state
  *
  * Pass `invalid` to the control AND `error` to the FormField — the wrapper
  * does not propagate state.
@@ -36,6 +38,7 @@ export {default as SummaryCard} from "./SummaryCard"
 
 export {default as FormField} from "./FormField"
 export {default as Input} from "./Input"
+export {default as AmountInput} from "./AmountInput"
 export {default as Textarea} from "./Textarea"
 export {default as Select} from "./Select"
 export {default as DateField} from "./DateField"

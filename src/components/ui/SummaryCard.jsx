@@ -9,6 +9,12 @@ import {cn} from "@/lib/cn"
  * currently renders side by side.
  *
  * `delta` takes a signed number, not a preformatted string.
+ *
+ * `valueShort` is the abbreviated form of a money figure (`UGX 2.9M`). The
+ * swap is a CONTAINER query, not a breakpoint: tile width comes from the grid,
+ * not the viewport, so at one screen size a half-width tile clips while its
+ * full-width neighbour has room to spare. Keying off the card's own width is
+ * what lets both render correctly without the page hand-tuning each tile.
  */
 const CHIP = {
     neutral: "bg-neutral-5 text-neutral-60",
@@ -22,6 +28,7 @@ const CHIP = {
 export default function SummaryCard({
                                         label,
                                         value,
+                                        valueShort,
                                         icon: Icon,
                                         tone = "neutral",
                                         hint,
@@ -32,7 +39,10 @@ export default function SummaryCard({
     return (
         <div
             className={cn(
-                "flex items-start gap-3 rounded-lg border border-neutral-5 bg-white p-3 shadow-card md:gap-4 md:p-4",
+                // Chrome tightens on a genuinely narrow tile (a half-width tile on a
+                // phone): 12px of gap and padding either side is a fifth of the card,
+                // and the value line needs it more than the icon does.
+                "@container flex items-start gap-2.5 rounded-lg border border-neutral-5 bg-white p-2.5 shadow-card @[13rem]:gap-3 @[13rem]:p-3 md:gap-4 md:p-4",
                 className,
             )}
             {...rest}
@@ -50,12 +60,27 @@ export default function SummaryCard({
             )}
 
             <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-neutral-40 md:text-sm">{label}</p>
-                <p className="mt-1 truncate font-heading text-xl font-medium tabular-nums text-neutral-90 md:text-2xl">
-                    {value}
+                {/* text-2xs on mobile: at two tiles across, the text column is ~99px
+                    and a 12px "Active Agreements" overshoots it by a hair. Kept on one
+                    truncating line rather than wrapping so values stay on a common
+                    baseline across the row. */}
+                <p className="truncate text-2xs font-medium text-neutral-40 md:text-sm">{label}</p>
+                <p
+                    title={typeof value === "string" ? value : undefined}
+                    className="mt-1 truncate font-heading text-xl font-medium tabular-nums text-neutral-90 md:text-2xl"
+                >
+                    {valueShort == null ? value : (
+                        <>
+                            {/* 15rem is where a full `UGX 2,900,000` clears the icon chip and
+                                padding. Below it the abbreviated form also drops a type step —
+                                at half a phone's width even `UGX 2.9M` overruns at text-xl. */}
+                            <span className="text-lg @[15rem]:hidden">{valueShort}</span>
+                            <span className="hidden @[15rem]:inline">{value}</span>
+                        </>
+                    )}
                 </p>
                 {(delta != null || hint) && (
-                    <div className="mt-1 flex items-center gap-1.5 text-xs">
+                    <div className="mt-1 flex items-center gap-1.5 text-2xs md:text-xs">
                         {delta != null && (
                             <span
                                 className={cn(

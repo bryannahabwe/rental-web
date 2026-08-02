@@ -1,4 +1,4 @@
-import {ChoiceGroup, FormField, Input} from "@/components/ui"
+import {AmountInput, ChoiceGroup, FormField} from "@/components/ui"
 import {formatOrdinal} from "@/lib/format"
 
 /** Explains, in words, what billing day the chosen start date implies. */
@@ -38,12 +38,12 @@ const SIGN_OPTIONS = [
  * direction — asking someone to type a minus sign into a money field is how
  * you get arrears recorded as credit.
  */
-export function OpeningBalanceField({register, balanceSign, setBalanceSign, helpText}) {
+export function OpeningBalanceField({control, balanceSign, setBalanceSign, helpText}) {
     return (
         <div className="rounded-lg border border-neutral-5 bg-neutral-0 p-4">
             <p className="mb-1.5 text-sm font-medium text-neutral-70">Opening balance (UGX)</p>
             <ChoiceGroup className="mb-2.5" options={SIGN_OPTIONS} value={balanceSign} onChange={setBalanceSign}/>
-            <Input {...register("openingBalance")} type="number" min="0" inputMode="numeric" placeholder="0"/>
+            <AmountInput name="openingBalance" control={control} placeholder="0"/>
             {helpText && <p className="mt-2 text-xs leading-relaxed text-neutral-40">{helpText}</p>}
         </div>
     )
