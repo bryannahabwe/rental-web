@@ -5,6 +5,7 @@ import {useUsers} from "@/hooks/useUsers"
 import {useProperties} from "@/hooks/useProperties"
 import {Badge, Button, EmptyState, LoadingPanel} from "@/components/ui"
 import {statusLabel, statusTone} from "@/lib/statusTone"
+import {isPropertyScoped, roleLabel} from "@/lib/roles"
 import InviteModal from "@/components/feature/users/InviteModal"
 import EditUserModal from "@/components/feature/users/EditUserModal"
 import UserDetailSheet from "@/components/feature/users/UserDetailSheet"
@@ -17,6 +18,16 @@ export default function UsersPage() {
     const [editUser, setEditUser] = useState(null)
 
     const propertyName = (id) => properties.find((p) => p.id === id)?.name || "—"
+
+    // Roles are per property, so the property alone doesn't say what someone
+    // can do there — "Riverside (Caretaker)" does.
+    const describeAssignments = (u) => {
+        const entries = Object.entries(u.propertyRoles || {})
+        if (entries.length === 0) return "No properties assigned"
+        return entries
+            .map(([id, role]) => `${propertyName(id)} (${roleLabel(role)})`)
+            .join(", ")
+    }
 
     // Keep the open sheet/modal in sync with fresh list data after a mutation.
     const liveUser = (u) => users.find((x) => x.id === u.id) || u
@@ -80,11 +91,9 @@ export default function UsersPage() {
                                 <Badge tone={statusTone("user", u.status)}>{u.status}</Badge>
                             </div>
 
-                            {u.role === "PROPERTY_MANAGER" && (
+                            {isPropertyScoped(u.role) && (
                                 <p className="text-sm text-neutral-50">
-                                    {u.assignedPropertyIds?.length
-                                        ? u.assignedPropertyIds.map(propertyName).join(", ")
-                                        : "No properties assigned"}
+                                    {describeAssignments(u)}
                                 </p>
                             )}
                         </button>

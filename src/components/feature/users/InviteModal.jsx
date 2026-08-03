@@ -2,9 +2,10 @@ import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {useInviteUser} from "@/hooks/useUsers"
 import {useProperties} from "@/hooks/useProperties"
-import useAuthStore from "@/store/authStore"
+import {useAccountRole} from "@/hooks/usePermissions"
+import {ROLE, assignableRoles, isPropertyScoped, roleLabel, roleOption} from "@/lib/roles"
 import {Button, Dialog, FormField, Input, Select, toast} from "@/components/ui"
-import PropertyChecklist from "./PropertyChecklist"
+import PropertyRoleList from "./PropertyRoleList"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const PHONE_PATTERN = {
@@ -14,26 +15,33 @@ const PHONE_PATTERN = {
 
 export default function InviteModal({onClose}) {
     const inviteUser = useInviteUser()
-    const currentRole = useAuthStore((s) => s.role)
+    // Managing users is an account-wide act, so this is the account role rather
+    // than whatever applies to the property currently in the switcher.
+    const currentRole = useAccountRole()
     const {data: properties = []} = useProperties()
-    const [role, setRole] = useState("PROPERTY_MANAGER")
-    const [propertyIds, setPropertyIds] = useState([])
+    const [role, setRole] = useState(ROLE.PROPERTY_MANAGER)
+    const [assignments, setAssignments] = useState([])
     const [error, setError] = useState("")
 
     const {register, handleSubmit, formState: {errors}} = useForm()
 
-    const toggleProperty = (id) =>
-        setPropertyIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
+    const roleOptions = assignableRoles(currentRole).map(roleOption)
+    const scoped = isPropertyScoped(role)
 
-    const roleOptions = [
-        {label: "Property Manager (assigned properties only)", value: "PROPERTY_MANAGER"},
-        ...(currentRole === "SUPER_ADMIN" ? [{label: "Admin (full access)", value: "ADMIN"}] : []),
-    ]
+    // Switching between the two scoped roles re-points every property already
+    // ticked, so the top-level choice stays the answer to "what are they here
+    // to do" and the per-property selects remain the exception.
+    const changeRole = (next) => {
+        setRole(next)
+        if (isPropertyScoped(next)) {
+            setAssignments((prev) => prev.map((a) => ({...a, role: next})))
+        }
+    }
 
     const onSubmit = async (data) => {
         setError("")
-        if (role === "PROPERTY_MANAGER" && propertyIds.length === 0) {
-            setError("Assign at least one property to a property manager")
+        if (scoped && assignments.length === 0) {
+            setError(`Assign at least one property to a ${roleLabel(role).toLowerCase()}`)
             return
         }
         try {
@@ -42,7 +50,7 @@ export default function InviteModal({onClose}) {
                 phoneNumber: data.phoneNumber,
                 email: data.email,
                 role,
-                propertyIds: role === "PROPERTY_MANAGER" ? propertyIds : [],
+                assignments: scoped ? assignments : [],
             })
             toast.success("Invitation sent", `${data.name} will receive an email.`)
             onClose()
@@ -84,13 +92,16 @@ export default function InviteModal({onClose}) {
                 </FormField>
 
                 <FormField label="Role">
-                    <Select value={role} onChange={(e) => setRole(e.target.value)} options={roleOptions}/>
+                    <Select value={role} onChange={(e) => changeRole(e.target.value)} options={roleOptions}/>
                 </FormField>
 
-                {role === "PROPERTY_MANAGER" && (
-                    <FormField label="Assigned properties">
-                        <PropertyChecklist properties={properties} selectedIds={propertyIds}
-                                           onToggle={toggleProperty}/>
+                {scoped && (
+                    <FormField
+                        label="Assigned properties"
+                        hint="Set the role per property — someone can run one and only collect rent at another."
+                    >
+                        <PropertyRoleList properties={properties} assignments={assignments}
+                                          defaultRole={role} onChange={setAssignments}/>
                     </FormField>
                 )}
 

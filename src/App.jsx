@@ -16,6 +16,7 @@ import PaymentsPage from "@/pages/PaymentsPage"
 import ReportsPage from "@/pages/ReportsPage"
 import SettingsPage from "@/pages/SettingsPage"
 import useAuthStore from "@/store/authStore"
+import {useCan} from "@/hooks/usePermissions"
 import {ConfirmProvider, ToastHost} from "@/components/ui"
 import BusinessProfilePage from "@/pages/BusinessProfilePage"
 import ReceiptSettingsPage from "@/pages/ReceiptSettingsPage"
@@ -47,18 +48,25 @@ function TokenGuard() {
     return null
 }
 
-// Admin/owner-only pages redirect PROPERTY_MANAGERs to their landing page.
-function AdminOnly({children}) {
-    const role = useAuthStore(s => s.role)
-    if (role === "PROPERTY_MANAGER") return <Navigate to="/tenants" replace/>
+/**
+ * Gates a route on a capability, redirecting to the user's own landing page
+ * rather than showing a page whose every request would 403.
+ *
+ * Capability rather than role: five roles don't split into "admin" and "not",
+ * and the capability the route needs is resolved against the property currently
+ * active in the switcher.
+ */
+function Require({can: capability, children}) {
+    const can = useCan()
+    if (!can(capability)) return <HomeRedirect/>
     return children
 }
 
-// Managers land on Tenants (Dashboard/Reports are admin-only); everyone else
-// on the Dashboard.
+// Anyone who can see portfolio figures lands on the Dashboard; everyone else
+// (property managers, caretakers) on Tenants, which is their home screen.
 function HomeRedirect() {
-    const role = useAuthStore(s => s.role)
-    return <Navigate to={role === "PROPERTY_MANAGER" ? "/tenants" : "/dashboard"} replace/>
+    const can = useCan()
+    return <Navigate to={can("viewReports") ? "/dashboard" : "/tenants"} replace/>
 }
 
 export default function App() {
@@ -77,20 +85,20 @@ export default function App() {
                     element={
                         <ProtectedRoute>
                             <Routes>
-                                <Route path="/dashboard" element={<AdminOnly><DashboardPage/></AdminOnly>}/>
+                                <Route path="/dashboard" element={<Require can="viewReports"><DashboardPage/></Require>}/>
                                 <Route path="/tenants" element={<TenantsPage/>}/>
                                 <Route path="/tenants/:id" element={<TenantDetailPage/>}/>
                                 <Route path="/units" element={<UnitsPage/>}/>
-                                <Route path="/properties" element={<AdminOnly><PropertiesPage/></AdminOnly>}/>
-                                <Route path="/users" element={<AdminOnly><UsersPage/></AdminOnly>}/>
-                                <Route path="/activity" element={<AdminOnly><ActivityPage/></AdminOnly>}/>
+                                <Route path="/properties" element={<Require can="manageProperties"><PropertiesPage/></Require>}/>
+                                <Route path="/users" element={<Require can="manageUsers"><UsersPage/></Require>}/>
+                                <Route path="/activity" element={<Require can="viewActivity"><ActivityPage/></Require>}/>
                                 <Route path="/agreements" element={<AgreementsPage/>}/>
                                 <Route path="/payments" element={<PaymentsPage/>}/>
-                                <Route path="/reports" element={<AdminOnly><ReportsPage/></AdminOnly>}/>
-                                <Route path="/settings" element={<AdminOnly><SettingsPage/></AdminOnly>}/>
+                                <Route path="/reports" element={<Require can="viewReports"><ReportsPage/></Require>}/>
+                                <Route path="/settings" element={<Require can="manageBranding"><SettingsPage/></Require>}/>
                                 <Route path="/settings/profile" element={<ProfilePage/>}/>
-                                <Route path="/settings/business-profile" element={<AdminOnly><BusinessProfilePage/></AdminOnly>}/>
-                                <Route path="/settings/receipt-settings" element={<AdminOnly><ReceiptSettingsPage/></AdminOnly>}/>
+                                <Route path="/settings/business-profile" element={<Require can="manageBranding"><BusinessProfilePage/></Require>}/>
+                                <Route path="/settings/receipt-settings" element={<Require can="manageBranding"><ReceiptSettingsPage/></Require>}/>
                                 <Route path="*" element={<HomeRedirect/>}/>
                             </Routes>
                         </ProtectedRoute>

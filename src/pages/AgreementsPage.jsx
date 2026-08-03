@@ -3,6 +3,7 @@ import {LogOut, Pencil, Plus} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useAgreements} from "@/hooks/useAgreements"
 import useDebouncedValue from "@/hooks/useDebouncedValue"
+import {useCan} from "@/hooks/usePermissions"
 import {
     Badge, Button, Card, DataTable, Pagination, SearchInput, SegmentedFilter, Toolbar,
 } from "@/components/ui"
@@ -27,6 +28,7 @@ export default function AgreementsPage() {
     const [moveOutAgreement, setMoveOutAgreement] = useState(null)
     const [editAgreement, setEditAgreement] = useState(null)
     const [selectedAgreementId, setSelectedAgreementId] = useState(null)
+    const canWrite = useCan()("writeAgreements")
 
     const query = useDebouncedValue(search)
 
@@ -91,12 +93,14 @@ export default function AgreementsPage() {
 
     const rowActions = (ag) => (
         <>
-            <Button size="sm" variant="outline" iconLeft={Pencil}
-                    title="Edit agreement" aria-label={`Edit agreement for ${ag.tenantName}`}
-                    onClick={() => setEditAgreement(ag)}>
-                Edit
-            </Button>
-            {ag.status === "ACTIVE" && (
+            {canWrite && (
+                <Button size="sm" variant="outline" iconLeft={Pencil}
+                        title="Edit agreement" aria-label={`Edit agreement for ${ag.tenantName}`}
+                        onClick={() => setEditAgreement(ag)}>
+                    Edit
+                </Button>
+            )}
+            {canWrite && ag.status === "ACTIVE" && (
                 <Button size="sm" variant="ghost" iconLeft={LogOut}
                         title="Record move-out" aria-label={`Record move-out for ${ag.tenantName}`}
                         className="text-danger-600 hover:bg-danger-50"
@@ -112,16 +116,19 @@ export default function AgreementsPage() {
             title="Agreements"
             subtitle="Tenancies, billing models and move-outs"
             showBack
-            actions={<Button iconLeft={Plus} onClick={() => setShowCreate(true)}>New Agreement</Button>}
+            actions={canWrite &&
+                <Button iconLeft={Plus} onClick={() => setShowCreate(true)}>New Agreement</Button>}
             mobileAction={
-                <button
-                    type="button"
-                    onClick={() => setShowCreate(true)}
-                    aria-label="New agreement"
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
-                >
-                    <Plus size={26}/>
-                </button>
+                canWrite && (
+                    <button
+                        type="button"
+                        onClick={() => setShowCreate(true)}
+                        aria-label="New agreement"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
+                    >
+                        <Plus size={26}/>
+                    </button>
+                )
             }
         >
             <Card bodyClass="p-0" header={
@@ -146,7 +153,7 @@ export default function AgreementsPage() {
                         search ? "Try adjusting your search or filters." : "Create the first agreement to get started."
                     }
                     emptyAction={
-                        !search && statusFilter === "ACTIVE" && (
+                        !search && statusFilter === "ACTIVE" && canWrite && (
                             <Button iconLeft={Plus} onClick={() => setShowCreate(true)}>New Agreement</Button>
                         )
                     }

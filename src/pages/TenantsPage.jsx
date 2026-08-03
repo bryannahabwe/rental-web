@@ -3,7 +3,7 @@ import {useNavigate} from "react-router-dom"
 import {ListTree, Pencil, Plus, Trash2} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useTenants} from "@/hooks/useTenants"
-import useAuthStore from "@/store/authStore"
+import {useCan} from "@/hooks/usePermissions"
 import useDebouncedValue from "@/hooks/useDebouncedValue"
 import {
     Badge, Button, Card, DataTable, Pagination, SearchInput, SegmentedFilter, Toolbar,
@@ -30,7 +30,9 @@ export default function TenantsPage() {
     const [editTenant, setEditTenant] = useState(null)
     const [deleteTenant, setDeleteTenant] = useState(null)
     const [ledgerTenantId, setLedgerTenantId] = useState(null)
-    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
+    const can = useCan()
+    const canWrite = can("writeTenants")
+    const canDelete = can("deleteRecords")
     const navigate = useNavigate()
 
     const query = useDebouncedValue(search)
@@ -114,12 +116,14 @@ export default function TenantsPage() {
                     Ledger
                 </Button>
             )}
-            <Button size="sm" variant="outline" iconLeft={Pencil}
-                    title="Edit tenant"
-                    aria-label={`Edit ${t.name}`}
-                    onClick={() => setEditTenant(t)}>
-                Edit
-            </Button>
+            {canWrite && (
+                <Button size="sm" variant="outline" iconLeft={Pencil}
+                        title="Edit tenant"
+                        aria-label={`Edit ${t.name}`}
+                        onClick={() => setEditTenant(t)}>
+                    Edit
+                </Button>
+            )}
             {canDelete && (
                 <Button size="sm" variant="ghost" iconLeft={Trash2}
                         title="Delete tenant"
@@ -137,17 +141,19 @@ export default function TenantsPage() {
             title="Tenants"
             subtitle="Everyone renting across your properties"
             actions={
-                <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Tenant</Button>
+                canWrite && <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Tenant</Button>
             }
             mobileAction={
-                <button
-                    type="button"
-                    onClick={() => setShowModal(true)}
-                    aria-label="Add tenant"
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
-                >
-                    <Plus size={26}/>
-                </button>
+                canWrite && (
+                    <button
+                        type="button"
+                        onClick={() => setShowModal(true)}
+                        aria-label="Add tenant"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
+                    >
+                        <Plus size={26}/>
+                    </button>
+                )
             }
         >
             <Card bodyClass="p-0" header={
@@ -182,7 +188,7 @@ export default function TenantsPage() {
                             : "Add your first tenant to get started."
                     }
                     emptyAction={
-                        !search && (
+                        !search && canWrite && (
                             <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Tenant</Button>
                         )
                     }

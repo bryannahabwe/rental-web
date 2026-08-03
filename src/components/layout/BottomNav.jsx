@@ -1,25 +1,26 @@
 import {NavLink} from "react-router-dom"
 import {Building2, CreditCard, FileText, LayoutDashboard, Settings, Users} from "lucide-react"
-import useAuthStore from "@/store/authStore"
+import {useCan} from "@/hooks/usePermissions"
 import {cn} from "@/lib/cn"
 
-const adminItems = [
-    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard},
-    {label: "Tenants", path: "/tenants", icon: Users},
-    {label: "Payments", path: "/payments", icon: CreditCard},
-    {label: "Settings", path: "/settings", icon: Settings},
-]
+// One list in priority order, each entry tagged with the capability it needs;
+// the bar shows the first MAX_ITEMS a user can actually reach. Two hardcoded
+// arrays can't express five roles, and a role that matched neither used to fall
+// through to the admin bar.
+const MAX_ITEMS = 4
 
-const managerItems = [
-    {label: "Tenants", path: "/tenants", icon: Users},
-    {label: "Units", path: "/units", icon: Building2},
-    {label: "Payments", path: "/payments", icon: CreditCard},
-    {label: "Agreements", path: "/agreements", icon: FileText},
+const navCandidates = [
+    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, can: "viewReports"},
+    {label: "Tenants", path: "/tenants", icon: Users, can: "viewOperations"},
+    {label: "Payments", path: "/payments", icon: CreditCard, can: "viewOperations"},
+    {label: "Units", path: "/units", icon: Building2, can: "viewOperations"},
+    {label: "Agreements", path: "/agreements", icon: FileText, can: "viewOperations"},
+    {label: "Settings", path: "/settings", icon: Settings, can: "manageBranding"},
 ]
 
 export default function BottomNav() {
-    const role = useAuthStore((s) => s.role)
-    const navItems = role === "PROPERTY_MANAGER" ? managerItems : adminItems
+    const can = useCan()
+    const navItems = navCandidates.filter((i) => can(i.can)).slice(0, MAX_ITEMS)
 
     return (
         <nav

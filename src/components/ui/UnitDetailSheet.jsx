@@ -9,7 +9,14 @@ import {LoadingPanel} from "./Loader"
 import {formatUGX} from "@/lib/format"
 import {statusLabel, statusTone} from "@/lib/statusTone"
 
-export default function UnitDetailSheet({unitId, canDelete = true, onClose, onEdit, onDelete}) {
+export default function UnitDetailSheet({
+                                            unitId,
+                                            canEdit = true,
+                                            canDelete = true,
+                                            onClose,
+                                            onEdit,
+                                            onDelete,
+                                        }) {
     const {data: unit, isLoading} = useUnit(unitId)
 
     const status = unit?.isAvailable ? "AVAILABLE" : "OCCUPIED"
@@ -49,17 +56,19 @@ export default function UnitDetailSheet({unitId, canDelete = true, onClose, onEd
                     </div>
 
                     <div className="flex gap-2.5">
-                        <Button
-                            className="flex-1"
-                            variant="outline"
-                            iconLeft={Pencil}
-                            onClick={() => {
-                                onEdit(unit)
-                                onClose()
-                            }}
-                        >
-                            Edit
-                        </Button>
+                        {canEdit && (
+                            <Button
+                                className="flex-1"
+                                variant="outline"
+                                iconLeft={Pencil}
+                                onClick={() => {
+                                    onEdit(unit)
+                                    onClose()
+                                }}
+                            >
+                                Edit
+                            </Button>
+                        )}
                         {canDelete && (
                             <Button
                                 className="flex-1 text-danger-600 hover:bg-danger-50"

@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react"
 import {useNavigate} from "react-router-dom"
 import {Building2, Check, ChevronsUpDown, Plus} from "lucide-react"
 import usePropertyStore from "@/store/propertyStore"
-import useAuthStore from "@/store/authStore"
+import {useIsPropertyScoped} from "@/hooks/usePermissions"
 import {useProperties} from "@/hooks/useProperties"
 import {cn} from "@/lib/cn"
 
@@ -19,7 +19,11 @@ export default function PropertySwitcher() {
     const {data: properties = []} = useProperties()
     const selectedPropertyId = usePropertyStore((s) => s.selectedPropertyId)
     const setSelectedProperty = usePropertyStore((s) => s.setSelectedProperty)
-    const isManager = useAuthStore((s) => s.role === "PROPERTY_MANAGER")
+    // Deliberately the ACCOUNT role, not the effective one: no property-scoped
+    // user has the "All properties" aggregate, and deriving this from the
+    // effective role would make the switcher's options depend on the selection
+    // the switcher itself controls.
+    const isScoped = useIsPropertyScoped()
     const [open, setOpen] = useState(false)
     const ref = useRef(null)
 
@@ -38,8 +42,8 @@ export default function PropertySwitcher() {
     useEffect(() => {
         if (!properties.length) return
         const stillValid = selectedPropertyId && properties.some((p) => p.id === selectedPropertyId)
-        if (isManager) {
-            // Managers have no aggregate view — always land on an assigned property.
+        if (isScoped) {
+            // Scoped staff have no aggregate view — always land on an assigned property.
             if (!stillValid) setSelectedProperty(properties[0].id)
         } else if (selectedPropertyId && !stillValid) {
             // Selected property was deleted / account changed → back to "All".
@@ -47,7 +51,7 @@ export default function PropertySwitcher() {
         } else if (selectedPropertyId === null && properties.length === 1) {
             setSelectedProperty(properties[0].id)
         }
-    }, [properties, selectedPropertyId, setSelectedProperty, isManager])
+    }, [properties, selectedPropertyId, setSelectedProperty, isScoped])
 
     const current = properties.find((p) => p.id === selectedPropertyId)
     const label = current ? current.name : "All properties"
@@ -84,7 +88,7 @@ export default function PropertySwitcher() {
                     className="absolute inset-x-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-xl border border-neutral-5 bg-white shadow-dialog animate-scale-in"
                 >
                     <div className="max-h-65 overflow-y-auto p-1.5">
-                        {!isManager && (
+                        {!isScoped && (
                             <SwitchRow
                                 active={selectedPropertyId === null}
                                 title="All properties"
@@ -103,7 +107,7 @@ export default function PropertySwitcher() {
                         ))}
                     </div>
 
-                    {!isManager && (
+                    {!isScoped && (
                         <button
                             type="button"
                             onClick={() => {

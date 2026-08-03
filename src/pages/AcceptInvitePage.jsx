@@ -3,6 +3,8 @@ import {useNavigate, useSearchParams} from "react-router-dom"
 import {useQueryClient} from "@tanstack/react-query"
 import {authService} from "@/services/authService"
 import useAuthStore from "@/store/authStore"
+import usePropertyStore from "@/store/propertyStore"
+import {roleCan} from "@/lib/roles"
 import AuthLayout from "@/components/layout/AuthLayout"
 import {Button, FormField, Input, LoadingPanel} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -13,6 +15,7 @@ export default function AcceptInvitePage() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const setAuth = useAuthStore((s) => s.setAuth)
+    const setSelectedProperty = usePropertyStore((s) => s.setSelectedProperty)
 
     const [invite, setInvite] = useState(null)
     const [loadError, setLoadError] = useState("")
@@ -47,7 +50,13 @@ export default function AcceptInvitePage() {
             const res = await authService.acceptInvite({token, password})
             queryClient.clear()
             setAuth(res.data)
-            navigate(res.data.role === "PROPERTY_MANAGER" ? "/tenants" : "/dashboard", {replace: true})
+            // Activate the property the API nominated — scoped staff have no
+            // "All properties" view to fall back on.
+            if (res.data.defaultPropertyId) {
+                setSelectedProperty(res.data.defaultPropertyId)
+            }
+            navigate(roleCan(res.data.role, "viewReports") ? "/dashboard" : "/tenants",
+                {replace: true})
         } catch (err) {
             setError(getErrorMessage(err, "Could not accept the invitation"))
         } finally {

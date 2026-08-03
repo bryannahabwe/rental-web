@@ -2,7 +2,7 @@ import {useState} from "react"
 import {Building2, Home, Pencil, Plus, Trash2, Users} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useDeleteProperty, useProperties} from "@/hooks/useProperties"
-import useAuthStore from "@/store/authStore"
+import {useCan} from "@/hooks/usePermissions"
 import {Button, EmptyState, LoadingPanel, toast, useConfirm} from "@/components/ui"
 import PropertyModal from "@/components/feature/properties/PropertyModal"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -11,7 +11,7 @@ export default function PropertiesPage() {
     const {data: properties = [], isLoading} = useProperties()
     const [showModal, setShowModal] = useState(false)
     const [editProperty, setEditProperty] = useState(null)
-    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
+    const canDelete = useCan()("deleteRecords")
     const confirm = useConfirm()
     const deleteProperty = useDeleteProperty()
 

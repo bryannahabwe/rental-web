@@ -4,28 +4,30 @@ import {
 } from "lucide-react"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
+import {useCan} from "@/hooks/usePermissions"
 import PropertySwitcher from "./PropertySwitcher"
 import {Avatar} from "@/components/ui"
 import {cn} from "@/lib/cn"
 
-// managerOk = visible to PROPERTY_MANAGERs; everything else is admin/owner-only.
+// `can` is the capability a link needs — the same one gating its route in
+// App.jsx, so the menu can't offer a page that redirects straight back.
 const mainLinks = [
-    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, managerOk: false},
-    {label: "Tenants", path: "/tenants", icon: Users, managerOk: true},
+    {label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, can: "viewReports"},
+    {label: "Tenants", path: "/tenants", icon: Users, can: "viewOperations"},
 ]
 
 const financialLinks = [
-    {label: "Payments", path: "/payments", icon: CreditCard, managerOk: true},
-    {label: "Reports", path: "/reports", icon: BarChart3, managerOk: false},
+    {label: "Payments", path: "/payments", icon: CreditCard, can: "viewOperations"},
+    {label: "Reports", path: "/reports", icon: BarChart3, can: "viewReports"},
 ]
 
 const manageLinks = [
-    {label: "Properties", path: "/properties", icon: Home, managerOk: false},
-    {label: "Units", path: "/units", icon: Building2, managerOk: true},
-    {label: "Agreements", path: "/agreements", icon: FileText, managerOk: true},
-    {label: "Users", path: "/users", icon: UserCog, managerOk: false},
-    {label: "Activity", path: "/activity", icon: Activity, managerOk: false},
-    {label: "Settings", path: "/settings", icon: Settings, managerOk: false},
+    {label: "Properties", path: "/properties", icon: Home, can: "manageProperties"},
+    {label: "Units", path: "/units", icon: Building2, can: "viewOperations"},
+    {label: "Agreements", path: "/agreements", icon: FileText, can: "viewOperations"},
+    {label: "Users", path: "/users", icon: UserCog, can: "manageUsers"},
+    {label: "Activity", path: "/activity", icon: Activity, can: "viewActivity"},
+    {label: "Settings", path: "/settings", icon: Settings, can: "manageBranding"},
 ]
 
 /**
@@ -67,13 +69,14 @@ function SidebarSection({label, links}) {
 }
 
 export default function Sidebar() {
-    const {landlord, logout, role} = useAuthStore()
+    const {landlord, logout} = useAuthStore()
     const {settings, clearSettings} = useSettingsStore()
     const navigate = useNavigate()
+    const can = useCan()
 
-    // Managers only see the sections they're allowed to act on.
-    const isManager = role === "PROPERTY_MANAGER"
-    const visible = (links) => links.filter((l) => !isManager || l.managerOk)
+    // Everyone only sees the sections they're allowed to act on — resolved
+    // against the active property, so switching can change the menu.
+    const visible = (links) => links.filter((l) => can(l.can))
 
     const companyName = settings?.companyName || "RentFlow"
     const logoUrl = settings?.logoUrl || null

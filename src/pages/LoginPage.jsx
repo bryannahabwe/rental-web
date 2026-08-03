@@ -6,6 +6,8 @@ import {authService} from "@/services/authService"
 import {settingsService} from "@/services/settingsService"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
+import usePropertyStore from "@/store/propertyStore"
+import {roleCan} from "@/lib/roles"
 import AuthLayout from "@/components/layout/AuthLayout"
 import {Button, FormField, Input} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -15,6 +17,7 @@ export default function LoginPage() {
     const queryClient = useQueryClient()
     const {setAuth} = useAuthStore()
     const {setSettings} = useSettingsStore()
+    const setSelectedProperty = usePropertyStore((s) => s.setSelectedProperty)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
@@ -33,6 +36,14 @@ export default function LoginPage() {
             queryClient.clear()
             setAuth(res.data)
 
+            // Activate the property the API nominated. Scoped staff have no
+            // "All properties" view, and this is the property whose role the
+            // API falls back to — so seeding it keeps our permissions and
+            // theirs pointed at the same place from the first request.
+            if (res.data.defaultPropertyId) {
+                setSelectedProperty(res.data.defaultPropertyId)
+            }
+
             // Fetch and store landlord settings immediately after login so
             // branding (company name, logo) loads everywhere right away.
             try {
@@ -42,7 +53,10 @@ export default function LoginPage() {
                 // Settings failure must not block login
             }
 
-            navigate("/dashboard", {replace: true})
+            // Land where this user can actually go: the Dashboard reads
+            // portfolio figures, which property-scoped staff can't see.
+            navigate(roleCan(res.data.role, "viewReports") ? "/dashboard" : "/tenants",
+                {replace: true})
         } catch (err) {
             setError(getErrorMessage(err, "Invalid credentials"))
         } finally {

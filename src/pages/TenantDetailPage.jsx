@@ -3,7 +3,7 @@ import {useNavigate, useParams} from "react-router-dom"
 import {Pencil, Trash2} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useTenant} from "@/hooks/useTenants"
-import useAuthStore from "@/store/authStore"
+import {useCan} from "@/hooks/usePermissions"
 import {Avatar, Badge, Button, Card, EmptyState, LoadingPanel} from "@/components/ui"
 import {formatCycle, formatUGX} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
@@ -37,7 +37,7 @@ export default function TenantDetailPage() {
     const {id} = useParams()
     const navigate = useNavigate()
     const {data: tenant, isLoading} = useTenant(id)
-    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
+    const canDelete = useCan()("deleteRecords")
     const [editing, setEditing] = useState(false)
     const [deleting, setDeleting] = useState(false)
 

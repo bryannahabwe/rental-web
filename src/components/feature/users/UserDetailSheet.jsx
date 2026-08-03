@@ -4,6 +4,7 @@ import useAuthStore from "@/store/authStore"
 import {Badge, Button, DetailList, DetailRow, Dialog, toast, useConfirm} from "@/components/ui"
 import {formatDate} from "@/lib/format"
 import {statusLabel, statusTone} from "@/lib/statusTone"
+import {ROLE, isPropertyScoped, roleLabel} from "@/lib/roles"
 import {canManage} from "./permissions"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -16,7 +17,7 @@ export default function UserDetailSheet({user, propertyName, onEdit, onClose}) {
 
     const editable = canManage(user, currentRole)
     const canDeactivate =
-        user.id !== currentUserId && user.role !== "SUPER_ADMIN" && user.status !== "DEACTIVATED"
+        user.id !== currentUserId && user.role !== ROLE.SUPER_ADMIN && user.status !== "DEACTIVATED"
 
     const handleResend = async () => {
         try {
@@ -47,9 +48,14 @@ export default function UserDetailSheet({user, propertyName, onEdit, onClose}) {
         }
     }
 
-    const assigned = !user.assignedPropertyIds || user.assignedPropertyIds.length === 0
+    // Roles are per property, so name the role alongside each one — the
+    // property alone doesn't say what they can do there.
+    const assignmentEntries = Object.entries(user.propertyRoles || {})
+    const assigned = assignmentEntries.length === 0
         ? "None assigned"
-        : user.assignedPropertyIds.map(propertyName).join(", ")
+        : assignmentEntries
+            .map(([id, role]) => `${propertyName(id)} (${roleLabel(role)})`)
+            .join(", ")
 
     return (
         <Dialog title="User Details" onClose={onClose}>
@@ -75,7 +81,7 @@ export default function UserDetailSheet({user, propertyName, onEdit, onClose}) {
                     />
                     <DetailRow label="Email" value={user.email || "—"}/>
                     <DetailRow label="Phone" value={user.phoneNumber || "—"}/>
-                    {user.role === "PROPERTY_MANAGER" && (
+                    {isPropertyScoped(user.role) && (
                         <DetailRow label="Assigned properties" value={assigned}/>
                     )}
                     <DetailRow label="Joined" value={formatDate(user.createdAt)}/>

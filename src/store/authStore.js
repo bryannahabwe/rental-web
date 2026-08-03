@@ -18,13 +18,22 @@ const useAuthStore = create(
             accessToken: null,
             refreshToken: null,
             landlord: null,
+            // The account role — the same for every property. The role that
+            // actually applies depends on the active property; derive it with
+            // useEffectiveRole() rather than reading this directly.
             role: null,
+            // propertyId -> role held there. Empty for account-wide roles, which
+            // reach every property as `role`.
+            propertyRoles: {},
+            assignedPropertyIds: [],
             userId: null,
 
             setAuth: (data) => set({
                 accessToken: data.accessToken,
                 refreshToken: data.refreshToken,
                 role: data.role,
+                propertyRoles: data.propertyRoles || {},
+                assignedPropertyIds: data.assignedPropertyIds || [],
                 userId: data.userId,
                 landlord: {
                     name: data.name,
@@ -33,16 +42,21 @@ const useAuthStore = create(
                 },
             }),
 
+            // Re-sync permissions from GET /users/me. The API applies a role
+            // change on the very next request, but our copy would stay stale
+            // until the next sign-in — so refresh it on app mount.
+            setPermissions: ({role, propertyRoles, assignedPropertyIds}) => set({
+                role,
+                propertyRoles: propertyRoles || {},
+                assignedPropertyIds: assignedPropertyIds || [],
+            }),
+
             setAccessToken: (accessToken) => set({accessToken}),
 
             // Patch the cached profile after a self-update (name / phone).
             updateLandlord: (patch) => set(state => ({
                 landlord: {...state.landlord, ...patch},
             })),
-
-            isManager: () => get().role === "PROPERTY_MANAGER",
-            isAdmin: () => get().role === "ADMIN" || get().role === "SUPER_ADMIN",
-            isSuperAdmin: () => get().role === "SUPER_ADMIN",
 
             logout: () => {
                 // Clear the active-property selection too, so the next account
@@ -53,6 +67,8 @@ const useAuthStore = create(
                     refreshToken: null,
                     landlord: null,
                     role: null,
+                    propertyRoles: {},
+                    assignedPropertyIds: [],
                     userId: null,
                 })
             },

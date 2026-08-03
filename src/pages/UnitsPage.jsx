@@ -2,7 +2,7 @@ import {useMemo, useState} from "react"
 import {Pencil, Plus, Trash2} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useDeleteUnit, useUnits} from "@/hooks/useUnits"
-import useAuthStore from "@/store/authStore"
+import {useCan} from "@/hooks/usePermissions"
 import useDebouncedValue from "@/hooks/useDebouncedValue"
 import {
     Badge, Button, Card, DataTable, Pagination, SearchInput, SegmentedFilter, Toolbar, toast, useConfirm,
@@ -29,7 +29,9 @@ export default function UnitsPage() {
     const [showModal, setShowModal] = useState(false)
     const [editUnit, setEditUnit] = useState(null)
     const [selectedUnitId, setSelectedUnitId] = useState(null)
-    const canDelete = useAuthStore((s) => s.role === "SUPER_ADMIN")
+    const can = useCan()
+    const canWrite = can("writeUnits")
+    const canDelete = can("deleteRecords")
     const confirm = useConfirm()
     const deleteUnit = useDeleteUnit()
 
@@ -91,11 +93,13 @@ export default function UnitsPage() {
 
     const rowActions = (u) => (
         <>
-            <Button size="sm" variant="outline" iconLeft={Pencil}
-                    title="Edit unit" aria-label={`Edit unit ${u.roomNumber}`}
-                    onClick={() => setEditUnit(u)}>
-                Edit
-            </Button>
+            {canWrite && (
+                <Button size="sm" variant="outline" iconLeft={Pencil}
+                        title="Edit unit" aria-label={`Edit unit ${u.roomNumber}`}
+                        onClick={() => setEditUnit(u)}>
+                    Edit
+                </Button>
+            )}
             {canDelete && (
                 <Button size="sm" variant="ghost" iconLeft={Trash2}
                         title="Delete unit" aria-label={`Delete unit ${u.roomNumber}`}
@@ -112,16 +116,18 @@ export default function UnitsPage() {
             title="Units"
             subtitle="Every rentable space across your properties"
             showBack
-            actions={<Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Unit</Button>}
+            actions={canWrite && <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Unit</Button>}
             mobileAction={
-                <button
-                    type="button"
-                    onClick={() => setShowModal(true)}
-                    aria-label="Add unit"
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
-                >
-                    <Plus size={26}/>
-                </button>
+                canWrite && (
+                    <button
+                        type="button"
+                        onClick={() => setShowModal(true)}
+                        aria-label="Add unit"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
+                    >
+                        <Plus size={26}/>
+                    </button>
+                )
             }
         >
             <Card bodyClass="p-0" header={
@@ -147,7 +153,8 @@ export default function UnitsPage() {
                         search ? "Try adjusting your search or filters." : "Add your first unit to get started."
                     }
                     emptyAction={
-                        !search && <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Unit</Button>
+                        !search && canWrite &&
+                        <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Unit</Button>
                     }
                 />
 
@@ -168,6 +175,7 @@ export default function UnitsPage() {
             {selectedUnitId && (
                 <UnitDetailSheet
                     unitId={selectedUnitId}
+                    canEdit={canWrite}
                     canDelete={canDelete}
                     onClose={() => setSelectedUnitId(null)}
                     onEdit={(unit) => setEditUnit(unit)}

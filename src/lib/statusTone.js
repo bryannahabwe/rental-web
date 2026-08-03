@@ -55,7 +55,11 @@ const TONES = {
     role: {
         SUPER_ADMIN: "primary",
         ADMIN: "primary",
+        // The two scoped roles share `info`; ACCOUNTANT is inert (reads only),
+        // so neutral rather than a colour that implies authority.
         PROPERTY_MANAGER: "info",
+        CARETAKER: "info",
+        ACCOUNTANT: "neutral",
     },
 }
 
@@ -64,6 +68,8 @@ const LABELS = {
         SUPER_ADMIN: "Owner",
         ADMIN: "Admin",
         PROPERTY_MANAGER: "Property Manager",
+        CARETAKER: "Caretaker",
+        ACCOUNTANT: "Accountant",
     },
     unit: {
         OCCUPIED: "Occupied",

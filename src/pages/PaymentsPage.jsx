@@ -3,6 +3,7 @@ import {Eye, Plus, X} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {usePayments} from "@/hooks/usePayments"
 import useDebouncedValue from "@/hooks/useDebouncedValue"
+import {useCan} from "@/hooks/usePermissions"
 import {
     Badge, Button, Card, DataTable, DateField, Pagination, SearchInput, Toolbar,
 } from "@/components/ui"
@@ -18,6 +19,7 @@ export default function PaymentsPage() {
     const [toDate, setToDate] = useState("")
     const [showModal, setShowModal] = useState(false)
     const [selectedPaymentId, setSelectedPaymentId] = useState(null)
+    const canRecord = useCan()("recordPayments")
 
     const query = useDebouncedValue(search)
     const hasFilters = !!(search || fromDate || toDate)
@@ -104,16 +106,19 @@ export default function PaymentsPage() {
         <AppShell
             title="Payments"
             subtitle="Every rent payment recorded across your properties"
-            actions={<Button iconLeft={Plus} onClick={() => setShowModal(true)}>Record Payment</Button>}
+            actions={canRecord &&
+                <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Record Payment</Button>}
             mobileAction={
-                <button
-                    type="button"
-                    onClick={() => setShowModal(true)}
-                    aria-label="Record payment"
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
-                >
-                    <Plus size={26}/>
-                </button>
+                canRecord && (
+                    <button
+                        type="button"
+                        onClick={() => setShowModal(true)}
+                        aria-label="Record payment"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
+                    >
+                        <Plus size={26}/>
+                    </button>
+                )
             }
         >
             <Card bodyClass="p-0" header={
@@ -169,7 +174,7 @@ export default function PaymentsPage() {
                             : "Record the first payment to get started."
                     }
                     emptyAction={
-                        !hasFilters && (
+                        !hasFilters && canRecord && (
                             <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Record Payment</Button>
                         )
                     }

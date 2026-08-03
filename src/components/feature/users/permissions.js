@@ -1,10 +1,13 @@
+import {ROLE} from "@/lib/roles"
+
 /**
  * Whether the current user may change another user's role/assignments.
- * The owner (SUPER_ADMIN) is never editable, and an admin may only manage
- * property managers — mirrors the backend's PUT /users/{id} guard.
+ * The owner (SUPER_ADMIN) is never editable, and an admin may not manage
+ * another admin — mirrors the backend's `assertCanAssignRole`.
  */
 export const canManage = (target, currentRole) => {
-    if (target.role === "SUPER_ADMIN") return false
-    if (currentRole === "ADMIN" && target.role !== "PROPERTY_MANAGER") return false
+    if (target.role === ROLE.SUPER_ADMIN) return false
+    if (currentRole === ROLE.ADMIN
+        && (target.role === ROLE.ADMIN || target.role === ROLE.SUPER_ADMIN)) return false
     return true
 }
