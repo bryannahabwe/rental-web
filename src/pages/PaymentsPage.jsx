@@ -68,12 +68,15 @@ export default function PaymentsPage() {
             card: "block", cardLabel: "Amount",
             cell: (p) => {
                 const short = p.expectedAmount != null && p.amount < p.expectedAmount
+                // Headline is what this payment put toward its own period
+                // (received − rolled over); the gross drops to the caption.
+                const applied = p.overpayment > 0 ? p.amount - p.overpayment : p.amount
                 return (
                     <div>
-                        <span className="tabular-nums">{formatUGX(p.amount)}</span>
+                        <span className="tabular-nums">{formatUGX(applied)}</span>
                         {p.overpayment > 0 ? (
                             <p className="mt-0.5 text-2xs font-normal tabular-nums text-info-600">
-                                {formatUGX(p.expectedAmount)} applied · {formatUGX(p.overpayment)} rolled over
+                                {formatUGX(p.amount)} received · {formatUGX(p.overpayment)} rolled over
                             </p>
                         ) : short ? (
                             <p className="mt-0.5 text-2xs font-normal tabular-nums text-neutral-40">

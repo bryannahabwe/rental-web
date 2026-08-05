@@ -91,13 +91,21 @@ export default function TenantLedgerView({tenantId}) {
             key: "balance", header: "Balance", align: "right", card: "meta", cardLabel: "Balance",
             cellClass: "whitespace-nowrap font-medium tabular-nums",
             cell: (c) => {
-                // Per-cycle balance: what THIS period still owes (expected − paid),
-                // counted only once the cycle is due. Negative = a credit on this
-                // cycle. Matches the Status column and the top-line Outstanding,
-                // unlike a cumulative cash running total.
-                const balance = (c.due ? Number(c.expectedAmount) : 0) - Number(c.paidAmount)
+                // Per-cycle balance: what THIS period still owes — always
+                // expected − paid, so it agrees with the Status column. A
+                // not-yet-due cycle that's been partly prepaid (e.g. a rollover
+                // covering 120k of a 180k month) reads PARTIAL with 60k left,
+                // NOT a 120k credit, which zeroing out expected used to produce.
+                // Negative = overpaid (a credit on this cycle).
+                const balance = Number(c.expectedAmount) - Number(c.paidAmount)
+                // Owed-but-overdue is the only alarming case (red). A positive
+                // balance on a not-yet-due cycle is simply rent still to come,
+                // so it stays neutral; settled (0) and credits stay green.
+                const tone = balance <= 0 ? "text-success-600"
+                    : c.due ? "text-danger-600"
+                        : "text-neutral-90"
                 return (
-                    <span className={balance > 0 ? "text-danger-600" : "text-success-600"}>
+                    <span className={tone}>
                         {balance < 0 ? `${formatUGX(Math.abs(balance))} cr` : formatUGX(balance)}
                     </span>
                 )
@@ -132,10 +140,17 @@ export default function TenantLedgerView({tenantId}) {
             cellClass: "whitespace-nowrap font-medium tabular-nums text-neutral-90",
             cell: (t) => (
                 <div>
-                    <span className="tabular-nums">{formatUGX(t.amount)}</span>
+                    {/* Lead with what this payment actually covered for THIS
+                        period (received − rolled over), so the headline agrees
+                        with the "For Period" column. The gross cash received
+                        moves to the caption — otherwise a 300k payment that only
+                        put 180k toward its period reads as a 300k period entry. */}
+                    <span className="tabular-nums">
+                        {formatUGX(t.overpayment > 0 ? t.amount - t.overpayment : t.amount)}
+                    </span>
                     {t.overpayment > 0 && (
                         <p className="mt-0.5 text-2xs font-normal tabular-nums text-info-600">
-                            {formatUGX(t.expectedAmount)} applied · {formatUGX(t.overpayment)} rolled over
+                            {formatUGX(t.amount)} received · {formatUGX(t.overpayment)} rolled over
                         </p>
                     )}
                 </div>

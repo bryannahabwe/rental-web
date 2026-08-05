@@ -46,7 +46,7 @@ export default function AppShell({
             <div className="flex min-h-screen min-w-0 flex-1 flex-col md:pl-60">
                 {/* ── Desktop topbar ── */}
                 <header
-                    className="sticky top-0 z-40 hidden shrink-0 items-center justify-between gap-4 border-b border-neutral-5 bg-white px-7 py-3 md:flex">
+                    className="sticky top-0 z-40 hidden shrink-0 items-center justify-between gap-4 border-b border-neutral-5 bg-white px-4 py-3 md:flex">
                     <div className="flex min-w-0 items-center gap-3">
                         {showBack && (
                             <button
@@ -104,7 +104,7 @@ export default function AppShell({
                 </header>
 
                 {/* ── Page content ── */}
-                <main className="flex-1 px-3.5 pt-4 pb-24 md:px-7 md:py-7 md:pb-10">
+                <main className="flex-1 px-3 pt-4 pb-24 md:px-4 md:py-7 md:pb-10">
                     <div className="mx-auto w-full max-w-[1600px]">{children}</div>
                 </main>
             </div>
