@@ -17,6 +17,11 @@ export function useCreatePayment() {
         onSuccess: () => {
             void queryClient.invalidateQueries({queryKey: ["payments"]})
             void queryClient.invalidateQueries({queryKey: ["reports"]})
+            // A payment rewrites the tenant's ledger (cycle balances,
+            // rollovers, transaction history), so refresh those too —
+            // otherwise the ledger keeps showing pre-payment figures while
+            // the payments list updates. Covers ["tenants", id, "ledger"].
+            void queryClient.invalidateQueries({queryKey: ["tenants"]})
         },
     })
 }
