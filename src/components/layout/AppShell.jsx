@@ -104,8 +104,8 @@ export default function AppShell({
                 </header>
 
                 {/* ── Page content ── */}
-                <main className="flex-1 px-3 pt-4 pb-24 md:px-4 md:py-7 md:pb-10">
-                    <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+                <main className="flex-1 px-3 pt-4 pb-24 md:px-6 md:py-7 md:pb-10">
+                    <div className="w-full">{children}</div>
                 </main>
             </div>
 
