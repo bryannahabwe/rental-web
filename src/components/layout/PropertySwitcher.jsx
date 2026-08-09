@@ -2,17 +2,41 @@ import {useEffect, useRef, useState} from "react"
 import {useNavigate} from "react-router-dom"
 import {Building2, Check, ChevronsUpDown, Plus} from "lucide-react"
 import usePropertyStore from "@/store/propertyStore"
-import {useIsPropertyScoped} from "@/hooks/usePermissions"
+import {useHasMultipleProperties, useIsPropertyScoped} from "@/hooks/usePermissions"
 import {useProperties} from "@/hooks/useProperties"
 import {cn} from "@/lib/cn"
 
 const ALL = "__all__"
+
+const TRIGGER_CLASS =
+    "flex w-full items-center gap-2.5 rounded-lg border border-white/15 bg-white/8 px-3 py-2.5 text-left text-white"
+
+/** The icon + "Property" label + name, shared by the interactive trigger and
+ *  the static single-property label. */
+function SwitcherFace({label}) {
+    return (
+        <>
+            <span
+                className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-md bg-white/15 text-white">
+                <Building2 size={15}/>
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block text-2xs uppercase tracking-[0.06em] text-white/50">Property</span>
+                <span className="block truncate text-sm font-semibold text-white">{label}</span>
+            </span>
+        </>
+    )
+}
 
 /**
  * Workspace-style property switcher. Lists the landlord's properties plus an
  * "All properties" aggregate option, and lets them jump to the manage screen.
  * Rendered on the dark secondary-900 sidebar/top-bar, so the trigger uses the
  * white-alpha system while the dropdown itself is a light popover.
+ *
+ * With a single property there's nothing to switch to, so it collapses to a
+ * static label — the property name stays as context/identity, but without a
+ * dropdown affordance that would do nothing.
  */
 export default function PropertySwitcher() {
     const navigate = useNavigate()
@@ -24,6 +48,7 @@ export default function PropertySwitcher() {
     // effective role would make the switcher's options depend on the selection
     // the switcher itself controls.
     const isScoped = useIsPropertyScoped()
+    const interactive = useHasMultipleProperties()
     const [open, setOpen] = useState(false)
     const ref = useRef(null)
 
@@ -35,30 +60,26 @@ export default function PropertySwitcher() {
         return () => document.removeEventListener("mousedown", handler)
     }, [])
 
-    // Keep the selection valid: if the active property was deleted (or the
-    // account changed), fall back to "All properties" so we don't send a stale
-    // X-Property-Id that silently filters everything to nothing. Also auto-pick
-    // the single property when a landlord only has one.
-    useEffect(() => {
-        if (!properties.length) return
-        const stillValid = selectedPropertyId && properties.some((p) => p.id === selectedPropertyId)
-        if (isScoped) {
-            // Scoped staff have no aggregate view — always land on an assigned property.
-            if (!stillValid) setSelectedProperty(properties[0].id)
-        } else if (selectedPropertyId && !stillValid) {
-            // Selected property was deleted / account changed → back to "All".
-            setSelectedProperty(null)
-        } else if (selectedPropertyId === null && properties.length === 1) {
-            setSelectedProperty(properties[0].id)
-        }
-    }, [properties, selectedPropertyId, setSelectedProperty, isScoped])
-
+    // Selection validity (auto-pick, stale fallback) lives in
+    // usePropertySelectionSync, mounted app-wide.
     const current = properties.find((p) => p.id === selectedPropertyId)
     const label = current ? current.name : "All properties"
 
     const choose = (id) => {
         setSelectedProperty(id === ALL ? null : id)
         setOpen(false)
+    }
+
+    // Single property → static label. Keep the property's identity visible, but
+    // drop the dropdown that would only ever offer the one option.
+    if (!interactive) {
+        const only = current ?? properties[0]
+        if (!only) return null
+        return (
+            <div className={TRIGGER_CLASS}>
+                <SwitcherFace label={only.name}/>
+            </div>
+        )
     }
 
     return (
@@ -68,17 +89,9 @@ export default function PropertySwitcher() {
                 onClick={() => setOpen((v) => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={open}
-                className="flex w-full items-center gap-2.5 rounded-lg border border-white/15 bg-white/8 px-3 py-2.5 text-left text-white transition-colors hover:bg-white/12"
+                className={cn(TRIGGER_CLASS, "transition-colors hover:bg-white/12")}
             >
-                <span
-                    className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-md bg-white/15 text-white">
-                    <Building2 size={15}/>
-                </span>
-                <span className="min-w-0 flex-1">
-                    <span
-                        className="block text-2xs uppercase tracking-[0.06em] text-white/50">Property</span>
-                    <span className="block truncate text-sm font-semibold text-white">{label}</span>
-                </span>
+                <SwitcherFace label={label}/>
                 <ChevronsUpDown size={15} className="shrink-0 text-white/60"/>
             </button>
 

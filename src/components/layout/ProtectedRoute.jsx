@@ -1,6 +1,6 @@
 import {Navigate} from "react-router-dom"
 import useAuthStore from "@/store/authStore"
-import {useSyncPermissions} from "@/hooks/usePermissions"
+import {usePropertySelectionSync, useSyncPermissions} from "@/hooks/usePermissions"
 
 export default function ProtectedRoute({children}) {
     // Select individual slices, not the whole store — this component wraps the
@@ -31,5 +31,6 @@ export default function ProtectedRoute({children}) {
  */
 function Authenticated({children}) {
     useSyncPermissions()
+    usePropertySelectionSync()
     return children
 }

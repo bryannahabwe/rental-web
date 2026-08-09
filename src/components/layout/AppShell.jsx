@@ -71,7 +71,7 @@ export default function AppShell({
                     {actions && <div className="flex shrink-0 items-center gap-2.5">{actions}</div>}
                 </header>
 
-                {/* ── Mobile topbar — one sticky block, brand row + property row ── */}
+                {/* ── Mobile topbar — one sticky block, page row + property row ── */}
                 <header className="sticky top-0 z-40 shrink-0 bg-secondary-900 md:hidden">
                     <div className="flex min-h-15 items-center justify-between gap-3 px-4 py-2.5">
                         <div className="flex min-w-0 items-center gap-2.5">
@@ -85,14 +85,23 @@ export default function AppShell({
                                     <ArrowLeft size={20}/>
                                 </button>
                             )}
+                            {/* The current page, so mobile users know where they are —
+                                the bottom nav shows "More" for every overflow page, and
+                                the business name already lives in the avatar menu and
+                                the property label below. */}
                             <div className="min-w-0">
-                                <p className="truncate font-heading text-base leading-none tracking-[0.01em] text-white">
-                                    {companyName}
-                                </p>
+                                {eyebrow && (
+                                    <p className="text-2xs font-medium uppercase tracking-wide text-white/50">{eyebrow}</p>
+                                )}
+                                <h1 className="truncate font-heading text-base leading-none tracking-[0.01em] text-white">
+                                    {title}
+                                </h1>
                                 {/* Two lines, not one: the sticky bar can afford the
                                     extra line, and several page subtitles are
                                     sentences that lose their point when clipped. */}
-                                <p className="mt-1 line-clamp-2 text-xs leading-snug text-white/55">{subtitle ?? title}</p>
+                                {subtitle && (
+                                    <p className="mt-1 line-clamp-2 text-xs leading-snug text-white/55">{subtitle}</p>
+                                )}
                             </div>
                         </div>
                         <AvatarMenu/>
