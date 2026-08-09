@@ -15,6 +15,7 @@ import AgreementsPage from "@/pages/AgreementsPage"
 import PaymentsPage from "@/pages/PaymentsPage"
 import ReportsPage from "@/pages/ReportsPage"
 import SettingsPage from "@/pages/SettingsPage"
+import MorePage from "@/pages/MorePage"
 import useAuthStore from "@/store/authStore"
 import {useCan} from "@/hooks/usePermissions"
 import {ConfirmProvider, ToastHost} from "@/components/ui"
@@ -103,6 +104,8 @@ export default function App() {
                                 <Route path="/settings/profile" element={<ProfilePage/>}/>
                                 <Route path="/settings/business-profile" element={<Require can="manageBranding"><BusinessProfilePage/></Require>}/>
                                 <Route path="/settings/receipt-settings" element={<Require can="manageBranding"><ReceiptSettingsPage/></Require>}/>
+                                {/* Mobile "More" hub — everything the bottom nav can't fit as a tab. */}
+                                <Route path="/more" element={<MorePage/>}/>
                                 <Route path="*" element={<HomeRedirect/>}/>
                             </Routes>
                         </ProtectedRoute>

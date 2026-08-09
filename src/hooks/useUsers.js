@@ -54,3 +54,13 @@ export function useResendInvite() {
         onSuccess: () => queryClient.invalidateQueries({queryKey: ["users"]}),
     })
 }
+
+export function useTransferOwnership() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: usersService.transferOwnership,
+        // Roles change for both the caller and the target, so refresh the user
+        // list and the caller's own permissions.
+        onSuccess: () => queryClient.invalidateQueries({queryKey: ["users"]}),
+    })
+}

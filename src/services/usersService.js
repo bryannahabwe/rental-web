@@ -8,4 +8,5 @@ export const usersService = {
     update: (id, data) => api.put(`/users/${id}`, data),
     deactivate: (id) => api.post(`/users/${id}/deactivate`),
     resendInvite: (id) => api.post(`/users/${id}/resend-invite`),
+    transferOwnership: (id) => api.post(`/users/${id}/transfer-ownership`),
 }

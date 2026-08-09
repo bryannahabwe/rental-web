@@ -1,5 +1,5 @@
-import {Pencil, Send, ShieldOff, UserCog} from "lucide-react"
-import {useDeactivateUser, useResendInvite} from "@/hooks/useUsers"
+import {Crown, Pencil, Send, ShieldOff, UserCog} from "lucide-react"
+import {useDeactivateUser, useResendInvite, useTransferOwnership} from "@/hooks/useUsers"
 import useAuthStore from "@/store/authStore"
 import {Badge, Button, DetailList, DetailRow, Dialog, toast, useConfirm} from "@/components/ui"
 import {formatDate} from "@/lib/format"
@@ -13,11 +13,20 @@ export default function UserDetailSheet({user, propertyName, onEdit, onClose}) {
     const currentUserId = useAuthStore((s) => s.userId)
     const deactivateUser = useDeactivateUser()
     const resendInvite = useResendInvite()
+    const transferOwnership = useTransferOwnership()
     const confirm = useConfirm()
 
     const editable = canManage(user, currentRole)
     const canDeactivate =
         user.id !== currentUserId && user.role !== ROLE.SUPER_ADMIN && user.status !== "DEACTIVATED"
+
+    // Only the current owner can hand ownership over, and only to another active
+    // admin — the same rule the API enforces.
+    const canTransferOwnership =
+        currentRole === ROLE.SUPER_ADMIN &&
+        user.id !== currentUserId &&
+        user.role === ROLE.ADMIN &&
+        user.status === "ACTIVE"
 
     const handleResend = async () => {
         try {
@@ -45,6 +54,26 @@ export default function UserDetailSheet({user, propertyName, onEdit, onClose}) {
             onClose()
         } catch (err) {
             toast.error("Couldn't deactivate the user", getErrorMessage(err))
+        }
+    }
+
+    // Handing over ownership demotes the current owner, so it's gated behind a
+    // type-to-confirm — the API applies the demotion on the caller's next login.
+    const handleTransferOwnership = async () => {
+        const ok = await confirm.ask({
+            title: "Transfer ownership?",
+            message: `${user.name} will become the account owner (Super Admin) and you'll be changed to Admin. This takes effect the next time you sign in.`,
+            confirmLabel: "Transfer ownership",
+            icon: Crown,
+            requireText: user.name,
+        })
+        if (!ok) return
+        try {
+            await transferOwnership.mutateAsync(user.id)
+            toast.success("Ownership transferred", `${user.name} is now the account owner`)
+            onClose()
+        } catch (err) {
+            toast.error("Couldn't transfer ownership", getErrorMessage(err))
         }
     }
 
@@ -108,6 +137,19 @@ export default function UserDetailSheet({user, propertyName, onEdit, onClose}) {
                     </Button>
                 )}
             </div>
+
+            {canTransferOwnership && (
+                <div className="mt-3 border-t border-neutral-5 pt-4">
+                    <Button className="w-full text-primary-700" variant="outline"
+                            iconLeft={Crown} loading={transferOwnership.isPending}
+                            onClick={handleTransferOwnership}>
+                        Make account owner
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-neutral-40">
+                        Hands full ownership to {user.name}. You'll become an Admin.
+                    </p>
+                </div>
+            )}
         </Dialog>
     )
 }
