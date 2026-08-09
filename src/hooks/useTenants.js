@@ -18,13 +18,18 @@ export function useAllTenants() {
     })
 }
 
+// Adding or removing a tenant changes the dashboard's counts and outstanding
+// totals, so reports must refresh alongside the tenant list.
+function invalidateTenantsAndReports(queryClient) {
+    void queryClient.invalidateQueries({queryKey: ["tenants"]})
+    void queryClient.invalidateQueries({queryKey: ["reports"]})
+}
+
 export function useCreateTenant() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: tenantsService.create,
-        onSuccess: () => {
-            void queryClient.invalidateQueries({queryKey: ["tenants"]})
-        },
+        onSuccess: () => invalidateTenantsAndReports(queryClient),
     })
 }
 
@@ -42,9 +47,7 @@ export function useDeleteTenant() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: tenantsService.delete,
-        onSuccess: () => {
-            void queryClient.invalidateQueries({queryKey: ["tenants"]})
-        },
+        onSuccess: () => invalidateTenantsAndReports(queryClient),
     })
 }
 

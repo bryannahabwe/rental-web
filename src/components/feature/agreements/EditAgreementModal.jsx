@@ -1,7 +1,7 @@
 import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {useUpdateAgreement} from "@/hooks/useAgreements"
-import {AmountInput, Button, DateField, Dialog, FormField, toast} from "@/components/ui"
+import {Alert, AmountInput, Button, DateField, Dialog, FormField, toast} from "@/components/ui"
 import {nullIfEmpty} from "@/lib/format"
 import {BillingDayHint, BillingModelField, OpeningBalanceField} from "./fields"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -88,7 +88,7 @@ export default function EditAgreementModal({agreement, onClose}) {
                     setBalanceSign={setBalanceSign}
                 />
 
-                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert>{error}</Alert>}
             </form>
         </Dialog>
     )

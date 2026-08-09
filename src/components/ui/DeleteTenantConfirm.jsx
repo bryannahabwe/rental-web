@@ -3,6 +3,7 @@ import {Trash2} from "lucide-react"
 import {useDeleteTenant} from "@/hooks/useTenants"
 import Dialog from "./Dialog"
 import Button from "./Button"
+import Alert from "./Alert"
 import {toast} from "./toastStore"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -53,7 +54,7 @@ export default function DeleteTenantConfirm({tenant, onClose, onDeleted}) {
                     removed. This cannot be undone.
                 </p>
                 {error && (
-                    <p className="mt-4 w-full rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>
+                    <Alert className="mt-4 w-full">{error}</Alert>
                 )}
             </div>
         </Dialog>

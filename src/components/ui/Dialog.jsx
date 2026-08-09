@@ -50,9 +50,47 @@ export default function Dialog({
         return () => document.removeEventListener("keydown", onKey)
     }, [dismissible, onClose])
 
-    // Move focus into the dialog so keyboard users don't stay behind it.
+    // Focus management: move focus into the dialog on open, keep Tab trapped
+    // inside it (WCAG 2.4.3), and return focus to the triggering element on
+    // close so keyboard users don't lose their place.
     useEffect(() => {
+        const previouslyFocused = document.activeElement
         surfaceRef.current?.focus()
+
+        const focusablesIn = (root) =>
+            Array.from(root?.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), ' +
+                'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ) ?? []).filter((el) => el.offsetParent !== null || el === document.activeElement)
+
+        const onKeyDown = (e) => {
+            if (e.key !== "Tab") return
+            const surface = surfaceRef.current
+            if (!surface) return
+            const focusables = focusablesIn(surface)
+            if (focusables.length === 0) {
+                // Nothing tabbable — keep focus on the surface itself.
+                e.preventDefault()
+                surface.focus()
+                return
+            }
+            const first = focusables[0]
+            const last = focusables[focusables.length - 1]
+            const active = document.activeElement
+            if (e.shiftKey && (active === first || active === surface)) {
+                e.preventDefault()
+                last.focus()
+            } else if (!e.shiftKey && active === last) {
+                e.preventDefault()
+                first.focus()
+            }
+        }
+
+        document.addEventListener("keydown", onKeyDown)
+        return () => {
+            document.removeEventListener("keydown", onKeyDown)
+            if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+        }
     }, [])
 
     const showsHandle = position === "responsive" || position === "bottom"

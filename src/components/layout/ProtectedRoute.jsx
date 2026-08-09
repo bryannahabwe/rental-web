@@ -3,7 +3,12 @@ import useAuthStore from "@/store/authStore"
 import {useSyncPermissions} from "@/hooks/usePermissions"
 
 export default function ProtectedRoute({children}) {
-    const {accessToken, isRefreshTokenExpired, logout} = useAuthStore()
+    // Select individual slices, not the whole store — this component wraps the
+    // entire authenticated app, and subscribing to the whole store re-rendered
+    // the tree on every token refresh (and every landlord/permission change).
+    const accessToken = useAuthStore((s) => s.accessToken)
+    const isRefreshTokenExpired = useAuthStore((s) => s.isRefreshTokenExpired)
+    const logout = useAuthStore((s) => s.logout)
 
     // No token at all → login
     if (!accessToken) {

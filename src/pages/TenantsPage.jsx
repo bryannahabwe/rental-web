@@ -44,17 +44,44 @@ export default function TenantsPage() {
         setPage(0)
     }
 
+    const onStatusChange = (value) => {
+        setStatusFilter(value)
+        setPage(0)
+    }
+
+    // periodStatus (PAID/PARTIAL/UNPAID) is computed per tenant server-side, not
+    // a filterable column — so a status filter can't be pushed to the query.
+    // When one is active we fetch a wide page and filter + paginate client-side,
+    // so the pagination totals reflect the *filtered* set rather than lying with
+    // the unfiltered count. With no filter, the server paginates as normal.
+    const PAGE_SIZE = 10
+    const FILTER_FETCH_SIZE = 200
+    const filtering = statusFilter !== "ALL"
+
     const {data, isLoading, error, refetch} = useTenants({
-        page, size: 10, sortBy: "createdAt", sortDir: "desc",
+        page: filtering ? 0 : page,
+        size: filtering ? FILTER_FETCH_SIZE : PAGE_SIZE,
+        sortBy: "createdAt", sortDir: "desc",
         search: query || undefined,
     })
 
-    const allTenants = data?.content || []
-    const tenants = statusFilter === "ALL"
-        ? allTenants
-        : allTenants.filter((t) => t.periodStatus === statusFilter)
+    const fetched = data?.content || []
+    const filtered = filtering
+        ? fetched.filter((t) => t.periodStatus === statusFilter)
+        : fetched
 
-    const totalPages = data?.totalPages || 0
+    const tenants = filtering
+        ? filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+        : filtered
+
+    const totalPages = filtering
+        ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+        : (data?.totalPages || 0)
+    const totalElements = filtering ? filtered.length : data?.totalElements
+
+    // If the property has more tenants than one wide page, the client-side
+    // filter can't see the overflow — say so rather than silently undercounting.
+    const truncated = filtering && (data?.totalElements ?? 0) > fetched.length
 
     // One definition drives the desktop table AND the mobile cards.
     const columns = useMemo(() => [
@@ -166,7 +193,7 @@ export default function TenantsPage() {
                     />
                     <SegmentedFilter
                         value={statusFilter}
-                        onChange={setStatusFilter}
+                        onChange={onStatusChange}
                         options={STATUS_OPTIONS}
                     />
                 </Toolbar>
@@ -194,13 +221,20 @@ export default function TenantsPage() {
                     }
                 />
 
+                {truncated && (
+                    <p className="border-t border-neutral-5 px-4 py-2 text-xs text-neutral-40">
+                        Showing the first {fetched.length} tenants. Narrow the list with search to
+                        filter the rest by status.
+                    </p>
+                )}
+
                 {totalPages > 1 && (
                     <Pagination
                         className="border-t border-neutral-5 px-4 py-2"
                         page={page}
-                        pageSize={10}
+                        pageSize={PAGE_SIZE}
                         totalPages={totalPages}
-                        totalElements={data?.totalElements}
+                        totalElements={totalElements}
                         onPageChange={setPage}
                     />
                 )}

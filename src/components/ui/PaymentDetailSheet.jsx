@@ -6,10 +6,11 @@ import {settingsService} from "@/services/settingsService"
 import {generateReceipt} from "@/utils/receiptGenerator"
 import Dialog from "./Dialog"
 import Button from "./Button"
+import Alert from "./Alert"
 import Badge from "./Badge"
 import ProgressBar from "./ProgressBar"
 import {DetailList, DetailRow} from "./DetailRow"
-import {EmptyState} from "./States"
+import {EmptyState, ErrorState} from "./States"
 import {LoadingPanel} from "./Loader"
 import {formatCycle, formatDate, formatUGX} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
@@ -21,7 +22,7 @@ const SECTION = "mb-3.5 text-2xs font-medium uppercase tracking-wide text-neutra
 const BAR_TONE = {PAID: "success", ROLLOVER: "info", PARTIAL: "warning"}
 
 export default function PaymentDetailSheet({paymentId, onClose}) {
-    const {data: payment, isLoading} = usePayment(paymentId)
+    const {data: payment, isLoading, isError, refetch} = usePayment(paymentId)
     const {settings} = useSettingsStore()
     const [downloading, setDownloading] = useState(false)
     const [error, setError] = useState("")
@@ -44,6 +45,8 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
         <Dialog title="Payment Details" onClose={onClose}>
             {isLoading ? (
                 <LoadingPanel/>
+            ) : isError ? (
+                <ErrorState onRetry={refetch}/>
             ) : !payment ? (
                 <EmptyState title="Payment not found" message="It may have been removed."/>
             ) : (
@@ -113,7 +116,7 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                     )}
 
                     {error && (
-                        <p className="mb-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>
+                        <Alert className="mb-3">{error}</Alert>
                     )}
 
                     <Button block iconLeft={Download} loading={downloading} onClick={handleDownload}>

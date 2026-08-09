@@ -3,7 +3,7 @@ import {useForm} from "react-hook-form"
 import {Camera, X} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useSettings, useUpdateSettings, useUploadLogo} from "@/hooks/useSettings"
-import {Button, Card, FormField, Input, LoadingPanel, Textarea, toast} from "@/components/ui"
+import {Alert, Button, Card, FormField, Input, LoadingPanel, Textarea, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const MAX_LOGO_BYTES = 5 * 1024 * 1024
@@ -131,7 +131,7 @@ export default function BusinessProfilePage() {
                         </div>
                     </Card>
 
-                    {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                    {error && <Alert>{error}</Alert>}
 
                     <Button type="submit" size="lg" loading={updateSettings.isPending}>Save changes</Button>
                 </form>

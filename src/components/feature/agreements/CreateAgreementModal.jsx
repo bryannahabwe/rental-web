@@ -4,7 +4,7 @@ import {useCreateAgreement} from "@/hooks/useAgreements"
 import {useAllTenants} from "@/hooks/useTenants"
 import {useAllUnits} from "@/hooks/useUnits"
 import {
-    AmountInput, Button, ChoiceGroup, DateField, Dialog, FormField, Select, toast,
+    Alert, AmountInput, Button, ChoiceGroup, DateField, Dialog, FormField, Select, toast,
 } from "@/components/ui"
 import {formatUGX, groupDigits, nullIfEmpty} from "@/lib/format"
 import {BillingDayHint, BillingModelField, OpeningBalanceField} from "./fields"
@@ -162,7 +162,7 @@ export default function CreateAgreementModal({onClose}) {
                     />
                 )}
 
-                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert>{error}</Alert>}
             </form>
         </Dialog>
     )

@@ -9,6 +9,7 @@ import FormField from "./FormField"
 import Input from "./Input"
 import Textarea from "./Textarea"
 import Select from "./Select"
+import Alert from "./Alert"
 import {toast} from "./toastStore"
 import {nullIfEmpty} from "@/lib/format"
 import {getErrorMessage} from "@/utils/errorMessage"
@@ -104,7 +105,7 @@ export default function TenantFormModal({tenant, onClose}) {
                     <Textarea {...register("address")} rows={2} placeholder="Home village or next-of-kin address"/>
                 </FormField>
 
-                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert>{error}</Alert>}
             </form>
         </Dialog>
     )

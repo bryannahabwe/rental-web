@@ -25,7 +25,11 @@ import ProfilePage from "@/pages/ProfilePage"
 // ── Token guard — checks on PWA resume ──────────────────
 function TokenGuard() {
     const navigate = useNavigate()
-    const {isRefreshTokenExpired, logout, accessToken} = useAuthStore()
+    // Individual selectors — TokenGuard mounts at the app root, so a whole-store
+    // subscription would re-run it on every auth change.
+    const accessToken = useAuthStore((s) => s.accessToken)
+    const isRefreshTokenExpired = useAuthStore((s) => s.isRefreshTokenExpired)
+    const logout = useAuthStore((s) => s.logout)
 
     useEffect(() => {
         const checkToken = () => {

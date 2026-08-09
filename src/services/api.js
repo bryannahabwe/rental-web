@@ -39,7 +39,7 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true
 
-            const {refreshToken, isRefreshTokenExpired, logout, setAccessToken} =
+            const {refreshToken, isRefreshTokenExpired, logout, setTokens} =
                 useAuthStore.getState()
 
             // Don't try refresh if refresh token is already expired
@@ -60,8 +60,10 @@ api.interceptors.response.use(
                 }
 
                 const response = await refreshPromise
-                const {accessToken} = response.data
-                setAccessToken(accessToken)
+                // The API rotates the refresh token on refresh — persist both so
+                // the refresh window keeps sliding with activity.
+                const {accessToken, refreshToken: rotatedRefreshToken} = response.data
+                setTokens({accessToken, refreshToken: rotatedRefreshToken})
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`
                 return api(originalRequest)
 

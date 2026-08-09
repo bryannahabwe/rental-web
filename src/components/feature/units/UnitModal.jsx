@@ -3,7 +3,7 @@ import {useForm} from "react-hook-form"
 import {useCreateUnit, useUpdateUnit} from "@/hooks/useUnits"
 import {useProperties} from "@/hooks/useProperties"
 import usePropertyStore from "@/store/propertyStore"
-import {AmountInput, Button, Dialog, FormField, Input, Textarea, Select, Toggle, toast} from "@/components/ui"
+import {Alert, AmountInput, Button, Dialog, FormField, Input, Textarea, Select, Toggle, toast} from "@/components/ui"
 import {nullIfEmpty} from "@/lib/format"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -116,7 +116,7 @@ export default function UnitModal({unit, onClose}) {
                 </div>
 
                 {error && (
-                    <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>
+                    <Alert>{error}</Alert>
                 )}
             </form>
         </Dialog>

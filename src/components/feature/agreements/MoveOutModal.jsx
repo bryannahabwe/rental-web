@@ -2,7 +2,7 @@ import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {LogOut} from "lucide-react"
 import {useMoveOut} from "@/hooks/useAgreements"
-import {Button, DateField, Dialog, FormField, toast} from "@/components/ui"
+import {Alert, Button, DateField, Dialog, FormField, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 export default function MoveOutModal({agreement, onClose}) {
@@ -56,7 +56,7 @@ export default function MoveOutModal({agreement, onClose}) {
                     />
                 </FormField>
 
-                {error && <p className="mt-4 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert className="mt-4">{error}</Alert>}
             </form>
         </Dialog>
     )

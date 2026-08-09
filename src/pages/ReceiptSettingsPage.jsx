@@ -2,7 +2,7 @@ import {useState} from "react"
 import {useForm} from "react-hook-form"
 import AppShell from "@/components/layout/AppShell"
 import {useSettings, useUpdateSettings} from "@/hooks/useSettings"
-import {Button, Card, ChoiceGroup, FormField, Input, LoadingPanel, Textarea, toast} from "@/components/ui"
+import {Alert, Button, Card, ChoiceGroup, FormField, Input, LoadingPanel, Textarea, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const NUMBERING_OPTIONS = [
@@ -91,7 +91,7 @@ export default function ReceiptSettingsPage() {
                         </FormField>
                     </Card>
 
-                    {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                    {error && <Alert>{error}</Alert>}
 
                     <Button type="submit" size="lg" loading={updateSettings.isPending}>Save changes</Button>
                 </form>

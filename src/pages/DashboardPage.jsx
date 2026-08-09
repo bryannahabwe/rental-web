@@ -53,6 +53,10 @@ export default function DashboardPage() {
 
     const payments = paymentsData?.content || []
     const allTenants = tenantsData?.content || []
+    // If a property somehow exceeds the wide fetch, the client-side totals below
+    // would silently understate. Detect it so the figure can be labelled partial
+    // rather than presented as exact.
+    const tenantsTruncated = (tenantsData?.totalElements ?? 0) > allTenants.length
 
     const outstandingTenants = allTenants.filter(
         (t) => t.periodStatus === "UNPAID" || t.periodStatus === "PARTIAL",
@@ -179,9 +183,11 @@ export default function DashboardPage() {
                     hint={
                         tenantsLoading
                             ? "Across all tenants"
-                            : outstandingTenants.length === 0
-                                ? "All tenants paid up"
-                                : `${outstandingTenants.length} tenant${outstandingTenants.length === 1 ? "" : "s"} owing`
+                            : tenantsTruncated
+                                ? `Partial — first ${allTenants.length} tenants`
+                                : outstandingTenants.length === 0
+                                    ? "All tenants paid up"
+                                    : `${outstandingTenants.length} tenant${outstandingTenants.length === 1 ? "" : "s"} owing`
                     }
                 />
             </div>

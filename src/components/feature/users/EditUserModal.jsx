@@ -3,7 +3,7 @@ import {useUpdateUser} from "@/hooks/useUsers"
 import {useProperties} from "@/hooks/useProperties"
 import {useAccountRole} from "@/hooks/usePermissions"
 import {assignableRoles, isPropertyScoped, roleLabel, roleOption} from "@/lib/roles"
-import {Button, Dialog, FormField, Input, Select, toast} from "@/components/ui"
+import {Alert, Button, Dialog, FormField, Input, Select, toast} from "@/components/ui"
 import PropertyRoleList from "./PropertyRoleList"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -97,7 +97,7 @@ export default function EditUserModal({user, onClose}) {
                     </FormField>
                 )}
 
-                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert>{error}</Alert>}
             </form>
         </Dialog>
     )

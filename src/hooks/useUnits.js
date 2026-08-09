@@ -18,11 +18,19 @@ export function useAllUnits() {
     })
 }
 
+// Unit changes move occupancy and the dashboard's unit counts, so reports must
+// refresh too — otherwise the summary/occupancy cards stay stale until their
+// staleTime lapses.
+function invalidateUnitsAndReports(queryClient) {
+    void queryClient.invalidateQueries({queryKey: ["units"]})
+    void queryClient.invalidateQueries({queryKey: ["reports"]})
+}
+
 export function useCreateUnit() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: unitsService.create,
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ["units"]}),
+        onSuccess: () => invalidateUnitsAndReports(queryClient),
     })
 }
 
@@ -30,7 +38,7 @@ export function useUpdateUnit() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: ({id, data}) => unitsService.update(id, data),
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ["units"]}),
+        onSuccess: () => invalidateUnitsAndReports(queryClient),
     })
 }
 
@@ -38,7 +46,7 @@ export function useDeleteUnit() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: unitsService.delete,
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ["units"]}),
+        onSuccess: () => invalidateUnitsAndReports(queryClient),
     })
 }
 

@@ -8,7 +8,7 @@ import useSettingsStore from "@/store/settingsStore"
 import {settingsService} from "@/services/settingsService"
 import {generateReceipt} from "@/utils/receiptGenerator"
 import {
-    AmountInput, Badge, Button, ChoiceGroup, DateField, Dialog, FormField, Input, Select, Tabs, Textarea, toast,
+    Alert, AmountInput, Badge, Button, ChoiceGroup, DateField, Dialog, FormField, Input, Select, Tabs, Textarea, toast,
 } from "@/components/ui"
 import {formatCycle, formatUGX, nullIfEmpty, todayStr} from "@/lib/format"
 import CyclePicker from "./CyclePicker"
@@ -46,12 +46,19 @@ export default function RecordPaymentModal({onClose}) {
     const [completedPayment, setCompletedPayment] = useState(null)
     const [receiptNumber, setReceiptNumber] = useState(null)
     const [receiptDownloading, setReceiptDownloading] = useState(false)
+    // Spans BOTH awaits below (payment + receipt-number). createPayment.isPending
+    // clears after the first await, so on its own it would re-enable the button
+    // during the receipt fetch and allow a double-submit.
+    const [submitting, setSubmitting] = useState(false)
     const [manualError, setManualError] = useState("")
     const [manualGenerating, setManualGenerating] = useState(false)
     const [manualStyle, setManualStyle] = useState(settings?.receiptStyle || "DIGITAL")
 
     const activeAgreements = agreementsData?.content || []
     const allTenants = tenantsData || []
+    // The picker shows one wide page; if there are more active agreements than
+    // that, the overflow isn't selectable — say so instead of hiding it.
+    const agreementsTruncated = (agreementsData?.totalElements ?? 0) > activeAgreements.length
 
     const {register, control, handleSubmit, watch, formState: {errors}} = useForm({
         defaultValues: {paymentDate: todayStr(), agreementId: ""},
@@ -100,6 +107,7 @@ export default function RecordPaymentModal({onClose}) {
             setError("Please select a payment period")
             return
         }
+        setSubmitting(true)
         try {
             const result = await createPayment.mutateAsync({
                 agreementId: data.agreementId,
@@ -116,6 +124,8 @@ export default function RecordPaymentModal({onClose}) {
             setCompletedPayment(result.data)
         } catch (err) {
             setError(getErrorMessage(err))
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -201,7 +211,8 @@ export default function RecordPaymentModal({onClose}) {
                 <>
                     <Button variant="outline" onClick={onClose}>Cancel</Button>
                     {isRecord ? (
-                        <Button type="submit" form="record-payment" loading={createPayment.isPending}>
+                        <Button type="submit" form="record-payment"
+                                loading={createPayment.isPending || submitting}>
                             Record payment
                         </Button>
                     ) : (
@@ -225,7 +236,10 @@ export default function RecordPaymentModal({onClose}) {
 
             {isRecord ? (
                 <form id="record-payment" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                    <FormField label="Tenant / Agreement" error={errors.agreementId?.message} required>
+                    <FormField label="Tenant / Agreement" error={errors.agreementId?.message} required
+                               hint={agreementsTruncated
+                                   ? `Showing the first ${activeAgreements.length} active agreements`
+                                   : undefined}>
                         <Select
                             {...register("agreementId", {required: "Please select an agreement"})}
                             invalid={!!errors.agreementId}
@@ -288,12 +302,14 @@ export default function RecordPaymentModal({onClose}) {
                         />
                     </FormField>
 
+                    {/* Informational, not an input — recorded payments are cash
+                        only today (the API's PaymentMethod has no other value).
+                        Use the Manual Receipt tab for other tender types. */}
                     <FormField label="Payment method">
-                        <div
-                            className="flex h-11 items-center gap-2 rounded-lg border border-neutral-15 bg-neutral-0 px-3.5">
+                        <p className="flex items-center gap-2 text-sm text-neutral-50">
                             <Badge size="sm" tone="primary">CASH</Badge>
-                            <span className="text-sm text-neutral-50">Cash payment</span>
-                        </div>
+                            Recorded as a cash payment
+                        </p>
                     </FormField>
 
                     <FormField label="Reference" hint="Optional">
@@ -304,7 +320,7 @@ export default function RecordPaymentModal({onClose}) {
                         <Textarea {...register("notes")} rows={2} placeholder="April rent payment…"/>
                     </FormField>
 
-                    {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                    {error && <Alert>{error}</Alert>}
                 </form>
             ) : (
                 <form id="manual-receipt" onSubmit={handleSubmitManual(onManualSubmit)} className="flex flex-col gap-4">
@@ -372,7 +388,7 @@ export default function RecordPaymentModal({onClose}) {
                     </FormField>
 
                     {manualError && (
-                        <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{manualError}</p>
+                        <Alert>{manualError}</Alert>
                     )}
                 </form>
             )}

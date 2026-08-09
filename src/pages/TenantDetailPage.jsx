@@ -4,7 +4,7 @@ import {Pencil, Trash2} from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import {useTenant} from "@/hooks/useTenants"
 import {useCan} from "@/hooks/usePermissions"
-import {Avatar, Badge, Button, Card, EmptyState, LoadingPanel} from "@/components/ui"
+import {Avatar, Badge, Button, Card, EmptyState, ErrorState, LoadingPanel} from "@/components/ui"
 import {formatCycle, formatUGX} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
 import TenantLedgerView from "@/components/ui/TenantLedgerView"
@@ -36,7 +36,7 @@ const SECTION = "mb-3.5 text-2xs font-medium uppercase tracking-wide text-neutra
 export default function TenantDetailPage() {
     const {id} = useParams()
     const navigate = useNavigate()
-    const {data: tenant, isLoading} = useTenant(id)
+    const {data: tenant, isLoading, isError, refetch} = useTenant(id)
     const canDelete = useCan()("deleteRecords")
     const [editing, setEditing] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -45,6 +45,8 @@ export default function TenantDetailPage() {
         <AppShell title={tenant?.name || "Tenant"} subtitle={tenant?.phone} showBack>
             {isLoading ? (
                 <LoadingPanel/>
+            ) : isError ? (
+                <ErrorState onRetry={refetch}/>
             ) : !tenant ? (
                 <EmptyState title="Tenant not found" message="This tenant may have been removed."/>
             ) : (

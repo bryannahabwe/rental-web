@@ -3,7 +3,7 @@ import {useForm} from "react-hook-form"
 import {Link, useNavigate} from "react-router-dom"
 import {authService} from "@/services/authService"
 import AuthLayout from "@/components/layout/AuthLayout"
-import {Button, FormField, Input, toast} from "@/components/ui"
+import {Alert, Button, FormField, Input, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 export default function RegisterPage() {
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                     />
                 </FormField>
 
-                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert>{error}</Alert>}
 
                 <Button type="submit" block size="lg" loading={loading}>Create account</Button>
             </form>

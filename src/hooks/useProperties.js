@@ -10,11 +10,18 @@ export function useProperties() {
     })
 }
 
+// Adding or removing a property changes the dashboard's portfolio figures, so
+// reports refresh alongside the property list.
+function invalidatePropertiesAndReports(queryClient) {
+    void queryClient.invalidateQueries({queryKey: ["properties"]})
+    void queryClient.invalidateQueries({queryKey: ["reports"]})
+}
+
 export function useCreateProperty() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: propertiesService.create,
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ["properties"]}),
+        onSuccess: () => invalidatePropertiesAndReports(queryClient),
     })
 }
 
@@ -30,6 +37,6 @@ export function useDeleteProperty() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: propertiesService.delete,
-        onSuccess: () => queryClient.invalidateQueries({queryKey: ["properties"]}),
+        onSuccess: () => invalidatePropertiesAndReports(queryClient),
     })
 }

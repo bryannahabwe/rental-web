@@ -3,7 +3,7 @@ import {useForm} from "react-hook-form"
 import AppShell from "@/components/layout/AppShell"
 import {useUpdateMe} from "@/hooks/useUsers"
 import useAuthStore from "@/store/authStore"
-import {Button, Card, FormField, Input, toast} from "@/components/ui"
+import {Alert, Button, Card, FormField, Input, toast} from "@/components/ui"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const PHONE_PATTERN = {
@@ -64,7 +64,7 @@ export default function ProfilePage() {
                     </div>
                 </Card>
 
-                {error && <p className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
+                {error && <Alert>{error}</Alert>}
 
                 <Button type="submit" size="lg" loading={updateMe.isPending}>Save changes</Button>
             </form>

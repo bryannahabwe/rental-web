@@ -31,10 +31,13 @@ export default function ToastHost() {
         >
             {toasts.map(({id, variant, title, description}) => {
                 const {Icon, chip, border} = VARIANT[variant] ?? VARIANT.info
+                // Errors/warnings interrupt (assertive); success/info are polite.
+                const assertive = variant === "error" || variant === "warning"
                 return (
                     <div
                         key={id}
-                        role="status"
+                        role={assertive ? "alert" : "status"}
+                        aria-live={assertive ? "assertive" : "polite"}
                         className={cn(
                             "pointer-events-auto flex items-start gap-3 rounded-2xl border bg-white p-4",
                             "shadow-dialog animate-slide-down",

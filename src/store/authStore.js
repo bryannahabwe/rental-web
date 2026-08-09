@@ -1,6 +1,7 @@
 import {create} from "zustand"
 import {persist} from "zustand/middleware"
 import usePropertyStore from "@/store/propertyStore"
+import useSettingsStore from "@/store/settingsStore"
 
 // Decode JWT expiry without a library
 const getTokenExpiry = (token) => {
@@ -53,6 +54,15 @@ const useAuthStore = create(
 
             setAccessToken: (accessToken) => set({accessToken}),
 
+            // Persist tokens after a refresh. The API rotates the refresh token
+            // on every /auth/refresh, so dropping it would freeze the refresh
+            // window at login time and force a logout 7 days later regardless of
+            // activity. Only overwrite fields the response actually carried.
+            setTokens: ({accessToken, refreshToken}) => set(state => ({
+                accessToken: accessToken ?? state.accessToken,
+                refreshToken: refreshToken ?? state.refreshToken,
+            })),
+
             // Patch the cached profile after a self-update (name / phone).
             updateLandlord: (patch) => set(state => ({
                 landlord: {...state.landlord, ...patch},
@@ -62,6 +72,10 @@ const useAuthStore = create(
                 // Clear the active-property selection too, so the next account
                 // that logs in doesn't inherit a stale property context.
                 usePropertyStore.getState().reset()
+                // Clear cached business settings (name, logo, receipt config) so
+                // they can't leak onto the next account's receipts on a shared
+                // device before its own settings load.
+                useSettingsStore.getState().clearSettings()
                 set({
                     accessToken: null,
                     refreshToken: null,
