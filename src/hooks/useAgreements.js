@@ -30,6 +30,10 @@ export function useMoveOut() {
             void queryClient.invalidateQueries({queryKey: ["agreements"]})
             void queryClient.invalidateQueries({queryKey: ["units"]})
             void queryClient.invalidateQueries({queryKey: ["reports"]})
+            // A deposit applied at move-out credits the tenant's balance and is
+            // reflected in the ledger, so refresh tenants + payments too.
+            void queryClient.invalidateQueries({queryKey: ["tenants"]})
+            void queryClient.invalidateQueries({queryKey: ["payments"]})
         },
     })
 }

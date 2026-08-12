@@ -1,4 +1,4 @@
-import {useState} from "react"
+import {useEffect, useState} from "react"
 import {useForm} from "react-hook-form"
 import {useCreateAgreement} from "@/hooks/useAgreements"
 import {useAllTenants} from "@/hooks/useTenants"
@@ -26,10 +26,22 @@ export default function CreateAgreementModal({onClose}) {
 
     const availableUnits = units.filter((u) => u.isAvailable)
 
-    const {register, control, handleSubmit, watch, formState: {errors}} = useForm()
+    const {register, control, handleSubmit, watch, setValue, formState: {errors}} = useForm()
     const selectedUnitId = watch("unitId")
     const selectedUnit = units.find((u) => u.id === selectedUnitId)
     const startDate = watch("startDate")
+
+    // Auto-fill the agreed rent from the chosen unit. The field stays editable,
+    // so a landlord can override it when the agreed rent differs from the
+    // unit's list rent; picking a different unit refreshes it to that rent.
+    useEffect(() => {
+        if (selectedUnit) {
+            setValue("rentAmount", selectedUnit.rentAmount, {shouldDirty: true})
+        }
+        // Keyed on the unit id only: we intentionally re-seed the rent when the
+        // unit changes, not on every keystroke in the rent field.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedUnitId])
 
     const onSubmit = async (data) => {
         setError("")
@@ -113,12 +125,12 @@ export default function CreateAgreementModal({onClose}) {
                 <FormField
                     label="Agreed rent (UGX)"
                     hint={selectedUnit
-                        ? `Defaults to ${formatUGX(selectedUnit.rentAmount)} if left blank`
-                        : "Optional — defaults to the unit's rent"}
+                        ? "Auto-filled from the unit — edit if the agreed rent differs"
+                        : "Auto-fills from the unit you select"}
                 >
                     <AmountInput
                         name="rentAmount" control={control}
-                        placeholder={selectedUnit ? groupDigits(selectedUnit.rentAmount) : "Leave blank to use unit rent"}
+                        placeholder={selectedUnit ? groupDigits(selectedUnit.rentAmount) : "Select a unit first"}
                     />
                 </FormField>
 
@@ -146,7 +158,8 @@ export default function CreateAgreementModal({onClose}) {
                     )}
                 </div>
 
-                <FormField label="Deposit (UGX)" hint="Optional">
+                <FormField label="Security Deposit (UGX)"
+                           hint="Optional — held and settled (applied/refunded/forfeited) at move-out">
                     <AmountInput name="depositAmount" control={control}
                                  placeholder="Leave blank if not applicable"/>
                 </FormField>

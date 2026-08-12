@@ -6,4 +6,6 @@ export const authService = {
     refresh: (refreshToken) => api.post("/auth/refresh", {refreshToken}),
     getInvite: (token) => api.get(`/auth/invite/${token}`),
     acceptInvite: (data) => api.post("/auth/accept-invite", data),
+    requestPasswordReset: (data) => api.post("/auth/request-password-reset", data),
+    resetPassword: (data) => api.post("/auth/reset-password", data),
 }

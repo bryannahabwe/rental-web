@@ -59,12 +59,24 @@ export default function AgreementDetailSheet({agreementId, onClose, onMoveOut, o
                         <p className={SECTION}>Financials</p>
                         <DetailList columns={2}>
                             <DetailRow label="Monthly Rent" value={formatUGX(ag.rentAmount)} numeric/>
-                            <DetailRow label="Deposit"
+                            <DetailRow label="Security Deposit"
                                        value={ag.depositAmount ? formatUGX(ag.depositAmount) : "—"} numeric/>
                             <DetailRow label="Billing Model" value={ag.billingModel || "ADVANCE"}/>
                             <DetailRow label="Opening Balance" value={openingValue} tone={openingTone} numeric/>
                         </DetailList>
                     </div>
+
+                    {ag.status === "TERMINATED" &&
+                        (ag.depositApplied != null || ag.depositRefunded != null || ag.depositForfeited != null) && (
+                            <div className="mb-5 rounded-lg bg-neutral-0 p-4">
+                                <p className={SECTION}>Deposit Settlement</p>
+                                <DetailList columns={3}>
+                                    <DetailRow label="Used toward rent" value={formatUGX(ag.depositApplied || 0)} numeric/>
+                                    <DetailRow label="Kept (damages / penalties)" value={formatUGX(ag.depositForfeited || 0)} numeric/>
+                                    <DetailRow label="Refunded" value={formatUGX(ag.depositRefunded || 0)} numeric/>
+                                </DetailList>
+                            </div>
+                        )}
 
                     <div className="flex flex-col gap-2">
                         <Button

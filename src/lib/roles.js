@@ -23,20 +23,21 @@ export const ROLE = {
 
 /** Mirrors `UserRole.isPropertyScoped()` on the API. */
 export const isPropertyScoped = (role) =>
-    role === ROLE.PROPERTY_MANAGER || role === ROLE.CARETAKER
+    role === ROLE.ADMIN || role === ROLE.PROPERTY_MANAGER || role === ROLE.CARETAKER
 
 /** Roles a scoped user can hold at an individual property. */
-export const SCOPED_ROLES = [ROLE.PROPERTY_MANAGER, ROLE.CARETAKER]
+export const SCOPED_ROLES = [ROLE.ADMIN, ROLE.PROPERTY_MANAGER, ROLE.CARETAKER]
 
 const CAPABILITIES = {
     [ROLE.SUPER_ADMIN]: [
-        "viewReports", "viewActivity", "manageProperties", "manageUsers", "manageBranding",
-        "viewOperations", "writeTenants", "writeUnits", "writeAgreements", "recordPayments",
-        "deleteRecords",
+        "viewReports", "viewActivity", "manageProperties", "createProperties", "manageUsers",
+        "manageBranding", "viewOperations", "writeTenants", "writeUnits", "writeAgreements",
+        "recordPayments", "deleteRecords",
     ],
     [ROLE.ADMIN]: [
         "viewReports", "viewActivity", "manageProperties", "manageUsers", "manageBranding",
         "viewOperations", "writeTenants", "writeUnits", "writeAgreements", "recordPayments",
+        "deleteRecords",
     ],
     // Read-only finance across the whole account: figures, no edits.
     [ROLE.ACCOUNTANT]: ["viewReports", "viewActivity", "viewOperations"],
@@ -101,8 +102,11 @@ const ROLE_HINTS = {
  * not create another admin.
  */
 export const assignableRoles = (currentRole) => {
-    const roles = [ROLE.ADMIN, ROLE.ACCOUNTANT, ROLE.PROPERTY_MANAGER, ROLE.CARETAKER]
-    return currentRole === ROLE.SUPER_ADMIN ? roles : roles.filter((r) => r !== ROLE.ADMIN)
+    if (currentRole === ROLE.SUPER_ADMIN) {
+        return [ROLE.ADMIN, ROLE.ACCOUNTANT, ROLE.PROPERTY_MANAGER, ROLE.CARETAKER]
+    }
+    // A scoped admin may only hand out property-scoped staff roles.
+    return [ROLE.PROPERTY_MANAGER, ROLE.CARETAKER]
 }
 
 export const roleOption = (role) => ({

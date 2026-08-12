@@ -78,7 +78,7 @@ export default function EditAgreementModal({agreement, onClose}) {
                     <AmountInput name="rentAmount" control={control}/>
                 </FormField>
 
-                <FormField label="Deposit (UGX)" hint="Optional">
+                <FormField label="Security Deposit (UGX)" hint="Optional">
                     <AmountInput name="depositAmount" control={control}/>
                 </FormField>
 

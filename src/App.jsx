@@ -4,6 +4,8 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute"
 import LoginPage from "@/pages/LoginPage"
 import RegisterPage from "@/pages/RegisterPage"
 import AcceptInvitePage from "@/pages/AcceptInvitePage"
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage"
+import ResetPasswordPage from "@/pages/ResetPasswordPage"
 import DashboardPage from "@/pages/DashboardPage"
 import TenantsPage from "@/pages/TenantsPage"
 import TenantDetailPage from "@/pages/TenantDetailPage"
@@ -85,6 +87,8 @@ export default function App() {
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route path="/register" element={<RegisterPage/>}/>
                 <Route path="/accept-invite" element={<AcceptInvitePage/>}/>
+                <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+                <Route path="/reset-password" element={<ResetPasswordPage/>}/>
                 <Route
                     path="/*"
                     element={

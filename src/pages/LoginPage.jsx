@@ -97,6 +97,12 @@ export default function LoginPage() {
                     />
                 </FormField>
 
+                <div className="-mt-2 text-right text-sm">
+                    <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-700">
+                        Forgot password?
+                    </Link>
+                </div>
+
                 {error && <Alert>{error}</Alert>}
 
                 <Button type="submit" block size="lg" loading={loading}>Sign in</Button>

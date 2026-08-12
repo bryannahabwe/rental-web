@@ -101,8 +101,9 @@ export default function TenantFormModal({tenant, onClose}) {
                     <Input {...register("email")} type="email" placeholder="jane@example.com"/>
                 </FormField>
 
-                <FormField label="Address" hint="Optional">
-                    <Textarea {...register("address")} rows={2} placeholder="Home village or next-of-kin address"/>
+                <FormField label="Extra information" hint="Optional">
+                    <Textarea {...register("address")} rows={2}
+                              placeholder="Anything worth noting — next of kin, home village, ID, etc."/>
                 </FormField>
 
                 {error && <Alert>{error}</Alert>}

@@ -11,7 +11,12 @@ export default function PropertiesPage() {
     const {data: properties = [], isLoading} = useProperties()
     const [showModal, setShowModal] = useState(false)
     const [editProperty, setEditProperty] = useState(null)
-    const canDelete = useCan()("deleteRecords")
+    const can = useCan()
+    // Creating a property is account-wide, so it's owner-only — a scoped admin
+    // manages (edits) their properties but can't spin up new ones. Mirrors the
+    // API's `hasRole('SUPER_ADMIN')` on POST /properties.
+    const canCreate = can("createProperties")
+    const canDelete = can("deleteRecords")
     const confirm = useConfirm()
     const deleteProperty = useDeleteProperty()
 
@@ -37,17 +42,21 @@ export default function PropertiesPage() {
             title="Properties"
             subtitle="The buildings you manage"
             showBack
-            actions={<Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Property</Button>}
-            mobileAction={
-                <button
-                    type="button"
-                    onClick={() => setShowModal(true)}
-                    aria-label="Add property"
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
-                >
-                    <Plus size={26}/>
-                </button>
-            }
+            actions={canCreate
+                ? <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Property</Button>
+                : undefined}
+            mobileAction={canCreate
+                ? (
+                    <button
+                        type="button"
+                        onClick={() => setShowModal(true)}
+                        aria-label="Add property"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-fab transition-colors hover:bg-primary-600"
+                    >
+                        <Plus size={26}/>
+                    </button>
+                )
+                : undefined}
         >
             {isLoading ? (
                 <LoadingPanel message="Loading properties…"/>
@@ -55,8 +64,12 @@ export default function PropertiesPage() {
                 <EmptyState
                     icon={Home}
                     title="No properties yet"
-                    message="Add your first property to start tracking units and tenants."
-                    action={<Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Property</Button>}
+                    message={canCreate
+                        ? "Add your first property to start tracking units and tenants."
+                        : "No properties have been assigned to you yet."}
+                    action={canCreate
+                        ? <Button iconLeft={Plus} onClick={() => setShowModal(true)}>Add Property</Button>
+                        : undefined}
                 />
             ) : (
                 <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">

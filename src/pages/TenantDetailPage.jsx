@@ -86,7 +86,7 @@ export default function TenantDetailPage() {
                                 <div className="flex flex-col gap-3.5">
                                     <Row label="Phone" value={tenant.phone}/>
                                     <Row label="Email" value={tenant.email || "—"}/>
-                                    <Row label="Address" value={tenant.address || "—"}/>
+                                    <Row label="Extra information" value={tenant.address || "—"}/>
                                 </div>
                             </Card>
 

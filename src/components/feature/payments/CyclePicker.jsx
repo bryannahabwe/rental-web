@@ -24,7 +24,10 @@ export default function CyclePicker({cycles = [], isLoading, selected, onSelect,
         )
     }
 
-    const unpaidCycles = cycles.filter((c) => c.status !== "PAID")
+    // Only cycles actually owed count as "unpaid". The list also includes one
+    // upcoming cycle (so advance payers can pay ahead) — that one is not due and
+    // must not be counted as arrears or added to the total demanded.
+    const unpaidCycles = cycles.filter((c) => c.due && c.status !== "PAID")
     const totalUnpaid = unpaidCycles.reduce(
         (sum, c) => sum + Number(c.expectedAmount) - Number(c.paidAmount), 0,
     )
@@ -93,8 +96,17 @@ export default function CyclePicker({cycles = [], isLoading, selected, onSelect,
                                         {formatUGX(cycle.paidAmount)} paid of {formatUGX(cycle.expectedAmount)}
                                     </span>
                                 )}
+                                {!cycle.due && (
+                                    <span className="mt-0.5 block text-2xs text-neutral-40">
+                                        Not due yet — pay ahead
+                                    </span>
+                                )}
                             </span>
-                            <Badge size="sm" tone={statusTone("period", cycle.status)}>{cycle.status}</Badge>
+                            {cycle.due ? (
+                                <Badge size="sm" tone={statusTone("period", cycle.status)}>{cycle.status}</Badge>
+                            ) : (
+                                <Badge size="sm" tone="neutral">Upcoming</Badge>
+                            )}
                         </button>
                     )
                 })}
