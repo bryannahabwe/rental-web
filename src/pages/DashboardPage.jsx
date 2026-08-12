@@ -5,7 +5,7 @@ import AppShell from "@/components/layout/AppShell"
 import {useOccupancy, usePaymentReport, useSummary} from "@/hooks/useReports"
 import {usePayments} from "@/hooks/usePayments"
 import {useTenants} from "@/hooks/useTenants"
-import {Badge, Card, DataTable, ProgressBar, SummaryCard} from "@/components/ui"
+import {Badge, Card, DataTable, ErrorState, ProgressBar, SummaryCard} from "@/components/ui"
 import {formatCycle, formatDate, formatUGX, formatUGXShort, todayStr} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
 import {cn} from "@/lib/cn"
@@ -31,15 +31,15 @@ function SectionHeader({title, count, countTone = "danger", to, linkLabel = "Vie
 }
 
 export default function DashboardPage() {
-    const {data: summary, isLoading: summaryLoading} = useSummary()
-    const {data: occupancy, isLoading: occupancyLoading} = useOccupancy()
-    const {data: paymentsData, isLoading: paymentsLoading} = usePayments({
+    const summaryQuery = useSummary()
+    const occupancyQuery = useOccupancy()
+    const paymentsQuery = usePayments({
         page: 0, size: 5, sortBy: "paymentDate", sortDir: "desc",
     })
     // The dashboard totals and the outstanding table both need every tenant,
     // not a page of them — a truncated fetch would silently understate
     // "Total Outstanding". 500 is the practical ceiling for one property.
-    const {data: tenantsData, isLoading: tenantsLoading} = useTenants({
+    const tenantsQuery = useTenants({
         page: 0, size: 500, sortBy: "createdAt", sortDir: "desc",
     })
     // Cash actually received this calendar month — the same computation the
@@ -47,9 +47,28 @@ export default function DashboardPage() {
     // with calendar months (they depend on each tenant's billingDay and
     // ADVANCE/ARREARS model), so they can't answer "how much came in this
     // month" — that mismatch was why this widget used to be wrong.
-    const {data: monthReport, isLoading: monthReportLoading} = usePaymentReport({
+    const monthReportQuery = usePaymentReport({
         from: firstOfMonthStr(), to: todayStr(),
     })
+
+    const {data: summary, isLoading: summaryLoading} = summaryQuery
+    const {data: occupancy, isLoading: occupancyLoading} = occupancyQuery
+    const {data: paymentsData, isLoading: paymentsLoading} = paymentsQuery
+    const {data: tenantsData, isLoading: tenantsLoading} = tenantsQuery
+    const {data: monthReport, isLoading: monthReportLoading} = monthReportQuery
+
+    // When the core report calls fail — almost always the API being unreachable
+    // (network/CORS/5xx), not a real 401 — the KPI tiles would otherwise render
+    // as silent "—" placeholders that read like genuine zero data. Show an
+    // explicit error + retry instead so a down backend is obvious.
+    const loadFailed = summaryQuery.isError || occupancyQuery.isError || tenantsQuery.isError
+    const retryAll = () => {
+        summaryQuery.refetch()
+        occupancyQuery.refetch()
+        paymentsQuery.refetch()
+        tenantsQuery.refetch()
+        monthReportQuery.refetch()
+    }
 
     const payments = paymentsData?.content || []
     const allTenants = tenantsData?.content || []
@@ -142,6 +161,14 @@ export default function DashboardPage() {
 
     return (
         <AppShell title="Dashboard" subtitle="How collection is tracking right now">
+            {loadFailed ? (
+                <ErrorState
+                    title="Couldn't reach the server"
+                    message="We couldn't load your dashboard. Check your connection and try again."
+                    onRetry={retryAll}
+                />
+            ) : (
+            <>
             {/* One responsive KPI strip — this replaces the separate desktop and
                 mobile stat-card components the page rendered side by side. */}
             {/* 3 + 2 rather than a single row of five: at five across the tile
@@ -287,6 +314,8 @@ export default function DashboardPage() {
                     emptyMessage="Payments will appear here as they come in."
                 />
             </Card>
+            </>
+            )}
         </AppShell>
     )
 }
