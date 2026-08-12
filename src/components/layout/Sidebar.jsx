@@ -7,6 +7,7 @@ import useSettingsStore from "@/store/settingsStore"
 import {useCan} from "@/hooks/usePermissions"
 import PropertySwitcher from "./PropertySwitcher"
 import {Avatar} from "@/components/ui"
+import {initials} from "@/lib/format"
 import {cn} from "@/lib/cn"
 
 // `can` is the capability a link needs — the same one gating its route in
@@ -90,19 +91,23 @@ export default function Sidebar() {
     return (
         <aside
             className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col overflow-y-auto bg-secondary-900 md:flex">
-            {/* Brand */}
-            <div className="px-5 pb-5 pt-6">
-                {logoUrl ? (
-                    <>
-                        <img src={logoUrl} alt={companyName} className="mb-1 h-11 max-w-40 object-contain"/>
-                        <p className="mt-1 text-2xs text-white/40">{companyName}</p>
-                    </>
-                ) : (
-                    <>
-                        <h1 className="truncate font-heading text-2xl leading-none text-white">{companyName}</h1>
-                        <p className="mt-1 text-2xs text-white/40">Property Management</p>
-                    </>
-                )}
+            {/* Brand — logo mark + name as one balanced identity row */}
+            <div className="flex items-center gap-3 px-5 pb-5 pt-6">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-inset ring-white/10">
+                    {logoUrl ? (
+                        <img src={logoUrl} alt="" className="h-full w-full object-cover"/>
+                    ) : (
+                        <span className="font-heading text-base font-semibold text-white">
+                            {initials(companyName)}
+                        </span>
+                    )}
+                </div>
+                <div className="min-w-0">
+                    <p className="truncate font-heading text-[15px] font-medium leading-tight text-white">
+                        {companyName}
+                    </p>
+                    <p className="truncate text-2xs text-white/40">Property Management</p>
+                </div>
             </div>
 
             <div className="px-4 pb-3">

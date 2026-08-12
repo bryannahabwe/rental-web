@@ -7,11 +7,17 @@ import AppShell from "@/components/layout/AppShell"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
 import {Avatar, Button, Card} from "@/components/ui"
+import {cn} from "@/lib/cn"
 
 /**
  * Nav rows are icon + label + description. The icons already distinguish
  * them, so the chips are a single neutral tint rather than nine hand-picked
  * colours that encoded nothing.
+ *
+ * `mobileOnly` sections (Manage/Administration/Reports) are operational pages
+ * that already live in the desktop sidebar, so on md+ this page shows only the
+ * real settings (Account). On mobile there's no sidebar, so Settings doubles as
+ * the hub and shows everything.
  */
 const SECTIONS = [
     {
@@ -24,6 +30,7 @@ const SECTIONS = [
     },
     {
         label: "Manage",
+        mobileOnly: true,
         items: [
             {icon: Building, label: "Properties", description: "Add and manage properties", path: "/properties"},
             {icon: Building2, label: "Units", description: "Manage your rental units", path: "/units"},
@@ -32,6 +39,7 @@ const SECTIONS = [
     },
     {
         label: "Administration",
+        mobileOnly: true,
         items: [
             {icon: Users, label: "User Management", description: "Invite and manage team members", path: "/users"},
             {icon: Activity, label: "Activity Log", description: "Audit trail of account actions", path: "/activity"},
@@ -39,6 +47,7 @@ const SECTIONS = [
     },
     {
         label: "Reports",
+        mobileOnly: true,
         items: [
             {icon: BarChart3, label: "Reports", description: "Revenue & occupancy analytics", path: "/reports"},
         ],
@@ -76,7 +85,7 @@ export default function SettingsPage() {
                 </Card>
 
                 {SECTIONS.map((section) => (
-                    <section key={section.label}>
+                    <section key={section.label} className={cn(section.mobileOnly && "md:hidden")}>
                         <p className="mb-2 px-1 text-2xs font-medium uppercase tracking-wide text-neutral-40">
                             {section.label}
                         </p>
