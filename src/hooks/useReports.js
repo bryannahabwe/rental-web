@@ -35,3 +35,12 @@ export function useMonthlyCollection(params) {
         enabled: !!params.from && !!params.to,
     })
 }
+
+export function useFinances(params = {}, {enabled = true} = {}) {
+    const propertyId = usePropertyStore(s => s.selectedPropertyId)
+    return useQuery({
+        queryKey: ["reports", propertyId, "finances", params],
+        queryFn: () => reportsService.getFinances(params).then(r => r.data),
+        enabled,
+    })
+}

@@ -5,4 +5,5 @@ export const reportsService = {
     getPaymentReport: (params) => api.get("/reports/payments", {params}),
     getMonthlyCollection: (params) => api.get("/reports/payments/monthly", {params}),
     getOccupancy: () => api.get("/reports/occupancy"),
+    getFinances: (params) => api.get("/reports/finances", {params}),
 }

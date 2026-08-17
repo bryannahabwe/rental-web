@@ -1,6 +1,7 @@
 import {NavLink, useNavigate} from "react-router-dom"
 import {
-    Activity, BarChart3, Building2, CreditCard, FileText, Home, LayoutDashboard, LogOut, Settings, UserCog, Users,
+    Activity, BarChart3, Building2, CreditCard, FileText, Home, LayoutDashboard, LogOut,
+    Receipt, Scale, Settings, UserCog, Users, Wallet,
 } from "lucide-react"
 import useAuthStore from "@/store/authStore"
 import useSettingsStore from "@/store/settingsStore"
@@ -19,6 +20,9 @@ const mainLinks = [
 
 const financialLinks = [
     {label: "Payments", path: "/payments", icon: CreditCard, can: "viewOperations"},
+    {label: "Income", path: "/income", icon: Wallet, can: "viewOperations"},
+    {label: "Expenses", path: "/expenses", icon: Receipt, can: "viewOperations"},
+    {label: "Finances", path: "/finances", icon: Scale, can: "viewReports"},
     {label: "Reports", path: "/reports", icon: BarChart3, can: "viewReports"},
 ]
 

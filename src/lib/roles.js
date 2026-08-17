@@ -32,20 +32,21 @@ const CAPABILITIES = {
     [ROLE.SUPER_ADMIN]: [
         "viewReports", "viewActivity", "manageProperties", "createProperties", "manageUsers",
         "manageBranding", "viewOperations", "writeTenants", "writeUnits", "writeAgreements",
-        "recordPayments", "deleteRecords",
+        "recordPayments", "recordExpenses", "deleteRecords",
     ],
     [ROLE.ADMIN]: [
         "viewReports", "viewActivity", "manageProperties", "manageUsers", "manageBranding",
         "viewOperations", "writeTenants", "writeUnits", "writeAgreements", "recordPayments",
-        "deleteRecords",
+        "recordExpenses", "deleteRecords",
     ],
     // Read-only finance across the whole account: figures, no edits.
     [ROLE.ACCOUNTANT]: ["viewReports", "viewActivity", "viewOperations"],
     [ROLE.PROPERTY_MANAGER]: [
         "viewOperations", "writeTenants", "writeUnits", "writeAgreements", "recordPayments",
+        "recordExpenses",
     ],
-    // Collects rent at the property and issues receipts; writes nothing else.
-    [ROLE.CARETAKER]: ["viewOperations", "recordPayments"],
+    // Collects rent at the property, issues receipts, and logs property costs.
+    [ROLE.CARETAKER]: ["viewOperations", "recordPayments", "recordExpenses"],
 }
 
 /**

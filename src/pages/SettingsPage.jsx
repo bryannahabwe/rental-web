@@ -1,7 +1,7 @@
 import {Link, useNavigate} from "react-router-dom"
 import {
-    Activity, BarChart3, Briefcase, Building, Building2, ChevronRight,
-    FileText, LogOut, Receipt, UserCircle, Users,
+    Activity, BarChart3, Briefcase, Building, Building2, ChevronRight, CreditCard,
+    FileText, LogOut, Receipt, Tags, UserCircle, Users,
 } from "lucide-react"
 import AppShell from "@/components/layout/AppShell"
 import useAuthStore from "@/store/authStore"
@@ -26,6 +26,13 @@ const SECTIONS = [
             {icon: UserCircle, label: "My Profile", description: "Your name and phone number", path: "/settings/profile"},
             {icon: Briefcase, label: "Business Profile", description: "Company name, logo and address", path: "/settings/business-profile"},
             {icon: Receipt, label: "Receipt Settings", description: "Prefix, numbering and style", path: "/settings/receipt-settings"},
+        ],
+    },
+    {
+        label: "Expenses",
+        items: [
+            {icon: Tags, label: "Expense Categories", description: "Manage the categories expenses are filed under", path: "/settings/expense-categories"},
+            {icon: CreditCard, label: "Payment Methods", description: "Manage how expenses are paid", path: "/settings/payment-methods"},
         ],
     },
     {

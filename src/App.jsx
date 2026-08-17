@@ -24,6 +24,11 @@ import {ConfirmProvider, ToastHost} from "@/components/ui"
 import BusinessProfilePage from "@/pages/BusinessProfilePage"
 import ReceiptSettingsPage from "@/pages/ReceiptSettingsPage"
 import ProfilePage from "@/pages/ProfilePage"
+import IncomePage from "@/pages/IncomePage"
+import ExpensesPage from "@/pages/ExpensesPage"
+import FinancesPage from "@/pages/FinancesPage"
+import ExpenseCategoriesPage from "@/pages/ExpenseCategoriesPage"
+import PaymentMethodsPage from "@/pages/PaymentMethodsPage"
 
 // ── Token guard — checks on PWA resume ──────────────────
 function TokenGuard() {
@@ -103,11 +108,16 @@ export default function App() {
                                 <Route path="/activity" element={<Require can="viewActivity"><ActivityPage/></Require>}/>
                                 <Route path="/agreements" element={<AgreementsPage/>}/>
                                 <Route path="/payments" element={<PaymentsPage/>}/>
+                                <Route path="/income" element={<Require can="viewOperations"><IncomePage/></Require>}/>
+                                <Route path="/expenses" element={<Require can="viewOperations"><ExpensesPage/></Require>}/>
+                                <Route path="/finances" element={<Require can="viewReports"><FinancesPage/></Require>}/>
                                 <Route path="/reports" element={<Require can="viewReports"><ReportsPage/></Require>}/>
                                 <Route path="/settings" element={<Require can="manageBranding"><SettingsPage/></Require>}/>
                                 <Route path="/settings/profile" element={<ProfilePage/>}/>
                                 <Route path="/settings/business-profile" element={<Require can="manageBranding"><BusinessProfilePage/></Require>}/>
                                 <Route path="/settings/receipt-settings" element={<Require can="manageBranding"><ReceiptSettingsPage/></Require>}/>
+                                <Route path="/settings/expense-categories" element={<Require can="manageBranding"><ExpenseCategoriesPage/></Require>}/>
+                                <Route path="/settings/payment-methods" element={<Require can="manageBranding"><PaymentMethodsPage/></Require>}/>
                                 {/* Mobile "More" hub — everything the bottom nav can't fit as a tab. */}
                                 <Route path="/more" element={<MorePage/>}/>
                                 <Route path="*" element={<HomeRedirect/>}/>

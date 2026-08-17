@@ -1,6 +1,6 @@
 import {
     Activity, BarChart3, Building2, CreditCard, FileText, Home,
-    LayoutDashboard, Settings, UserCog, Users,
+    LayoutDashboard, Receipt, Scale, Settings, UserCog, Users, Wallet,
 } from "lucide-react"
 
 /**
@@ -21,6 +21,9 @@ export const NAV_DESTINATIONS = [
     {label: "Payments", path: "/payments", icon: CreditCard, can: "viewOperations", group: null, description: "Recorded payments"},
     {label: "Units", path: "/units", icon: Building2, can: "viewOperations", group: "Manage", description: "Rooms and occupancy"},
     {label: "Agreements", path: "/agreements", icon: FileText, can: "viewOperations", group: "Manage", description: "Tenancies and move-outs"},
+    {label: "Income", path: "/income", icon: Wallet, can: "viewOperations", group: "Finances", description: "Rent and other income"},
+    {label: "Expenses", path: "/expenses", icon: Receipt, can: "viewOperations", group: "Finances", description: "Property costs"},
+    {label: "Finances", path: "/finances", icon: Scale, can: "viewReports", group: "Finances", description: "Income vs expenses"},
     {label: "Properties", path: "/properties", icon: Home, can: "manageProperties", group: "Manage", description: "Buildings you manage"},
     {label: "Reports", path: "/reports", icon: BarChart3, can: "viewReports", group: "Reports & logs", description: "Collections and occupancy"},
     {label: "Users", path: "/users", icon: UserCog, can: "manageUsers", group: "Manage", description: "Manage staff accounts"},
