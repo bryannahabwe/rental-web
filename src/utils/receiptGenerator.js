@@ -22,6 +22,31 @@ const formatCycle = (start, end) => {
     return `${formatCycleDate(start)} – ${formatCycleDate(end)}`
 }
 
+/**
+ * What the tenant still owes on the period this receipt covers.
+ *
+ * Taken from the period's total (`periodPaidAmount`), not from this row's
+ * amount: a cycle is routinely settled by more than one payment — the tail of
+ * a rollover chain plus a cash top-up — and subtracting a single row from the
+ * rent hands the tenant a balance for money they have already paid.
+ *
+ * Manual receipts carry a balance typed in by the landlord and keep it.
+ */
+const periodBalance = (payment) => {
+    if (payment.isManual) return Number(payment.balance || 0)
+
+    const amount = Number(payment.amount || 0)
+    const overpayment = Number(payment.overpayment || 0)
+    const applied = overpayment > 0 ? amount - overpayment : amount
+    // Pre-dates the field, or an older cached row: this payment's own
+    // contribution understates a shared period but never overstates it.
+    const periodPaid = payment.periodPaidAmount != null
+        ? Number(payment.periodPaidAmount)
+        : applied
+
+    return Math.max(0, Number(payment.expectedAmount || 0) - periodPaid)
+}
+
 // Convert number to words (UGX amounts)
 const numberToWords = (num) => {
     if (num === 0) return "Zero"
@@ -188,7 +213,7 @@ const generateDigital = async (doc, payment, settings, receiptNumber) => {
         { label: "FOR PERIOD", value: periodDisplay },
         { label: "PAYMENT BY",    value: payment.method || "CASH" },
         { label: "EXPECTED RENT", value: formatUGX(payment.expectedAmount) },
-        { label: "BALANCE",       value: formatUGX(Math.max(0, Number(payment.expectedAmount || 0) - Number(payment.amount || 0))) },
+        { label: "BALANCE",       value: formatUGX(periodBalance(payment)) },
     ]
 
     if (payment.reference) {
@@ -367,10 +392,7 @@ const generateFormal = async (doc, payment, settings, receiptNumber) => {
     y += 10
 
     // Balance
-    const balance = payment.isManual
-        ? Number(payment.balance || 0)
-        : Math.max(0, Number(payment.expectedAmount || 0) - Number(payment.amount || 0))
-    dottedLine("Balance:", formatUGX(balance), y)
+    dottedLine("Balance:", formatUGX(periodBalance(payment)), y)
     y += 16
 
     // Signature + footer

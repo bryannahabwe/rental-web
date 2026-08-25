@@ -5,9 +5,9 @@ import {usePayments} from "@/hooks/usePayments"
 import useDebouncedValue from "@/hooks/useDebouncedValue"
 import {useCan} from "@/hooks/usePermissions"
 import {
-    Badge, Button, Card, DataTable, DateField, Pagination, SearchInput, Toolbar,
+    Badge, Button, Card, DataTable, DateField, Pagination, PaymentAmount, SearchInput, Toolbar,
 } from "@/components/ui"
-import {formatCycle, formatDate, formatUGX} from "@/lib/format"
+import {formatCycle, formatDate} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
 import RecordPaymentModal from "@/components/feature/payments/RecordPaymentModal"
 import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
@@ -60,32 +60,10 @@ export default function PaymentsPage() {
             cell: (p) => formatCycle(p.periodStartDate, p.periodEndDate),
         },
         {
-            // `Expected` used to be its own column, but it only carries
-            // information when it differs from the amount — folding it in as a
-            // sub-line frees ~135px and stops the table overflowing at 1440.
             key: "amount", header: "Amount", align: "right",
             cellClass: "whitespace-nowrap font-medium tabular-nums text-neutral-90",
             card: "block", cardLabel: "Amount",
-            cell: (p) => {
-                const short = p.expectedAmount != null && p.amount < p.expectedAmount
-                // Headline is what this payment put toward its own period
-                // (received − rolled over); the gross drops to the caption.
-                const applied = p.overpayment > 0 ? p.amount - p.overpayment : p.amount
-                return (
-                    <div>
-                        <span className="tabular-nums">{formatUGX(applied)}</span>
-                        {p.overpayment > 0 ? (
-                            <p className="mt-0.5 text-2xs font-normal tabular-nums text-info-600">
-                                {formatUGX(p.amount)} received · {formatUGX(p.overpayment)} rolled over
-                            </p>
-                        ) : short ? (
-                            <p className="mt-0.5 text-2xs font-normal tabular-nums text-neutral-40">
-                                of {formatUGX(p.expectedAmount)} expected
-                            </p>
-                        ) : null}
-                    </div>
-                )
-            },
+            cell: (p) => <PaymentAmount payment={p}/>,
         },
         {
             key: "periodStatus", header: "Status", card: "badge",

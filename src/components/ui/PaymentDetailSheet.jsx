@@ -14,6 +14,7 @@ import {EmptyState, ErrorState} from "./States"
 import {LoadingPanel} from "./Loader"
 import {formatCycle, formatDate, formatUGX} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
+import {periodFigures} from "@/lib/paymentPeriod"
 
 const SECTION = "mb-3.5 text-2xs font-medium uppercase tracking-wide text-neutral-40"
 
@@ -26,6 +27,11 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
     const {settings} = useSettingsStore()
     const [downloading, setDownloading] = useState(false)
     const [error, setError] = useState("")
+
+    // The badge, the bar and the caption all report the PERIOD, not this row.
+    // A row that completes a part-paid cycle would otherwise sit under a
+    // half-empty bar reading PAID.
+    const period = payment ? periodFigures(payment) : null
 
     const handleDownload = async () => {
         setDownloading(true)
@@ -57,16 +63,18 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                             {formatUGX(payment.amount)}
                         </p>
                         <p className="mt-1 text-sm tabular-nums text-neutral-40">
-                            of {formatUGX(payment.expectedAmount)} expected
+                            {period.sharedPeriod
+                                ? `${formatUGX(period.periodPaid)} of ${formatUGX(payment.expectedAmount)} paid this period`
+                                : `of ${formatUGX(payment.expectedAmount)} expected`}
                         </p>
 
                         {payment.expectedAmount > 0 && (
                             <ProgressBar
                                 className="my-3 h-1.5"
-                                value={payment.amount}
+                                value={period.periodPaid}
                                 max={payment.expectedAmount}
                                 tone={BAR_TONE[payment.periodStatus] || "warning"}
-                                label="Share of the expected amount paid"
+                                label="Share of the period's rent paid"
                             />
                         )}
 

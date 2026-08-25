@@ -5,6 +5,7 @@ import {tenantsService} from "@/services/tenantsService"
 import Badge from "./Badge"
 import Button from "./Button"
 import DataTable from "./DataTable"
+import PaymentAmount from "./PaymentAmount"
 import {EmptyState, ErrorState} from "./States"
 import {LoadingPanel} from "./Loader"
 import {formatDate, formatUGX} from "@/lib/format"
@@ -138,30 +139,9 @@ export default function TenantLedgerView({tenantId}) {
         {
             key: "amount", header: "Amount", align: "right", card: "block", cardLabel: "Amount",
             cellClass: "whitespace-nowrap font-medium tabular-nums text-neutral-90",
-            cell: (t) => {
-                // Mirror the Payments table exactly (PaymentsPage amount cell):
-                // lead with what this payment put toward its OWN period
-                // (received − rolled over) so the headline agrees with "For
-                // Period", move the gross to a caption, and — for a row that
-                // fell short of the period's rent (e.g. a partial rollover) —
-                // show "of X expected" for the same context the Payments page gives.
-                const short = t.expectedAmount != null && t.amount < t.expectedAmount
-                const applied = t.overpayment > 0 ? t.amount - t.overpayment : t.amount
-                return (
-                    <div>
-                        <span className="tabular-nums">{formatUGX(applied)}</span>
-                        {t.overpayment > 0 ? (
-                            <p className="mt-0.5 text-2xs font-normal tabular-nums text-info-600">
-                                {formatUGX(t.amount)} received · {formatUGX(t.overpayment)} rolled over
-                            </p>
-                        ) : short ? (
-                            <p className="mt-0.5 text-2xs font-normal tabular-nums text-neutral-40">
-                                of {formatUGX(t.expectedAmount)} expected
-                            </p>
-                        ) : null}
-                    </div>
-                )
-            },
+            // The same cell the Payments table uses — these two lists are meant
+            // to render identical rows, and two copies of the markup drifted.
+            cell: (t) => <PaymentAmount payment={t}/>,
         },
         {
             key: "period", header: "For Period", card: "meta", cardLabel: null,

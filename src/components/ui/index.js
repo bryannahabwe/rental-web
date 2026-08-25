@@ -53,6 +53,7 @@ export {default as SegmentedFilter} from "./SegmentedFilter"
 export {default as Tabs, TabLinks} from "./Tabs"
 
 export {default as DataTable} from "./DataTable"
+export {default as PaymentAmount} from "./PaymentAmount"
 export {default as Pagination} from "./Pagination"
 export {default as DetailRow, DetailList} from "./DetailRow"
 export {default as ProgressBar} from "./ProgressBar"
