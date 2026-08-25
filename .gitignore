@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Machine-local Claude Code state (permission allowlists, local paths)
+.claude/settings.local.json
