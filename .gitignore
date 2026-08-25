@@ -25,3 +25,7 @@ dist-ssr
 
 # Machine-local Claude Code state (permission allowlists, local paths)
 .claude/settings.local.json
+
+# Production infrastructure runbook — origin IP, host paths, nginx/TLS layout.
+# The GitHub remote is public; this stays local.
+docs/certbot-renewal.md
