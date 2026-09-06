@@ -17,6 +17,8 @@ const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1)
     .toISOString().split("T")[0]
 const todayStr = today.toISOString().split("T")[0]
 
+// Methods are managed names now ("Mobile Money"), shown as-is. This map only
+// catches a row that predates V29 and still carries the old enum constant.
 const METHOD_LABELS = {
     CASH: "Cash", MOBILE_MONEY: "Mobile Money", BANK_TRANSFER: "Bank Transfer", CHEQUE: "Cheque",
 }
@@ -112,6 +114,10 @@ export default function IncomePage() {
         {
             key: "method", header: "Method", card: "meta", cardLabel: null, cellClass: "whitespace-nowrap",
             cell: (e) => METHOD_LABELS[e.method] || e.method || "—",
+        },
+        {
+            key: "receivedBy", header: "Received by", card: "meta", cellClass: "whitespace-nowrap",
+            cell: (e) => e.receivedBy || "—",
         },
         {
             key: "incomeDate", header: "Date", cellClass: "whitespace-nowrap",

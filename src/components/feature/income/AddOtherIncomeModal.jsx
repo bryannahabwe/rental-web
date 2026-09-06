@@ -3,17 +3,11 @@ import {useForm} from "react-hook-form"
 import {useCreateOtherIncome, useUpdateOtherIncome} from "@/hooks/useIncome"
 import {useProperties} from "@/hooks/useProperties"
 import {useAllTenants} from "@/hooks/useTenants"
+import {usePaymentMethods} from "@/hooks/usePaymentMethods"
 import usePropertyStore from "@/store/propertyStore"
 import {Alert, AmountInput, Button, DateField, Dialog, FormField, Input, Select, Textarea, toast} from "@/components/ui"
 import {nullIfEmpty, todayStr} from "@/lib/format"
 import {getErrorMessage} from "@/utils/errorMessage"
-
-const METHOD_OPTIONS = [
-    {label: "Cash", value: "CASH"},
-    {label: "Mobile Money", value: "MOBILE_MONEY"},
-    {label: "Bank Transfer", value: "BANK_TRANSFER"},
-    {label: "Cheque", value: "CHEQUE"},
-]
 
 const CATEGORY_SUGGESTIONS = [
     "Deposit forfeiture", "Late fee", "Damage charge", "Utility reimbursement", "Other",
@@ -32,6 +26,11 @@ export default function AddOtherIncomeModal({entry, onClose}) {
     const selectedPropertyId = usePropertyStore(s => s.selectedPropertyId)
     const {data: properties = [], isLoading: propertiesLoading} = useProperties()
     const {data: tenants = []} = useAllTenants()
+    const {data: methods = []} = usePaymentMethods()
+
+    // Active options, but keep the currently-selected value visible when editing
+    // even if it was since retired.
+    const methodOptions = methods.filter((m) => m.active || m.name === entry?.method)
 
     const {register, control, handleSubmit, formState: {errors}} = useForm({
         defaultValues: {
@@ -40,7 +39,8 @@ export default function AddOtherIncomeModal({entry, onClose}) {
             incomeDate: entry?.incomeDate ?? todayStr(),
             amount: entry?.amount ?? undefined,
             category: entry?.category ?? "",
-            method: entry?.method ?? "CASH",
+            method: entry?.method ?? "",
+            receivedBy: entry?.receivedBy ?? "",
             reference: entry?.reference ?? "",
             notes: entry?.notes ?? "",
         },
@@ -55,6 +55,7 @@ export default function AddOtherIncomeModal({entry, onClose}) {
             amount: data.amount,
             category: data.category,
             method: data.method,
+            receivedBy: nullIfEmpty(data.receivedBy),
             reference: nullIfEmpty(data.reference),
             notes: nullIfEmpty(data.notes),
         }
@@ -129,8 +130,18 @@ export default function AddOtherIncomeModal({entry, onClose}) {
                     </datalist>
                 </FormField>
 
-                <FormField label="Received by">
-                    <Select {...register("method")} options={METHOD_OPTIONS}/>
+                <FormField label="Payment method" error={errors.method?.message} required
+                           hint="Manage the list in Settings → Payment Methods">
+                    <Select
+                        {...register("method", {required: "Please select a payment method"})}
+                        invalid={!!errors.method}
+                        placeholder="Select method"
+                        options={methodOptions.map((m) => ({label: m.name, value: m.name}))}
+                    />
+                </FormField>
+
+                <FormField label="Received by" hint="Optional — who received the money">
+                    <Input {...register("receivedBy")} placeholder="e.g. John, or front desk"/>
                 </FormField>
 
                 <FormField label="Tenant" hint="Optional — link this income to a tenant">

@@ -4,6 +4,7 @@ import {Check, Download} from "lucide-react"
 import {useCreatePayment} from "@/hooks/usePayments"
 import {useAgreements, useAgreementCycles} from "@/hooks/useAgreements"
 import {useAllTenants} from "@/hooks/useTenants"
+import {usePaymentMethods} from "@/hooks/usePaymentMethods"
 import useSettingsStore from "@/store/settingsStore"
 import {settingsService} from "@/services/settingsService"
 import {generateReceipt} from "@/utils/receiptGenerator"
@@ -20,13 +21,6 @@ const TABS = [
     {id: "manual", label: "Manual Receipt"},
 ]
 
-const METHOD_OPTIONS = [
-    {label: "Cash", value: "CASH"},
-    {label: "Mobile Money", value: "MOBILE MONEY"},
-    {label: "Bank Transfer", value: "BANK TRANSFER"},
-    {label: "Cheque", value: "CHEQUE"},
-]
-
 const STYLE_OPTIONS = [
     {value: "DIGITAL", label: "Digital", description: "Clean branded"},
     {value: "FORMAL", label: "Formal", description: "Like receipt book"},
@@ -39,6 +33,10 @@ export default function RecordPaymentModal({onClose}) {
         page: 0, size: 100, status: "ACTIVE",
     })
     const {data: tenantsData, isLoading: tenantsLoading} = useAllTenants()
+    // Manual receipts are printed client-side, but the tender types they
+    // offer come from the same managed list as expenses and income.
+    const {data: methods = []} = usePaymentMethods()
+    const methodOptions = methods.filter((m) => m.active)
 
     const [activeTab, setActiveTab] = useState("record")
     const [error, setError] = useState("")
@@ -71,7 +69,7 @@ export default function RecordPaymentModal({onClose}) {
         watch: watchManual,
         formState: {errors: manualErrors},
     } = useForm({
-        defaultValues: {paymentDate: todayStr(), method: "CASH"},
+        defaultValues: {paymentDate: todayStr(), method: "Cash"},
     })
 
     const selectedAgreementId = watch("agreementId")
@@ -367,8 +365,12 @@ export default function RecordPaymentModal({onClose}) {
                         />
                     </FormField>
 
-                    <FormField label="Payment by">
-                        <Select {...registerManual("method")} options={METHOD_OPTIONS}/>
+                    <FormField label="Payment method"
+                               hint="Manage the list in Settings → Payment Methods">
+                        <Select
+                            {...registerManual("method")}
+                            options={methodOptions.map((m) => ({label: m.name, value: m.name}))}
+                        />
                     </FormField>
 
                     <FormField label="Balance remaining (UGX)" hint="Amount still owed after this payment">
