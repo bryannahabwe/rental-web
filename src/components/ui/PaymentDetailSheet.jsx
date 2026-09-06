@@ -1,10 +1,11 @@
 import {useState} from "react"
 import {Download, Pencil, Trash2} from "lucide-react"
+import {useQueryClient} from "@tanstack/react-query"
 import {usePayment, useDeletePayment} from "@/hooks/usePayments"
 import {useCan} from "@/hooks/usePermissions"
 import {useConfirm} from "./confirmContext"
 import useSettingsStore from "@/store/settingsStore"
-import {settingsService} from "@/services/settingsService"
+import {paymentsService} from "@/services/paymentsService"
 import {generateReceipt} from "@/utils/receiptGenerator"
 import Dialog from "./Dialog"
 import Button from "./Button"
@@ -36,6 +37,7 @@ export default function PaymentDetailSheet({paymentId, onClose, onEdit}) {
     // collects, an admin corrects. Mirrors the API's PUT/DELETE matrix.
     const canAmend = useCan()("deleteRecords")
     const confirm = useConfirm()
+    const queryClient = useQueryClient()
     const deletePayment = useDeletePayment()
 
     // A rollover row re-labels cash recorded elsewhere. Correcting it means
@@ -70,8 +72,13 @@ export default function PaymentDetailSheet({paymentId, onClose, onEdit}) {
         setDownloading(true)
         setError("")
         try {
-            const receiptRes = await settingsService.getNextReceiptNumber()
+            // Scoped to the payment, so a second download reprints the same
+            // number rather than issuing the tenant a different one.
+            const receiptRes = await paymentsService.issueReceipt(payment.id)
             await generateReceipt(payment, settings, receiptRes.data)
+            // The first issue writes the number onto the row; refresh so this
+            // sheet shows it and the button stops offering to issue one.
+            void queryClient.invalidateQueries({queryKey: ["payments"]})
         } catch (err) {
             console.error("Receipt generation failed", err)
             setError("Failed to generate receipt. Please try again.")
@@ -142,10 +149,13 @@ export default function PaymentDetailSheet({paymentId, onClose, onEdit}) {
                         </DetailList>
                     </div>
 
-                    {(payment.reference || payment.notes) && (
+                    {(payment.reference || payment.notes || payment.receiptNo) && (
                         <div className="mb-4 rounded-lg bg-neutral-0 p-4">
                             <p className={SECTION}>Additional Info</p>
                             <DetailList columns={1}>
+                                {payment.receiptNo && (
+                                    <DetailRow label="Receipt No." value={payment.receiptNo}/>
+                                )}
                                 {payment.reference && (
                                     <DetailRow label="Reference" value={payment.reference}/>
                                 )}
@@ -160,28 +170,34 @@ export default function PaymentDetailSheet({paymentId, onClose, onEdit}) {
                         <Alert className="mb-3">{error}</Alert>
                     )}
 
-                    <div className="flex flex-col gap-2">
-                        <Button block iconLeft={Download} loading={downloading} onClick={handleDownload}>
-                            Download Receipt
-                        </Button>
+                    {isDerived ? (
+                        // Not money received: it re-labels cash already receipted
+                        // on the row that funded it. Receipting it again would be
+                        // a second receipt for the same money.
+                        <p className="text-center text-2xs text-neutral-40">
+                            Carried-forward credit — the payment it came from carries the receipt,
+                            and is what there is to correct.
+                        </p>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            <Button block iconLeft={Download} loading={downloading} onClick={handleDownload}>
+                                {payment.receiptNo ? "Download Receipt" : "Issue Receipt"}
+                            </Button>
 
-                        {canAmend && (isDerived ? (
-                            <p className="text-center text-2xs text-neutral-40">
-                                Carried-forward credit — correct the payment it came from to change this.
-                            </p>
-                        ) : (
-                            <div className="flex gap-2">
-                                <Button block variant="outline" iconLeft={Pencil}
-                                        onClick={() => onEdit(payment)}>
-                                    Edit
-                                </Button>
-                                <Button block variant="danger" iconLeft={Trash2}
-                                        loading={deletePayment.isPending} onClick={handleDelete}>
-                                    Delete
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
+                            {canAmend && (
+                                <div className="flex gap-2">
+                                    <Button block variant="outline" iconLeft={Pencil}
+                                            onClick={() => onEdit(payment)}>
+                                        Edit
+                                    </Button>
+                                    <Button block variant="danger" iconLeft={Trash2}
+                                            loading={deletePayment.isPending} onClick={handleDelete}>
+                                        Delete
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </>
             )}
         </Dialog>

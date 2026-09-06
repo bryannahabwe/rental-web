@@ -2,6 +2,7 @@ import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {Check, Download} from "lucide-react"
 import {useCreatePayment} from "@/hooks/usePayments"
+import {paymentsService} from "@/services/paymentsService"
 import {useAgreements, useAgreementCycles} from "@/hooks/useAgreements"
 import {useAllTenants} from "@/hooks/useTenants"
 import {usePaymentMethods} from "@/hooks/usePaymentMethods"
@@ -117,7 +118,7 @@ export default function RecordPaymentModal({onClose}) {
                 reference: nullIfEmpty(data.reference),
                 notes: nullIfEmpty(data.notes),
             })
-            const receiptRes = await settingsService.getNextReceiptNumber()
+            const receiptRes = await paymentsService.issueReceipt(result.data.id)
             setReceiptNumber(receiptRes.data)
             setCompletedPayment(result.data)
         } catch (err) {
