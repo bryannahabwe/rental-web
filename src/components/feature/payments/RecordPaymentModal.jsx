@@ -14,7 +14,7 @@ import {
 } from "@/components/ui"
 import {formatCycle, formatUGX, nullIfEmpty, todayStr} from "@/lib/format"
 import CyclePicker from "./CyclePicker"
-import {autoSelectedCycle} from "./cycles"
+import {autoSelectedCycle, cycleRemainingNeed} from "./cycles"
 import {getErrorMessage} from "@/utils/errorMessage"
 
 const TABS = [
@@ -93,9 +93,14 @@ export default function RecordPaymentModal({onClose}) {
 
     const selectedAgreement = activeAgreements.find((ag) => ag.id === selectedAgreementId)
     const selectedTenant = allTenants.find((t) => t.id === selectedTenantId)
-    const expectedAmount = selectedAgreement?.rentAmount || 0
+    const expectedAmount = Number(selectedAgreement?.rentAmount) || 0
     const amountNum = Number(enteredAmount) || 0
-    const overpayment = amountNum > expectedAmount ? amountNum - expectedAmount : 0
+    // Sized off what the selected cycle STILL needs, exactly as the API sizes
+    // the real thing. Against the bare rent, a cycle already part-paid reads
+    // back a spill that is short by whatever it already held.
+    const cycleNeed = cycleRemainingNeed(cycles, selectedCycle) ?? expectedAmount
+    const overpayment = Math.max(0, amountNum - cycleNeed)
+    const shortfall = Math.max(0, cycleNeed - amountNum)
     const openingArrears = selectedAgreement
         ? Math.max(0, -(Number(selectedAgreement.openingBalance || 0)))
         : 0
@@ -265,7 +270,11 @@ export default function RecordPaymentModal({onClose}) {
                             label="Amount (UGX)"
                             error={errors.amount?.message}
                             required
-                            hint={selectedAgreement ? `Expected ${formatUGX(selectedAgreement.rentAmount)}` : undefined}
+                            hint={selectedAgreement
+                                ? cycleNeed < expectedAmount
+                                    ? `${formatUGX(cycleNeed)} still owed this period of ${formatUGX(expectedAmount)}`
+                                    : `Expected ${formatUGX(expectedAmount)}`
+                                : undefined}
                         >
                             <AmountInput
                                 name="amount"
@@ -285,10 +294,10 @@ export default function RecordPaymentModal({onClose}) {
                                 over to next cycle
                             </div>
                         )}
-                        {amountNum > 0 && amountNum < expectedAmount && selectedAgreement && (
+                        {amountNum > 0 && shortfall > 0 && selectedAgreement && (
                             <div
                                 className="mt-2 rounded-lg border-l-[3px] border-danger-500 bg-danger-50 px-3.5 py-2.5 text-sm text-danger-600">
-                                Partial — <span className="tabular-nums">{formatUGX(expectedAmount - amountNum)}</span>{" "}
+                                Partial — <span className="tabular-nums">{formatUGX(shortfall)}</span>{" "}
                                 still outstanding
                             </div>
                         )}

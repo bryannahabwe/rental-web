@@ -4,6 +4,7 @@ import {useUpdatePayment} from "@/hooks/usePayments"
 import {useAgreementCycles} from "@/hooks/useAgreements"
 import {Alert, AmountInput, Button, DateField, Dialog, FormField, Input, Textarea, toast} from "@/components/ui"
 import CyclePicker from "./CyclePicker"
+import {cycleRemainingNeed} from "./cycles"
 import {formatUGX, nullIfEmpty} from "@/lib/format"
 import {getErrorMessage} from "@/utils/errorMessage"
 
@@ -39,7 +40,20 @@ export default function EditPaymentModal({payment, onClose}) {
 
     const amountNum = Number(watch("amount")) || 0
     const expected = Number(payment.expectedAmount) || 0
-    const overpayment = amountNum > expected ? amountNum - expected : 0
+
+    // What this payment already contributes to its own cycle. The cycle totals
+    // coming back from the API include it, so measuring an edit against them
+    // untouched would charge this payment against its own money.
+    const ownContribution = Number(payment.amount) - Number(payment.overpayment)
+    const stillOnOriginalCycle = pickedCycle
+        && pickedCycle.start === payment.periodStartDate
+        && pickedCycle.end === payment.periodEndDate
+
+    const cycleNeed = cycleRemainingNeed(
+        cycles, pickedCycle, stillOnOriginalCycle ? ownContribution : 0,
+    ) ?? expected
+    const overpayment = Math.max(0, amountNum - cycleNeed)
+    const shortfall = Math.max(0, cycleNeed - amountNum)
 
     const onSubmit = async (data) => {
         setError("")
@@ -99,7 +113,11 @@ export default function EditPaymentModal({payment, onClose}) {
 
                 <div>
                     <FormField label="Amount (UGX)" error={errors.amount?.message} required
-                               hint={expected > 0 ? `Expected ${formatUGX(expected)}` : undefined}>
+                               hint={expected > 0
+                                   ? cycleNeed < expected
+                                       ? `${formatUGX(cycleNeed)} still owed this period of ${formatUGX(expected)}`
+                                       : `Expected ${formatUGX(expected)}`
+                                   : undefined}>
                         <AmountInput
                             name="amount"
                             control={control}
@@ -115,6 +133,11 @@ export default function EditPaymentModal({payment, onClose}) {
                         <div className="mt-2 rounded-lg border-l-[3px] border-warning-500 bg-warning-50 px-3.5 py-2.5 text-sm text-warning-700">
                             Overpayment of <span className="tabular-nums">{formatUGX(overpayment)}</span> — will roll
                             over to later cycles
+                        </div>
+                    )}
+                    {amountNum > 0 && shortfall > 0 && (
+                        <div className="mt-2 rounded-lg border-l-[3px] border-danger-500 bg-danger-50 px-3.5 py-2.5 text-sm text-danger-600">
+                            Partial — <span className="tabular-nums">{formatUGX(shortfall)}</span> still outstanding
                         </div>
                     )}
                 </div>
