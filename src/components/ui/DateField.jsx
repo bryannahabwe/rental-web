@@ -1,4 +1,4 @@
-import {useRef, useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import {Popover} from "radix-ui"
 import {Calendar, ChevronLeft, ChevronRight, X} from "lucide-react"
 import {CONTROL_BASE, CONTROL_HEIGHT, controlState} from "./controlStyles"
@@ -72,6 +72,18 @@ export default function DateField({
     const [month, setMonth] = useState(() => selected || new Date())
     const [open, setOpen] = useState(false)
 
+    // react-hook-form registers uncontrolled: it writes a field's initial value
+    // straight onto the input through the ref, with no `defaultValue` prop and
+    // no event. Nothing told the trigger, so a prefilled date — a form default,
+    // or an existing record opened for editing — rendered as "Select a date"
+    // while the input underneath held the real value. Reading the input back
+    // covers any such external write, reset() included.
+    useEffect(() => {
+        if (isControlled) return
+        const el = hiddenRef.current
+        if (el && el.value !== internal) setInternal(el.value)
+    })
+
     const commit = (next) => {
         if (!isControlled) setInternal(next)
         const el = hiddenRef.current
@@ -111,7 +123,15 @@ export default function DateField({
                 {...rest}
             />
 
-            <Popover.Root open={open} onOpenChange={setOpen}>
+            <Popover.Root
+                open={open}
+                onOpenChange={(next) => {
+                    // Open on the month being shown, not on whatever month was
+                    // current when this field first mounted.
+                    if (next) setMonth(selected || new Date())
+                    setOpen(next)
+                }}
+            >
                 <Popover.Trigger
                     type="button"
                     disabled={disabled}
