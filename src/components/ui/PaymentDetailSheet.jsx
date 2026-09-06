@@ -1,6 +1,8 @@
 import {useState} from "react"
-import {Download} from "lucide-react"
-import {usePayment} from "@/hooks/usePayments"
+import {Download, Pencil, Trash2} from "lucide-react"
+import {usePayment, useDeletePayment} from "@/hooks/usePayments"
+import {useCan} from "@/hooks/usePermissions"
+import {useConfirm} from "./confirmContext"
 import useSettingsStore from "@/store/settingsStore"
 import {settingsService} from "@/services/settingsService"
 import {generateReceipt} from "@/utils/receiptGenerator"
@@ -15,6 +17,8 @@ import {LoadingPanel} from "./Loader"
 import {formatCycle, formatDate, formatUGX} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
 import {periodFigures} from "@/lib/paymentPeriod"
+import {toast} from "./toastStore"
+import {getErrorMessage} from "@/utils/errorMessage"
 
 const SECTION = "mb-3.5 text-2xs font-medium uppercase tracking-wide text-neutral-40"
 
@@ -22,11 +26,40 @@ const SECTION = "mb-3.5 text-2xs font-medium uppercase tracking-wide text-neutra
 // as a shortfall.
 const BAR_TONE = {PAID: "success", ROLLOVER: "info", PARTIAL: "warning"}
 
-export default function PaymentDetailSheet({paymentId, onClose}) {
+export default function PaymentDetailSheet({paymentId, onClose, onEdit}) {
     const {data: payment, isLoading, isError, refetch} = usePayment(paymentId)
     const {settings} = useSettingsStore()
     const [downloading, setDownloading] = useState(false)
     const [error, setError] = useState("")
+
+    // Recording rent and unwinding it are different privileges: a caretaker
+    // collects, an admin corrects. Mirrors the API's PUT/DELETE matrix.
+    const canAmend = useCan()("deleteRecords")
+    const confirm = useConfirm()
+    const deletePayment = useDeletePayment()
+
+    // A rollover row re-labels cash recorded elsewhere. Correcting it means
+    // correcting the payment that funded it, which the API enforces too.
+    const isDerived = payment?.source === "ROLLOVER"
+
+    const handleDelete = async () => {
+        const ok = await confirm.ask({
+            title: "Delete this payment?",
+            message: `${formatUGX(payment.amount)} from ${payment.tenantName} will be permanently removed, `
+                + "and this tenant's cycle balances and carried-forward credit recalculated without it. "
+                + "Any receipt already issued stays issued. This cannot be undone.",
+            confirmLabel: "Delete payment",
+            tone: "danger",
+        })
+        if (!ok) return
+        try {
+            await deletePayment.mutateAsync(payment.id)
+            toast.success("Payment deleted", "Cycle balances have been recalculated.")
+            onClose()
+        } catch (err) {
+            setError(getErrorMessage(err, "Couldn't delete the payment. Please try again."))
+        }
+    }
 
     // The badge, the bar and the caption all report the PERIOD, not this row.
     // A row that completes a part-paid cycle would otherwise sit under a
@@ -127,9 +160,28 @@ export default function PaymentDetailSheet({paymentId, onClose}) {
                         <Alert className="mb-3">{error}</Alert>
                     )}
 
-                    <Button block iconLeft={Download} loading={downloading} onClick={handleDownload}>
-                        Download Receipt
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                        <Button block iconLeft={Download} loading={downloading} onClick={handleDownload}>
+                            Download Receipt
+                        </Button>
+
+                        {canAmend && (isDerived ? (
+                            <p className="text-center text-2xs text-neutral-40">
+                                Carried-forward credit — correct the payment it came from to change this.
+                            </p>
+                        ) : (
+                            <div className="flex gap-2">
+                                <Button block variant="outline" iconLeft={Pencil}
+                                        onClick={() => onEdit(payment)}>
+                                    Edit
+                                </Button>
+                                <Button block variant="danger" iconLeft={Trash2}
+                                        loading={deletePayment.isPending} onClick={handleDelete}>
+                                    Delete
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 </>
             )}
         </Dialog>

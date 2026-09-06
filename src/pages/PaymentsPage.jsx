@@ -11,6 +11,7 @@ import {formatCycle, formatDate} from "@/lib/format"
 import {statusTone} from "@/lib/statusTone"
 import RecordPaymentModal from "@/components/feature/payments/RecordPaymentModal"
 import PaymentDetailSheet from "@/components/ui/PaymentDetailSheet"
+import EditPaymentModal from "@/components/feature/payments/EditPaymentModal"
 
 export default function PaymentsPage() {
     const [page, setPage] = useState(0)
@@ -19,6 +20,9 @@ export default function PaymentsPage() {
     const [toDate, setToDate] = useState("")
     const [showModal, setShowModal] = useState(false)
     const [selectedPaymentId, setSelectedPaymentId] = useState(null)
+    // The sheet hands the loaded payment up rather than opening the editor
+    // itself: two nested Dialogs would each trap focus and each bind Escape.
+    const [editingPayment, setEditingPayment] = useState(null)
     const canRecord = useCan()("recordPayments")
 
     const query = useDebouncedValue(search)
@@ -174,10 +178,17 @@ export default function PaymentsPage() {
             </Card>
 
             {showModal && <RecordPaymentModal onClose={() => setShowModal(false)}/>}
-            {selectedPaymentId && (
+            {selectedPaymentId && !editingPayment && (
                 <PaymentDetailSheet
                     paymentId={selectedPaymentId}
                     onClose={() => setSelectedPaymentId(null)}
+                    onEdit={setEditingPayment}
+                />
+            )}
+            {editingPayment && (
+                <EditPaymentModal
+                    payment={editingPayment}
+                    onClose={() => setEditingPayment(null)}
                 />
             )}
         </AppShell>

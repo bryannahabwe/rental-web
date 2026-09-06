@@ -10,19 +10,44 @@ export function usePayments(params) {
     })
 }
 
+/**
+ * Everything a payment moves. Recording, editing or removing one replays the
+ * agreement's whole allocation, so nothing that reads off those rows can be
+ * left showing pre-payment figures.
+ */
+function invalidatePaymentViews(queryClient) {
+    void queryClient.invalidateQueries({queryKey: ["payments"]})
+    void queryClient.invalidateQueries({queryKey: ["reports"]})
+    // The tenant's ledger — cycle balances, rollovers, transaction history.
+    // Covers ["tenants", id, "ledger"].
+    void queryClient.invalidateQueries({queryKey: ["tenants"]})
+    // Rent is half the unified income ledger.
+    void queryClient.invalidateQueries({queryKey: ["income"]})
+    // Outstanding balances and per-cycle statuses are derived from the rows.
+    void queryClient.invalidateQueries({queryKey: ["agreements"]})
+}
+
 export function useCreatePayment() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: paymentsService.create,
-        onSuccess: () => {
-            void queryClient.invalidateQueries({queryKey: ["payments"]})
-            void queryClient.invalidateQueries({queryKey: ["reports"]})
-            // A payment rewrites the tenant's ledger (cycle balances,
-            // rollovers, transaction history), so refresh those too —
-            // otherwise the ledger keeps showing pre-payment figures while
-            // the payments list updates. Covers ["tenants", id, "ledger"].
-            void queryClient.invalidateQueries({queryKey: ["tenants"]})
-        },
+        onSuccess: () => invalidatePaymentViews(queryClient),
+    })
+}
+
+export function useUpdatePayment() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({id, data}) => paymentsService.update(id, data),
+        onSuccess: () => invalidatePaymentViews(queryClient),
+    })
+}
+
+export function useDeletePayment() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: paymentsService.remove,
+        onSuccess: () => invalidatePaymentViews(queryClient),
     })
 }
 
