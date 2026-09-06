@@ -25,6 +25,10 @@ function invalidatePaymentViews(queryClient) {
     void queryClient.invalidateQueries({queryKey: ["income"]})
     // Outstanding balances and per-cycle statuses are derived from the rows.
     void queryClient.invalidateQueries({queryKey: ["agreements"]})
+    // Its own key, not a child of ["agreements"] — so the cycle picker kept
+    // showing pre-payment statuses (a cycle just settled still reading UNPAID)
+    // until something else happened to refetch it.
+    void queryClient.invalidateQueries({queryKey: ["agreement-cycles"]})
 }
 
 export function useCreatePayment() {
